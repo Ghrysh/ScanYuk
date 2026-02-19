@@ -63,7 +63,8 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8',
-            'otp_combined' => 'required|numeric|digits:6' 
+            'otp_combined' => 'required|numeric|digits:6',
+            'plan' => 'nullable|in:free,starter,professional,business' 
         ]);
 
         $verification = DB::table('otp_verifications')
@@ -76,10 +77,13 @@ class AuthController extends Controller
             return back()->withErrors(['otp_combined' => 'Kode OTP salah atau sudah kadaluarsa.'])->withInput();
         }
 
+        $role = $request->input('plan', 'free');
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role' => $role,
         ]);
 
         DB::table('otp_verifications')->where('email', $request->email)->delete();
@@ -111,15 +115,16 @@ class AuthController extends Controller
             $request->session()->regenerate();
             
             $dashboards = [
-                User::ROLE_ADMIN        => '/admin/dashboard',
-                User::ROLE_FREE         => '/dashboard',
-                User::ROLE_STARTER      => '/dashboard',
-                User::ROLE_PROFESSIONAL => '/dashboard',
-                User::ROLE_BUSINESS     => '/dashboard',
+                'admin'        => '/admin/dashboard',
+                'free'         => '/dashboard',
+                'starter'      => '/dashboard',
+                'professional' => '/dashboard',
+                'business'     => '/dashboard',
             ];
 
-            $redirectUrl = $dashboards[$user->role] ?? '/';
-            return redirect()->intended($redirectUrl);
+            $redirectUrl = $dashboards[$user->role] ?? '/dashboard';
+            
+            return redirect($redirectUrl);
         }
 
         return back()->withErrors([
