@@ -29,6 +29,10 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'image',
+        'voice',
+        'scan',
+        'status',
     ];
 
     /**
@@ -52,5 +56,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function packageDetail()
+    {
+        return \App\Models\PricingPackage::where('name', 'ilike', $this->role)->first();
+    }
+
+    public function qrCodes()
+    {
+        return $this->hasMany(\App\Models\QrCode::class);
     }
 }

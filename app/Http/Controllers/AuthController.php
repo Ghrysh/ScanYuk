@@ -96,20 +96,29 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-
             $user = Auth::user();
 
+            if ($user->status === 'suspended') {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()->withErrors([
+                    'suspended' => 'Akun Anda telah ditangguhkan (Suspended).'
+                ])->onlyInput('email');
+            }
+
+            $request->session()->regenerate();
+            
             $dashboards = [
                 User::ROLE_ADMIN        => '/admin/dashboard',
-                User::ROLE_FREE         => '/dashboard/free',
-                User::ROLE_STARTER      => '/dashboard/starter',
-                User::ROLE_PROFESSIONAL => '/dashboard/professional',
-                User::ROLE_BUSINESS     => '/dashboard/business',
+                User::ROLE_FREE         => '/dashboard',
+                User::ROLE_STARTER      => '/dashboard',
+                User::ROLE_PROFESSIONAL => '/dashboard',
+                User::ROLE_BUSINESS     => '/dashboard',
             ];
 
             $redirectUrl = $dashboards[$user->role] ?? '/';
-
             return redirect()->intended($redirectUrl);
         }
 
@@ -118,10 +127,13 @@ class AuthController extends Controller
         ])->onlyInput('email');
     }
 
-    public function logout(Request $request) {
+    public function logout(Request $request)
+    {
         Auth::logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login');
+
+        return redirect('/');
     }
 }

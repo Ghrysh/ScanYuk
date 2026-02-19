@@ -4,6 +4,7 @@ use App\Models\PricingPackage;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\AdminController;
 
 Route::get('/', function () {
     return view('home');
@@ -55,37 +56,18 @@ Route::middleware('guest')->group(function () {
 Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['role:admin'])->group(function () {
-        Route::get('/admin/dashboard', function () {
-            return "Halaman Admin Dashboard";
-        });
+        Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+        Route::patch('/admin/users/{user}/toggle-status', [AdminController::class, 'toggleStatus'])->name('admin.users.toggle-status');
+        Route::get('/admin/users/search', [AdminController::class, 'search'])->name('admin.users.search');
+        Route::patch('/admin/packages/{package}', [AdminController::class, 'updatePackage'])->name('admin.packages.update');
     });
 
-    // Dashboard Free
-    Route::middleware(['role:free'])->group(function () {
-        Route::get('/dashboard/free', function () {
-            return "Halaman Paket Free";
-        });
-    });
-
-    // Dashboard Starter
-    Route::middleware(['role:starter'])->group(function () {
-        Route::get('/dashboard/starter', function () {
-            return "Halaman Paket Starter";
-        });
-    });
-
-    // Dashboard Professional
-    Route::middleware(['role:professional'])->group(function () {
-        Route::get('/dashboard/professional', function () {
-            return "Halaman Paket Professional";
-        });
-    });
-
-    // Dashboard Business
-    Route::middleware(['role:business'])->group(function () {
-        Route::get('/dashboard/business', function () {
-            return "Halaman Paket Business";
-        });
+    Route::middleware(['auth', 'role:free,starter,professional,business'])->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\UserDashboardController::class, 'index'])->name('user.dashboard');
+        Route::get('/dashboard/ar/create', [\App\Http\Controllers\QrCodeController::class, 'create'])->name('user.ar.create');
+        Route::post('/dashboard/ar/store', [\App\Http\Controllers\QrCodeController::class, 'store'])->name('user.ar.store');
+        Route::patch('/dashboard/ar/{qrCode}/toggle-status', [\App\Http\Controllers\QrCodeController::class, 'toggleStatus'])->name('user.ar.toggle-status');
+        Route::get('/dashboard/ar/{qrCode}/download', [\App\Http\Controllers\QrCodeController::class, 'download'])->name('user.ar.download');
     });
 
 });
