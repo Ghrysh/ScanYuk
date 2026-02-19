@@ -7,7 +7,6 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='5' height='5' x='3' y='3' rx='1'%3E%3C/rect%3E%3Crect width='5' height='5' x='16' y='3' rx='1'%3E%3C/rect%3E%3Crect width='5' height='5' x='3' y='16' rx='1'%3E%3C/rect%3E%3Cpath d='M21 16h-3a2 2 0 0 0-2 2v3'%3E%3C/path%3E%3Cpath d='M21 21v.01'%3E%3C/path%3E%3Cpath d='M12 7v3a2 2 0 0 1-2 2H7'%3E%3C/path%3E%3Cpath d='M3 12h.01'%3E%3C/path%3E%3Cpath d='M12 3h.01'%3E%3C/path%3E%3Cpath d='M12 16v.01'%3E%3C/path%3E%3Cpath d='M16 12h1'%3E%3C/path%3E%3Cpath d='M21 12v.01'%3E%3C/path%3E%3Cpath d='M12 21v-1'%3E%3C/path%3E%3C/svg%3E">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
@@ -32,11 +31,6 @@
         .btn-gradient {
             background: linear-gradient(90deg, #14b8a6 0%, #8b5cf6 100%);
         }
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { 
-            -webkit-appearance: none; 
-            margin: 0; 
-        }
     </style>
 </head>
 <body class="font-sans antialiased text-slate-600 bg-white bg-grid-pattern min-h-screen flex items-center justify-center p-4 relative">
@@ -49,18 +43,26 @@
     <div class="w-full max-w-[450px] bg-white rounded-2xl shadow-xl border border-slate-100 p-8 relative z-10">
         
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center gap-2 mb-6">
+            <div class="inline-flex items-center justify-center gap-2 mb-4">
                 <div class="w-8 h-8 rounded bg-teal-50 text-teal-600 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-qr-code w-7 h-7"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg>
                 </div>
                 <span class="text-xl font-bold tracking-tight text-slate-900">ScanYuk</span>
             </div>
+            
             <h2 class="text-2xl font-bold text-slate-900">Create Account</h2>
-            <p class="mt-2 text-sm text-slate-500">Start creating AR experiences</p>
+            
+            <div class="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-semibold
+                {{ $plan === 'free' ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-teal-50 text-teal-700 border-teal-200' }}">
+                <span>Paket:</span>
+                <span class="uppercase">{{ $plan }}</span>
+            </div>
         </div>
 
         <form x-data="registerForm()" @submit.prevent="submitForm" class="space-y-5" action="{{ route('register') }}" method="POST" id="regForm">
             @csrf
+            
+            <input type="hidden" name="role" value="{{ $plan }}">
             
             <div>
                 <label class="block text-sm font-semibold text-slate-700 mb-1">Full Name</label>
@@ -83,6 +85,7 @@
                     </button>
                 </div>
                 <p x-show="emailError" x-text="emailError" class="text-red-500 text-xs mt-1 font-medium"></p>
+                @error('email') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
             <div x-show="otpSent" x-transition.opacity.duration.300ms class="space-y-2 p-4 bg-slate-50 rounded-xl border border-slate-100">

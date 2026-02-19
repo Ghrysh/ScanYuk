@@ -3,12 +3,14 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Mail\Mailables\Address;
 
-class ContactSalesMail extends Mailable
+class ContactSalesMail extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -22,22 +24,22 @@ class ContactSalesMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New Sales Inquiry: ' . $this->data['company'],
+            replyTo: [
+                new Address($this->data['email'], $this->data['name']),
+            ],
+            subject: 'ScanYuk | Lead Baru (Contact Sales) - ' . $this->data['company'],
         );
     }
 
     public function content(): Content
     {
         return new Content(
-            htmlString: '
-                <h1>New Demo Request</h1>
-                <p><strong>Nama:</strong> '. $this->data['name'] .'</p>
-                <p><strong>Perusahaan:</strong> '. $this->data['company'] .'</p>
-                <p><strong>Email:</strong> '. $this->data['email'] .'</p>
-                <p><strong>Industri:</strong> '. $this->data['industry'] .'</p>
-                <p><strong>Volume:</strong> '. $this->data['volume'] .'</p>
-                <p><strong>Pesan:</strong> <br>'. nl2br($this->data['message']) .'</p>
-            ',
+            view: 'emails.contact-sales',
         );
+    }
+
+    public function attachments(): array
+    {
+        return [];
     }
 }

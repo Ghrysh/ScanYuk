@@ -16,12 +16,15 @@ class ContactController extends Controller
     public function send(Request $request)
     {
         $request->validate([
-            'name' => 'required|string',
-            'company' => 'required|string',
-            'email' => 'required|email',
-            'industry' => 'required|string',
-            'volume' => 'required|string',
+            'name' => 'required|string|max:255',
+            'company' => 'required|string|max:255',
+            'email' => 'required|email:rfc,dns', 
+            'industry' => 'required|string|max:255',
+            'volume' => 'required|string|max:255',
             'message' => 'required|string',
+        ], [
+            'email.email' => 'Format email tidak valid.',
+            'email.dns' => 'Domain email ini tidak dapat menerima pesan (tidak valid).',
         ]);
 
         $recipient = env('MAIL_SALES_TO', 'admin@scanyuk.com');

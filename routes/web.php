@@ -52,4 +52,42 @@ Route::middleware('guest')->group(function () {
     Route::post('/send-otp', [AuthController::class, 'sendOtp'])->name('send-otp');
 });
 
+Route::middleware(['auth'])->group(function () {
+
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/admin/dashboard', function () {
+            return "Halaman Admin Dashboard";
+        });
+    });
+
+    // Dashboard Free
+    Route::middleware(['role:free'])->group(function () {
+        Route::get('/dashboard/free', function () {
+            return "Halaman Paket Free";
+        });
+    });
+
+    // Dashboard Starter
+    Route::middleware(['role:starter'])->group(function () {
+        Route::get('/dashboard/starter', function () {
+            return "Halaman Paket Starter";
+        });
+    });
+
+    // Dashboard Professional
+    Route::middleware(['role:professional'])->group(function () {
+        Route::get('/dashboard/professional', function () {
+            return "Halaman Paket Professional";
+        });
+    });
+
+    // Dashboard Business
+    Route::middleware(['role:business'])->group(function () {
+        Route::get('/dashboard/business', function () {
+            return "Halaman Paket Business";
+        });
+    });
+
+});
+
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');

@@ -59,15 +59,14 @@
                             </li>
                         @endforeach
                     </ul>
-
-                    <a href="{{ route('register') }}" class="mt-auto block w-full py-3 rounded-lg font-semibold text-center transition-all duration-200 
+                        <a href="{{ route('register', ['plan' => Str::lower($package->name)]) }}" 
+                        class="mt-auto block w-full py-3 rounded-lg font-semibold text-center transition-all duration-200 
                         {{ $package->is_popular 
                             ? 'btn-gradient text-white hover:opacity-90 shadow-lg shadow-indigo-200' 
                             : 'border border-teal-500 text-teal-600 hover:bg-teal-50' 
                         }}">
-                        {{ $package->button_text }}
-                    </a>
-
+                            {{ $package->button_text }}
+                        </a>
                 </div>
             @endforeach
 

@@ -19,8 +19,16 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
-    public function showRegister() {
-        return view('auth.register');
+    public function showRegister(Request $request) {
+        $plan = $request->query('plan', 'free');
+
+        $allowedPlans = ['free', 'starter', 'professional', 'business'];
+        
+        if (!in_array($plan, $allowedPlans)) {
+            $plan = 'free';
+        }
+
+        return view('auth.register', ['plan' => $plan]);
     }
 
     public function sendOtp(Request $request) {
@@ -89,7 +97,20 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('/');
+
+            $user = Auth::user();
+
+            $dashboards = [
+                User::ROLE_ADMIN        => '/admin/dashboard',
+                User::ROLE_FREE         => '/dashboard/free',
+                User::ROLE_STARTER      => '/dashboard/starter',
+                User::ROLE_PROFESSIONAL => '/dashboard/professional',
+                User::ROLE_BUSINESS     => '/dashboard/business',
+            ];
+
+            $redirectUrl = $dashboards[$user->role] ?? '/';
+
+            return redirect()->intended($redirectUrl);
         }
 
         return back()->withErrors([

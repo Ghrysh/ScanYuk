@@ -51,7 +51,12 @@
                     <div>
                         <label class="block text-sm font-bold text-slate-800 mb-2">Email</label>
                         <input type="email" name="email" required placeholder="john@example.com" value="{{ old('email') }}"
-                            class="w-full px-4 py-3 bg-slate-100 border-transparent rounded-lg text-slate-900 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all">
+                            class="w-full px-4 py-3 bg-slate-100 border-transparent rounded-lg text-slate-900 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all 
+                            @error('email') border-red-500 ring-1 ring-red-500 @enderror">
+                        
+                        @error('email')
+                            <p class="text-red-500 text-sm mt-1 font-medium">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
