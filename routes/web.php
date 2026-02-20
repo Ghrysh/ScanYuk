@@ -40,6 +40,10 @@ Route::get('/how-it-works', function () {
     return view('how-it-works');
 })->name('how-it-works');
 
+Route::get('/scan-ar', function () {
+    return view('scanner');
+})->name('scan-ar');
+
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
 

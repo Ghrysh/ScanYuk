@@ -88,7 +88,7 @@
 
                 <div>
                     <label class="block text-sm font-bold text-slate-900 mb-2">Narration Text</label>
-                    <textarea name="narration" required rows="5" placeholder="Enter the narration text that will be converted to voice..." 
+                    <textarea x-model="narrationText" name="narration" required rows="5" placeholder="Enter the narration text that will be converted to voice..." 
                         class="w-full px-4 py-3 bg-slate-100 border-transparent rounded-lg text-slate-900 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all resize-none"></textarea>
                     <p class="text-xs text-slate-500 mt-2">This text will be converted to voice narration using TTS</p>
                 </div>
@@ -107,7 +107,7 @@
             </form>
 
             <div x-show="showPreviewModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center">
-                <div x-show="showPreviewModal" x-transition.opacity.duration.300ms class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showPreviewModal = false"></div>
+                <div x-show="showPreviewModal" x-transition.opacity.duration.300ms class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="closePreview()"></div>
 
                 <div x-show="showPreviewModal" 
                      x-transition:enter="transition ease-out duration-300"
@@ -123,7 +123,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
                             Preview AR
                         </h3>
-                        <button @click="showPreviewModal = false" type="button" class="text-slate-400 hover:text-slate-700 transition-colors p-1 bg-white rounded-md border border-slate-200">
+                        <button @click="closePreview()" type="button" class="text-slate-400 hover:text-slate-700 transition-colors p-1 bg-white rounded-md border border-slate-200">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                         </button>
                     </div>
@@ -135,7 +135,7 @@
 
                         <div class="mt-6 w-full flex items-center justify-center gap-3 p-4 bg-indigo-50 text-indigo-700 rounded-xl border border-indigo-100 shadow-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                            <span class="text-sm font-bold">Suara Narasi Akan Diputar</span>
+                            <span class="text-sm font-bold">Memutar Narasi AI...</span>
                         </div>
                     </div>
                 </div>
@@ -150,6 +150,7 @@
                 imageUrl: null,
                 errorMessage: '',
                 showPreviewModal: false,
+                narrationText: '',
                 
                 fileChosen(event) {
                     this.errorMessage = '';
@@ -191,7 +192,33 @@
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                         return;
                     }
+                    
+                    if (!this.narrationText.trim()) {
+                        this.errorMessage = 'Silakan isi Narration Text terlebih dahulu.';
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        return;
+                    }
+
                     this.showPreviewModal = true;
+                    this.playVoice();
+                },
+
+                closePreview() {
+                    this.showPreviewModal = false;
+                    window.speechSynthesis.cancel();
+                },
+
+                playVoice() {
+                    window.speechSynthesis.cancel();
+
+                    let textToSpeak = this.narrationText.trim();
+                    if (textToSpeak !== '') {
+                        let utterance = new SpeechSynthesisUtterance(textToSpeak);
+                        utterance.lang = 'id-ID';
+                        utterance.rate = 0.9;
+                        
+                        window.speechSynthesis.speak(utterance);
+                    }
                 }
             }))
         })

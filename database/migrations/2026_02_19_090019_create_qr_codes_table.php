@@ -10,10 +10,12 @@ return new class extends Migration
     {
         Schema::create('qr_codes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Relasi ke tabel users
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->uuid('uuid')->unique(); 
+            $table->string('qr_image_path')->nullable();
             $table->string('title');
-            $table->string('image_path')->nullable(); // Untuk menyimpan gambar
-            $table->text('narration')->nullable(); // Untuk menyimpan teks suara
+            $table->string('image_path')->nullable();
+            $table->text('narration')->nullable();
             $table->integer('scan_count')->default(0);
             $table->string('status')->default('Aktif');
             $table->timestamps();

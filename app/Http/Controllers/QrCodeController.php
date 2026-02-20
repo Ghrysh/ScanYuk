@@ -2,29 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\QrCode;
-use App\Models\PricingPackage;
+use App\Models\QrCode as QrCodeModel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Illuminate\Support\Facades\Storage;
 
 class QrCodeController extends Controller
 {
     public function create()
     {
-        return view('dashboard.create-ar');
+        return view('dashboard.create-ar'); 
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'image' => 'required|image|mimes:jpeg,png,jpg|max:5120',
-            'narration' => 'required|string|max:1000',
+            'image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+            'narration' => 'required|string',
         ]);
 
         $user = Auth::user();
 
-        $currentPackage = PricingPackage::where('name', 'ilike', $user->role)->first();
+        $currentPackage = \App\Models\PricingPackage::where('name', 'ilike', $user->role)->first();
         $imgLimit = (int) filter_var($currentPackage->features[0] ?? 0, FILTER_SANITIZE_NUMBER_INT);
         
         if ($user->image >= $imgLimit && $imgLimit > 0) {
@@ -32,14 +34,23 @@ class QrCodeController extends Controller
         }
 
         $imagePath = $request->file('image')->store('ar_images', 'public');
+        
+        $uuid = (string) Str::uuid();
+        $apiUrl = url('/api/scan/' . $uuid);
 
-        QrCode::create([
+        $qrFileName = 'qrcodes/' . $uuid . '.svg';
+        $qrImage = QrCode::size(500)->margin(2)->generate($apiUrl);
+        Storage::disk('public')->put($qrFileName, $qrImage);
+
+        QrCodeModel::create([
             'user_id' => $user->id,
+            'uuid' => $uuid,
             'title' => $request->title,
             'image_path' => $imagePath,
             'narration' => $request->narration,
+            'qr_image_path' => $qrFileName,
             'status' => 'Aktif',
-            'scan_count' => 0,
+            'scan_count' => 0
         ]);
 
         $user->increment('image');
@@ -48,36 +59,33 @@ class QrCodeController extends Controller
         return redirect()->route('user.dashboard')->with('success', 'AR Experience berhasil dibuat!');
     }
 
-    public function toggleStatus(QrCode $qrCode)
+    public function toggleStatus(QrCodeModel $qrCode)
     {
-        // Pastikan QR ini hanya bisa diubah oleh pemiliknya
         if ($qrCode->user_id !== Auth::id()) {
             abort(403, 'Unauthorized action.');
         }
 
-        // Balikkan statusnya
         $qrCode->status = $qrCode->status === 'Aktif' ? 'Nonaktif' : 'Aktif';
         $qrCode->save();
 
         return back()->with('success', 'Status QR Code berhasil diubah.');
     }
 
-    public function download(QrCode $qrCode)
+    public function download(QrCodeModel $qrCode)
     {
         if ($qrCode->user_id !== Auth::id()) {
             abort(403, 'Unauthorized action.');
         }
 
-        $targetUrl = url('/ar/' . $qrCode->id); 
-        
-        $apiUrl = "https://api.qrserver.com/v1/create-qr-code/?size=500x500&margin=10&data=" . urlencode($targetUrl);
-        
-        $imageContent = file_get_contents($apiUrl);
-        
-        $fileName = 'qr-' . \Illuminate\Support\Str::slug($qrCode->title) . '.png';
+        $identifier = $qrCode->uuid ?? $qrCode->id;
+        $apiUrl = url('/api/scan/' . $identifier);
+
+        $imageContent = QrCode::size(500)->margin(2)->generate($apiUrl);
+
+        $fileName = 'ScanYuk-AR-' . Str::slug($qrCode->title) . '.svg';
 
         return response($imageContent)
-            ->header('Content-Type', 'image/png')
+            ->header('Content-Type', 'image/svg+xml')
             ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
     }
 }
