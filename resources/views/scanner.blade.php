@@ -119,6 +119,14 @@
 
                     try {
                         const response = await fetch(decodedText);
+                        
+                        const contentType = response.headers.get("content-type");
+                        if (!contentType || !contentType.includes("application/json")) {
+                            this.errorMessage = "Server membalas dengan HTML (Cek URL/Error Server).";
+                            setTimeout(() => { this.errorMessage = ''; scannerInstance.resume(); }, 5000);
+                            return;
+                        }
+
                         const result = await response.json();
 
                         if (response.ok && result.status === 'success') {
@@ -130,8 +138,8 @@
                             setTimeout(() => { this.errorMessage = ''; scannerInstance.resume(); }, 3000);
                         }
                     } catch (error) {
-                        this.errorMessage = "Terjadi kesalahan jaringan.";
-                        setTimeout(() => { this.errorMessage = ''; scannerInstance.resume(); }, 3000);
+                        this.errorMessage = "Error: " + error.message;
+                        setTimeout(() => { this.errorMessage = ''; scannerInstance.resume(); }, 5000);
                     } finally {
                         this.isProcessing = false;
                     }

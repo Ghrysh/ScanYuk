@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\QrCodeController;
+use App\Http\Controllers\Api\ScanController;
 
 Route::get('/', function () {
     return view('home');
@@ -43,6 +45,8 @@ Route::get('/how-it-works', function () {
 Route::get('/scan-ar', function () {
     return view('scanner');
 })->name('scan-ar');
+
+Route::get('/api/scan/{uuid}', [ScanController::class, 'scanQr']);
 
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
 Route::post('/contact', [ContactController::class, 'send'])->name('contact.send');
