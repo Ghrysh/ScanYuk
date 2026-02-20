@@ -41,7 +41,7 @@
              x-transition:enter-start="opacity-0 scale-75 translate-y-10"
              x-transition:enter-end="opacity-100 scale-100 translate-y-0">
             <template x-if="arData.image_url">
-                <img :src="arData.image_url" class="max-w-full max-h-[60vh] object-contain drop-shadow-[0_20px_25px_rgba(0,0,0,0.6)] animate-[pulse_3s_ease-in-out_infinite]">
+                <img :src="arData.image_url" class="max-w-full max-h-[60vh] object-contain drop-shadow-[0_20px_25px_rgba(0,0,0,0.6)]">
             </template>
         </div>
 
@@ -106,9 +106,7 @@
                             this.arData = result.data;
                             this.arActive = true;
                             
-                            setTimeout(() => {
-                                this.playAI_Voice(this.arData.narration);
-                            }, 500);
+                            this.playAI_Voice(this.arData.narration);
 
                         } else {
                             this.throwError(result.message || "QR Code tidak valid.", scannerInstance);
