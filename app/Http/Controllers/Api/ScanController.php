@@ -9,10 +9,16 @@ class ScanController extends Controller
 {
     public function scanQr($uuid)
     {
-        $qr = DB::table('qr_codes')->where('uuid', $uuid)->where('is_active', true)->first();
+        $qr = DB::table('qr_codes')
+                ->where('uuid', $uuid)
+                ->where('status', 'Aktif')
+                ->first();
 
         if (!$qr) {
-            return response()->json(['status' => 'error', 'message' => 'QR Code tidak valid atau dinonaktifkan.'], 404);
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'QR Code tidak valid atau sedang dinonaktifkan.'
+            ], 404);
         }
 
         $user = DB::table('users')->where('id', $qr->user_id)->first();
@@ -24,16 +30,19 @@ class ScanController extends Controller
             'business' => 150,
         ];
 
-        $maxScans = $scanLimits[$user->role] ?? 0;
+        $userRole = strtolower($user->role);
+        $maxScans = $scanLimits[$userRole] ?? 0;
 
-        if ($user->total_scans >= $maxScans) {
+        if ($user->scan >= $maxScans) {
             return response()->json([
                 'status' => 'limit_reached',
-                'message' => 'Akun pembuat QR ini telah mencapai batas maksimal scan ('. $maxScans .'). Upgrade paket untuk scan lebih lanjut.'
+                'message' => 'Akun pembuat QR ini telah mencapai batas maksimal scan ('. $maxScans .').'
             ], 403);
         }
 
-        DB::table('users')->where('id', $user->id)->increment('total_scans');
+        DB::table('users')->where('id', $user->id)->increment('scan');
+        
+        DB::table('qr_codes')->where('id', $qr->id)->increment('scan_count');
 
         return response()->json([
             'status' => 'success',
