@@ -8,81 +8,63 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
-        body { background-color: #0f172a; margin: 0; overflow: hidden; }
-        .scan-line {
-            width: 100%; height: 3px; background: #14b8a6;
-            box-shadow: 0 0 10px #14b8a6, 0 0 20px #14b8a6;
-            position: absolute; top: 0; left: 0;
-            animation: scan 2.5s infinite linear;
-            z-index: 10;
-        }
-        @keyframes scan {
-            0% { top: 0; opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
-            100% { top: 100%; opacity: 0; }
-        }
-
-        #reader { width: 100%; height: 100vh; border: none !important; }
-        #reader video { object-fit: cover !important; height: 100vh !important; }
-        #reader__dashboard_section_csr { display: none !important; }
+        body { background-color: #000; margin: 0; overflow: hidden; }
+        
+        #reader { width: 100vw; height: 100vh; border: none !important; }
+        #reader video { object-fit: cover !important; width: 100vw !important; height: 100vh !important; }
+        
+        #reader__dashboard_section_csr, #reader__dashboard_section_swaplink, #reader__glass_ext { display: none !important; }
     </style>
 </head>
 <body x-data="arScanner()" x-init="initScanner()">
 
-    <div class="fixed top-0 left-0 w-full p-4 z-40 flex justify-between items-center pointer-events-auto">
-        <a href="{{ route('home') }}" @click="stopScanner()" class="bg-black/50 backdrop-blur-md text-white px-4 py-2 rounded-full flex items-center gap-2 hover:bg-black/70 transition">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-            Tutup Kamera
+    <div x-show="!arActive" class="fixed top-6 left-6 z-40">
+        <a href="{{ route('home') }}" @click="stopScanner()" class="bg-black/30 backdrop-blur-md text-white px-5 py-2.5 rounded-full flex items-center gap-2 hover:bg-black/50 transition shadow-lg border border-white/20">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
+            Kembali
         </a>
     </div>
 
-    <div class="relative w-full h-screen flex justify-center items-center">
-        <div x-show="!arActive" class="absolute w-64 h-64 border-2 border-teal-500/50 rounded-2xl z-20 pointer-events-none flex items-center justify-center">
-            <div class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-teal-400 rounded-tl-xl"></div>
-            <div class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-teal-400 rounded-tr-xl"></div>
-            <div class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-teal-400 rounded-bl-xl"></div>
-            <div class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-teal-400 rounded-br-xl"></div>
-            <div class="scan-line"></div>
-            <p class="text-white/70 text-sm font-semibold mt-32 text-center bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm">Arahkan ke QR Code ScanYuk</p>
-        </div>
-
-        <div id="reader"></div>
+    <div x-show="isProcessing" style="display: none;" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-black/60 backdrop-blur-xl text-white px-6 py-4 rounded-2xl flex flex-col items-center gap-3 shadow-2xl border border-white/10">
+        <svg class="animate-spin h-8 w-8 text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        <span class="font-medium text-sm tracking-wide">Menyiapkan AR...</span>
     </div>
 
-    <div x-show="arActive" x-transition.opacity.duration.500ms style="display: none;" 
-         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-md p-4">
+    <div id="reader"></div>
+
+    <div x-show="arActive" style="display: none;" class="fixed inset-0 z-50 flex flex-col items-center justify-between p-6">
         
-        <div class="relative w-full max-w-sm bg-white rounded-3xl overflow-hidden shadow-2xl transform transition-transform" 
-             x-transition:enter="ease-out duration-300"
-             x-transition:enter-start="scale-90 translate-y-8"
-             x-transition:enter-end="scale-100 translate-y-0">
+        <div class="w-full h-10"></div>
+
+        <div class="flex-grow flex items-center justify-center w-full max-w-sm relative"
+             x-transition:enter="ease-out duration-500"
+             x-transition:enter-start="opacity-0 scale-75 translate-y-10"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+            <template x-if="arData.image_url">
+                <img :src="arData.image_url" class="max-w-full max-h-[60vh] object-contain drop-shadow-[0_20px_25px_rgba(0,0,0,0.6)] animate-[pulse_3s_ease-in-out_infinite]">
+            </template>
+        </div>
+
+        <div x-show="arActive" class="w-full max-w-sm flex items-center justify-between gap-4 pb-4"
+             x-transition:enter="ease-out duration-300 delay-300"
+             x-transition:enter-start="opacity-0 translate-y-12"
+             x-transition:enter-end="opacity-100 translate-y-0">
             
-            <button @click="closeAR()" class="absolute top-4 right-4 bg-white/50 hover:bg-white/90 backdrop-blur-sm text-slate-800 p-2 rounded-full transition z-10 shadow-sm">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            <button @click="closeAR()" class="flex-1 bg-white/20 hover:bg-white/30 backdrop-blur-xl border border-white/30 text-white py-4 px-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                Tutup AR
             </button>
 
-            <div class="w-full h-80 bg-slate-100 flex items-center justify-center p-4 relative">
-                <template x-if="arData.image_url">
-                    <img :src="arData.image_url" class="max-w-full max-h-full object-contain drop-shadow-xl animate-pulse">
-                </template>
-            </div>
-
-            <div class="p-6 text-center bg-white">
-                <h3 class="text-xl font-bold text-slate-900 mb-2" x-text="arData.title"></h3>
-                
-                <div class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-full text-sm font-semibold">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                    Mendengarkan Narasi AI...
-                </div>
-            </div>
+            <button @click="playAI_Voice(arData.narration)" class="flex-1 bg-gradient-to-r from-teal-500 to-indigo-500 hover:opacity-90 backdrop-blur-md text-white py-4 px-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition shadow-[0_10px_25px_rgba(20,184,166,0.4)]">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 001.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06zM18.584 5.106a.75.75 0 011.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 11-1.06-1.06 8.25 8.25 0 000-11.668.75.75 0 010-1.06z" /><path d="M15.932 7.757a.75.75 0 011.061 0 4.5 4.5 0 010 6.364.75.75 0 01-1.06-1.06 3 3 0 000-4.243.75.75 0 010-1.061z" /></svg>
+                Putar Suara
+            </button>
         </div>
     </div>
 
-    <div x-show="errorMessage" style="display: none;" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-[60] bg-red-600 text-white px-6 py-3 rounded-xl shadow-lg font-medium flex items-center gap-3 w-[90%] max-w-md">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+    <div x-show="errorMessage" style="display: none;" class="fixed top-10 left-1/2 transform -translate-x-1/2 z-[60] bg-red-500/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl font-semibold flex items-center gap-3 w-fit whitespace-nowrap border border-white/20">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
         <span x-text="errorMessage" class="text-sm"></span>
-        <button @click="errorMessage = ''" class="ml-auto p-1 bg-red-700 rounded hover:bg-red-800"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
     </div>
 
     <script>
@@ -96,12 +78,12 @@
 
                 initScanner() {
                     const html5QrCode = new Html5Qrcode("reader");
-                    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+                    const config = { fps: 10 };
 
                     html5QrCode.start({ facingMode: "environment" }, config, (decodedText) => {
                         this.onScanSuccess(decodedText, html5QrCode);
                     }).catch(err => {
-                        this.errorMessage = "Gagal mengakses kamera. Pastikan izin kamera diberikan.";
+                        this.errorMessage = "Akses kamera ditolak. Izinkan browser menggunakan kamera.";
                     });
 
                     this.html5QrcodeScanner = html5QrCode;
@@ -110,39 +92,39 @@
                 async onScanSuccess(decodedText, scannerInstance) {
                     if (this.isProcessing || this.arActive) return;
                     
-                    if (!decodedText.includes('/api/scan/')) {
-                        return; 
-                    }
+                    if (!decodedText.includes('/api/scan/')) return; 
 
                     this.isProcessing = true;
                     scannerInstance.pause();
 
                     try {
                         const response = await fetch(decodedText);
-                        
-                        const contentType = response.headers.get("content-type");
-                        if (!contentType || !contentType.includes("application/json")) {
-                            this.errorMessage = "Server membalas dengan HTML (Cek URL/Error Server).";
-                            setTimeout(() => { this.errorMessage = ''; scannerInstance.resume(); }, 5000);
-                            return;
-                        }
-
                         const result = await response.json();
 
                         if (response.ok && result.status === 'success') {
+                            this.isProcessing = false;
                             this.arData = result.data;
                             this.arActive = true;
-                            this.playAI_Voice(this.arData.narration);
+                            
+                            setTimeout(() => {
+                                this.playAI_Voice(this.arData.narration);
+                            }, 500);
+
                         } else {
-                            this.errorMessage = result.message || "QR Code tidak valid.";
-                            setTimeout(() => { this.errorMessage = ''; scannerInstance.resume(); }, 3000);
+                            this.throwError(result.message || "QR Code tidak valid.", scannerInstance);
                         }
                     } catch (error) {
-                        this.errorMessage = "Error: " + error.message;
-                        setTimeout(() => { this.errorMessage = ''; scannerInstance.resume(); }, 5000);
-                    } finally {
-                        this.isProcessing = false;
+                        this.throwError("Terjadi kesalahan jaringan/server.", scannerInstance);
                     }
+                },
+
+                throwError(msg, scanner) {
+                    this.isProcessing = false;
+                    this.errorMessage = msg;
+                    setTimeout(() => { 
+                        this.errorMessage = ''; 
+                        scanner.resume(); 
+                    }, 4000);
                 },
 
                 playAI_Voice(text) {
@@ -164,7 +146,7 @@
                         if (this.html5QrcodeScanner) {
                             this.html5QrcodeScanner.resume();
                         }
-                    }, 1000);
+                    }, 500);
                 },
 
                 stopScanner() {
