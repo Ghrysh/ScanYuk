@@ -62,10 +62,11 @@ class QrCodeController extends Controller
                     $file = $request->file('file_3d');
                     $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
 
-                    $upload = Storage::disk('s3')->putFileAs('/', $file, $filename);
+                    $fileContent = file_get_contents($file->getRealPath());
+                    $upload = Storage::disk('s3')->put($filename, $fileContent);
                     
                     if (!$upload) {
-                        throw new \Exception("MinIO menolak menyimpan file. Pastikan parameter 'use_path_style_endpoint' sudah ada di config/filesystems.php!");
+                        throw new \Exception("Koneksi S3 berhasil, namun MinIO menolak menulis file. Pastikan nama bucket sudah diisi di config/filesystems.php!");
                     }
 
                     $arAsset = ArAsset::create([
@@ -76,7 +77,7 @@ class QrCodeController extends Controller
                     ]);
 
                     $qrCode->ar_asset_id = $arAsset->id;
-                } 
+                }
                 elseif ($request->filled('selected_3d_id')) {
                     $qrCode->ar_asset_id = $request->selected_3d_id;
                 } 

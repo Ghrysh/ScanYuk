@@ -49,17 +49,13 @@ return [
 
         's3' => [
             'driver' => 's3',
-            'key' => env('AWS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
-            'bucket' => env('AWS_BUCKET', 'scanyuk-3d-assets'), 
-            
-            'url' => env('AWS_URL'),
-            
-            'endpoint' => env('AWS_ENDPOINT', 'http://minio:9000'),
-            
-            'use_path_style_endpoint' => true, 
-            
+            'key' => 'adminscanyuk',
+            'secret' => 'RahasiaMinio123!',
+            'region' => 'us-east-1',
+            'bucket' => 'scanyuk-3d-assets',
+            'url' => 'https://scanyuk.com/ar-models',
+            'endpoint' => 'http://minio:9000',
+            'use_path_style_endpoint' => true,
             'throw' => true,
         ],
 
