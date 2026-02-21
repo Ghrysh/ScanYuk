@@ -83,29 +83,20 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/ar-models/{filename}', function ($filename) {
-    $publicUrl = "http://76.13.194.10:9000/scanyuk-3d-assets/" . $filename;
-    
-    try {
-        $response = Http::timeout(10)->get($publicUrl);
-        
-        if (!$response->successful()) {
-            $internalUrl = "http://minio:9000/scanyuk-3d-assets/" . $filename;
-            $response = Http::timeout(10)->get($internalUrl);
-        }
+    $internalUrl = "http://minio:9000/scanyuk-3d-assets/" . $filename;
 
-        if (!$response->successful()) {
-            abort(404, 'File 3D tidak ditemukan di MinIO');
-        }
-
-        return response($response->body(), 200, [
+    return response()->stream(
+        function () use ($internalUrl) {
+            @readfile($internalUrl);
+        },
+        200,
+        [
             'Content-Type' => 'model/gltf-binary',
             'Access-Control-Allow-Origin' => '*',
-            'Cache-Control' => 'public, max-age=31536000',
-        ]);
-
-    } catch (\Exception $e) {
-        abort(500, 'Koneksi ke MinIO Gagal: ' . $e->getMessage());
-    }
+            'Cache-Control' => 'public, max-age=31536000, immutable',
+            'Accept-Ranges' => 'bytes',
+        ]
+    );
 })->name('ar.models');
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
