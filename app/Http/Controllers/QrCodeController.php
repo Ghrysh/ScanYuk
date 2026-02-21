@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\QrCode as QrCodeModel;
+use App\Models\ArAsset;
+use App\Models\ArTemplate;
+use Illuminate\Support\Facades\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
