@@ -61,17 +61,17 @@ class QrCodeController extends Controller
                 $file = $request->file('file_3d');
                 $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
 
-                Storage::disk('s3')->put($filename, file_get_contents($file));
+                Storage::disk('s3')->putFileAs('', $file, $filename);
 
                 $arAsset = ArAsset::create([
                     'user_id' => auth()->id(),
                     'name' => $request->asset_name,
-                    'file_path' => env('AWS_URL') . '/' . $filename,
+                    'file_path' => url('/ar-models/' . $filename), 
                     'is_public' => true,
                 ]);
 
                 $qrCode->ar_asset_id = $arAsset->id;
-            } 
+            }
             elseif ($request->filled('selected_3d_id')) {
                 $qrCode->ar_asset_id = $request->selected_3d_id;
             } 
