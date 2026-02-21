@@ -62,9 +62,13 @@ class QrCodeController extends Controller
                 $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
 
                 try {
-                    Storage::disk('s3')->put($filename, file_get_contents($file->getRealPath()));
+                    $uploadSuccess = Storage::disk('s3')->putFileAs('', $file, $filename);
+                    
+                    if (!$uploadSuccess) {
+                        throw new \Exception("Sistem S3 menolak file tersebut.");
+                    }
                 } catch (\Exception $e) {
-                    return back()->withErrors(['error' => 'Gagal terhubung ke MinIO: ' . $e->getMessage()])->withInput();
+                    return back()->withErrors(['error' => 'Gagal mengunggah ke MinIO: ' . $e->getMessage()])->withInput();
                 }
 
                 $arAsset = ArAsset::create([
@@ -75,7 +79,7 @@ class QrCodeController extends Controller
                 ]);
 
                 $qrCode->ar_asset_id = $arAsset->id;
-            } 
+            }
             elseif ($request->filled('selected_3d_id')) {
                 $qrCode->ar_asset_id = $request->selected_3d_id;
             } 
