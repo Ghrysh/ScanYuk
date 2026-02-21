@@ -10,16 +10,23 @@ class QrCode extends Model
         'user_id',
         'uuid',
         'title',
+        'ar_type',
         'image_path',
+        'ar_asset_id',
+        'bgm_path',
         'narration',
         'qr_image_path',
         'status',
         'scan_count',
-        'is_active',
     ];
 
     public function arAsset()
     {
         return $this->belongsTo(ArAsset::class, 'ar_asset_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }
