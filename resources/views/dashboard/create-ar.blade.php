@@ -277,6 +277,8 @@
                 selectedLibrary3d: '',
                 selectedMusic: '',
                 bgmVolume: 0.3,
+                
+                local3dUrl: null, 
 
                 search3d: '',
                 searchMusic: '',
@@ -293,7 +295,14 @@
                 templates: @json($templates),
 
                 reset2d() { this.imageUrl2d = null; document.getElementById('image-upload').value = ''; },
-                reset3d() { this.upload3dName = ''; this.upload3dDisplayName = ''; document.getElementById('glb-upload').value = ''; this.selectedLibrary3d = ''; },
+                
+                reset3d() { 
+                    this.upload3dName = ''; 
+                    this.upload3dDisplayName = ''; 
+                    document.getElementById('glb-upload').value = ''; 
+                    this.selectedLibrary3d = ''; 
+                    if (this.local3dUrl) { URL.revokeObjectURL(this.local3dUrl); this.local3dUrl = null; } 
+                },
                 
                 handle2dUpload(e) {
                     let file = e.target.files[0];
@@ -308,6 +317,9 @@
                     if(file) {
                         this.upload3dName = file.name;
                         this.selectedLibrary3d = '';
+                        
+                        if (this.local3dUrl) URL.revokeObjectURL(this.local3dUrl); 
+                        this.local3dUrl = URL.createObjectURL(file); 
                     }
                 },
 
@@ -363,10 +375,21 @@
                     if(this.arType === '3d' && !this.upload3dName && !this.selectedLibrary3d) return alert('Pilih atau upload objek 3D dulu!');
                     
                     this.isFromTemplate = false;
+
+                    let src3d = '';
+                    if (this.arType === '3d') {
+                        if (this.upload3dName && this.local3dUrl) {
+                            src3d = this.local3dUrl;
+                        } else if (this.selectedLibrary3d) {
+                            let found = this.library3dList.find(i => i.id == this.selectedLibrary3d);
+                            src3d = found ? found.path : '';
+                        }
+                    }
+
                     this.previewData = {
                         title: this.title || 'Preview Custom AR',
                         type: this.arType,
-                        src: this.arType === '2d' ? this.imageUrl2d : (this.selectedLibrary3d ? this.library3dList.find(i => i.id == this.selectedLibrary3d)?.path : ''),
+                        src: this.arType === '2d' ? this.imageUrl2d : src3d,
                         music: this.selectedMusic
                     };
                     
