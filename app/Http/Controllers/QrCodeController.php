@@ -62,7 +62,7 @@ class QrCodeController extends Controller
                     $file = $request->file('file_3d');
                     $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
 
-                    $upload = Storage::disk('s3')->putFileAs('', $file, $filename);
+                    $upload = Storage::disk('s3')->putFileAs('/', $file, $filename);
                     
                     if (!$upload) {
                         throw new \Exception("MinIO menolak menyimpan file. Pastikan parameter 'use_path_style_endpoint' sudah ada di config/filesystems.php!");
