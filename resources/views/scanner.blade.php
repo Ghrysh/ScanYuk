@@ -156,11 +156,14 @@
                             this.arOverlay.style.display = 'block';
                             this.hasSnaped = true;
                         } else {
-                            const ease = 0.25; 
+                            let dist = Math.hypot(this.targetX - this.curX, this.targetY - this.curY);
+
+                            let ease = Math.min(1.0, 0.2 + (dist / 80)); 
                             
                             this.curX += (this.targetX - this.curX) * ease;
                             this.curY += (this.targetY - this.curY) * ease;
-                            this.curScale += (this.targetScale - this.curScale) * ease;
+
+                            this.curScale += (this.targetScale - this.curScale) * Math.min(1.0, ease + 0.1);
 
                             let dAngle = this.targetAngle - this.curAngle;
                             if (dAngle > 180) dAngle -= 360;
