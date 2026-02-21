@@ -14,6 +14,8 @@
         .btn-gradient:hover { opacity: 0.9; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Memastikan model-viewer tidak mengganggu klik radio button */
+        .pointer-events-none-children model-viewer { pointer-events: none; }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen" x-data="arCreator()">
@@ -43,8 +45,7 @@
                 <input type="hidden" name="ar_type" :value="arType">
                 <input type="hidden" name="selected_3d_id" :value="selectedLibrary3d">
                 <input type="hidden" name="bgm_path" :value="selectedMusic">
-
-                <div>
+                <input type="hidden" name="bgm_volume" :value="bgmVolume"> <div>
                     <label class="block text-sm font-bold text-slate-900 mb-2">Judul AR (Title)</label>
                     <input type="text" name="title" x-model="title" required placeholder="Contoh: Brosur Promosi Akhir Tahun" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all">
                 </div>
@@ -73,9 +74,9 @@
                             <label class="block text-sm font-bold text-slate-900 mb-2">Opsi 1: Upload Model 3D Sendiri (.glb)</label>
                             <input type="file" name="file_3d" id="glb-upload" accept=".glb" class="hidden" @change="handle3dUpload" :disabled="selectedLibrary3d !== ''">
                             <label for="glb-upload" class="flex items-center gap-4 w-full p-4 border border-slate-300 border-dashed rounded-lg cursor-pointer bg-white hover:border-teal-500 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
-                                <div class="flex-1">
-                                    <p class="text-sm font-bold text-slate-700" x-text="upload3dName ? upload3dName : 'Pilih file .glb dari perangkatmu'"></p>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-bold text-slate-700 truncate" x-text="upload3dName ? upload3dName : 'Pilih file .glb dari perangkatmu'"></p>
                                     <p class="text-xs text-slate-400">Maksimal 10MB</p>
                                 </div>
                             </label>
@@ -91,16 +92,19 @@
                                 <input type="text" x-model="search3d" placeholder="Cari objek 3D (misal: mobil, cincin)..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none" :disabled="upload3dName !== ''">
                             </div>
 
-                            <div class="max-h-48 overflow-y-auto no-scrollbar space-y-2">
+                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-72 overflow-y-auto p-1">
                                 <template x-for="item in filtered3d()" :key="item.id">
-                                    <label class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-teal-500 transition-colors" :class="selectedLibrary3d === item.id ? 'border-teal-500 bg-teal-50 ring-1 ring-teal-500' : ''">
-                                        <div class="flex items-center gap-3">
-                                            <input type="radio" x-model="selectedLibrary3d" :value="item.id" class="text-teal-500 focus:ring-teal-500" :disabled="upload3dName !== ''">
-                                            <span class="text-sm font-medium text-slate-700" x-text="item.name"></span>
+                                    <label class="flex flex-col bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden" :class="selectedLibrary3d === item.id ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : ''">
+                                        <div class="h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center">
+                                            <model-viewer :src="item.path" class="w-full h-full" disable-zoom disable-pan auto-rotate exposure="1"></model-viewer>
+                                        </div>
+                                        <div class="p-3 border-t border-slate-100 flex items-start gap-2">
+                                            <input type="radio" x-model="selectedLibrary3d" :value="item.id" class="mt-0.5 text-teal-500 focus:ring-teal-500" :disabled="upload3dName !== ''">
+                                            <span class="text-xs font-bold text-slate-700 leading-tight" x-text="item.name"></span>
                                         </div>
                                     </label>
                                 </template>
-                                <div x-show="filtered3d().length === 0" class="text-center py-4 text-sm text-slate-500">Tidak ada objek 3D yang sesuai pencarian.</div>
+                                <div x-show="filtered3d().length === 0" class="col-span-full text-center py-4 text-sm text-slate-500">Tidak ada objek 3D yang sesuai pencarian.</div>
                             </div>
                         </div>
 
@@ -108,27 +112,34 @@
                 </div>
 
                 <div class="pt-4 border-t border-slate-200">
-                    <label class="block text-sm font-bold text-slate-900 mb-2">Pilih Background Music (Opsional)</label>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="block text-sm font-bold text-slate-900">Pilih Background Music (Opsional)</label>
+                        <div class="flex items-center gap-2" x-show="selectedMusic !== ''" x-transition>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.536 6.464a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                            <input type="range" x-model="bgmVolume" @input="updateVolume()" min="0.05" max="1" step="0.05" class="w-20 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                        </div>
+                    </div>
                     
                     <div class="relative mb-4">
                         <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                        <input type="text" x-model="searchMusic" placeholder="Cari musik (misal: ramadhan, cinematic, lofi)..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-indigo-500 outline-none">
+                        <input type="text" x-model="searchMusic" placeholder="Cari musik (misal: ramadhan, cinematic)..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-indigo-500 outline-none">
                     </div>
 
                     <div class="max-h-48 overflow-y-auto no-scrollbar grid grid-cols-1 md:grid-cols-2 gap-2">
                         <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-500" :class="selectedMusic === '' ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : ''">
-                            <input type="radio" x-model="selectedMusic" value="" class="text-indigo-600 focus:ring-indigo-500">
+                            <input type="radio" x-model="selectedMusic" value="" class="text-indigo-600 focus:ring-indigo-500" @change="stopAllAudio()">
                             <span class="text-sm font-medium text-slate-700">Tanpa Musik (Hanya Narasi)</span>
                         </label>
                         
                         <template x-for="music in filteredMusic()" :key="music.path">
                             <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-indigo-500 transition-colors" :class="selectedMusic === music.path ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : ''">
-                                <label class="flex items-center gap-3 cursor-pointer flex-1">
-                                    <input type="radio" x-model="selectedMusic" :value="music.path" class="text-indigo-600 focus:ring-indigo-500">
+                                <label class="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                                    <input type="radio" x-model="selectedMusic" :value="music.path" class="text-indigo-600 focus:ring-indigo-500 flex-shrink-0">
                                     <span class="text-sm font-medium text-slate-700 truncate" x-text="music.name"></span>
                                 </label>
-                                <button type="button" @click="previewAudio(music.path)" class="p-1.5 text-slate-400 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-100 rounded-full transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                                <button type="button" @click="toggleAudio(music.path)" class="p-1.5 ml-2 text-slate-400 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-100 rounded-full transition-colors flex-shrink-0">
+                                    <svg x-show="playingMusicPath !== music.path" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                                    <svg x-show="playingMusicPath === music.path" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
                                 </button>
                             </div>
                         </template>
@@ -160,11 +171,17 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <template x-for="tpl in filteredTemplates()" :key="tpl.id">
-                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg transition-all group cursor-pointer" @click="previewTemplate(tpl)">
-                        <div class="h-40 bg-slate-100 flex items-center justify-center relative overflow-hidden">
-                            <div class="absolute inset-0 bg-gradient-to-br from-teal-400/20 to-indigo-500/20"></div>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-slate-300 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" /></svg>
-                            <span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-bold bg-white/90 text-slate-700 shadow-sm" x-text="'AR ' + tpl.ar_type.toUpperCase()"></span>
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg hover:border-indigo-300 transition-all group cursor-pointer" @click="previewTemplate(tpl)">
+                        <div class="h-40 bg-slate-100 flex items-center justify-center relative overflow-hidden pointer-events-none-children">
+                            <template x-if="tpl.ar_type === '2d'">
+                                <img :src="tpl.file_path" class="w-full h-full object-cover">
+                            </template>
+                            <template x-if="tpl.ar_type === '3d'">
+                                <model-viewer :src="tpl.file_path" class="w-full h-full" disable-zoom disable-pan auto-rotate exposure="1.2"></model-viewer>
+                            </template>
+                            <div class="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors"></div>
+                            
+                            <span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-bold shadow-sm" :class="tpl.ar_type === '3d' ? 'bg-indigo-600 text-white' : 'bg-teal-500 text-white'" x-text="'AR ' + tpl.ar_type.toUpperCase()"></span>
                         </div>
                         <div class="p-5">
                             <h3 class="font-bold text-slate-900 text-lg truncate mb-1" x-text="tpl.title"></h3>
@@ -179,31 +196,31 @@
         </div>
 
         <div x-show="showModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center">
-            <div x-show="showModal" x-transition.opacity class="absolute inset-0 bg-slate-900/70 backdrop-blur-sm" @click="closeModal()"></div>
+            <div x-show="showModal" x-transition.opacity class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="closeModal()"></div>
 
             <div x-show="showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col items-center border border-white/20">
                 
-                <div class="w-full p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div class="w-full p-4 border-b border-slate-100 flex items-center justify-between bg-white">
                     <h3 class="font-bold text-slate-900" x-text="previewData.title"></h3>
-                    <button @click="closeModal()" type="button" class="text-slate-400 hover:text-red-500 transition-colors p-1 bg-white rounded-full shadow-sm">
+                    <button @click="closeModal()" type="button" class="text-slate-400 hover:text-red-500 transition-colors p-1 bg-slate-50 rounded-full hover:bg-red-50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
 
                 <div class="p-6 w-full flex flex-col items-center">
-                    <div class="w-full bg-slate-900 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-inner" style="height: 300px;">
+                    <div class="w-full bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-inner border border-slate-200" style="height: 300px;">
                         
                         <template x-if="previewData.type === '2d'">
                             <img :src="previewData.src" class="max-w-full max-h-full object-contain">
                         </template>
 
                         <template x-if="previewData.type === '3d'">
-                            <model-viewer :src="previewData.src" auto-rotate camera-controls shadow-intensity="1" class="w-full h-full"></model-viewer>
+                            <model-viewer :src="previewData.src" auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer>
                         </template>
 
                         <div class="absolute bottom-4 left-4 flex gap-2">
-                            <span x-show="previewData.music" class="px-3 py-1 bg-black/50 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg> BGM On</span>
-                            <span class="px-3 py-1 bg-teal-500/80 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1 animate-pulse"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg> AI Speaking</span>
+                            <span x-show="previewData.music" class="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg> BGM On</span>
+                            <span class="px-3 py-1 bg-teal-500/90 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1 animate-pulse"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg> AI Speaking</span>
                         </div>
                     </div>
 
@@ -225,26 +242,37 @@
                 mainTab: 'custom', 
                 arType: '2d',
                 
+                // Form Data
                 title: '',
                 narrationText: '',
                 imageUrl2d: null,
                 upload3dName: '',
                 selectedLibrary3d: '',
                 selectedMusic: '',
+                bgmVolume: 0.3, // PERBAIKAN: Volume default 30%
 
+                // Search State
                 search3d: '',
                 searchMusic: '',
                 searchTemplate: '',
 
+                // Modal & Audio State
                 showModal: false,
                 isFromTemplate: false,
                 previewData: { title: '', type: '', src: '', music: '' },
-                currentAudioPlayer: null,
+                currentAudioPlayer: null, 
+                playingMusicPath: null, // PERBAIKAN: Menyimpan lagu yang sedang diplay (untuk UI Play/Pause)
 
+                // ==========================================
+                // DATA DINAMIS DARI LARAVEL
+                // ==========================================
                 library3dList: @json($library3dList),
                 musicList: @json($musicList),
                 templates: @json($templates),
 
+                // ==========================================
+                // FUNGSI LOGIKA FORM CUSTOM
+                // ==========================================
                 reset2d() { this.imageUrl2d = null; document.getElementById('image-upload').value = ''; },
                 reset3d() { this.upload3dName = ''; document.getElementById('glb-upload').value = ''; this.selectedLibrary3d = ''; },
                 
@@ -268,10 +296,31 @@
                 filteredMusic() { return this.musicList.filter(i => i.name.toLowerCase().includes(this.searchMusic.toLowerCase())); },
                 filteredTemplates() { return this.templates.filter(i => i.title.toLowerCase().includes(this.searchTemplate.toLowerCase()) || i.narration.toLowerCase().includes(this.searchTemplate.toLowerCase())); },
 
+                // ==========================================
+                // FUNGSI AUDIO & TTS (PERBAIKAN)
+                // ==========================================
+                toggleAudio(path) {
+                    if (this.playingMusicPath === path) {
+                        this.stopAllAudio(); // Jika diklik lagi lagu yang sama, Pause.
+                    } else {
+                        this.previewAudio(path); // Jika lagu lain, Play.
+                    }
+                },
+
                 previewAudio(path) {
                     this.stopAllAudio();
                     this.currentAudioPlayer = new Audio('/bg_sounds/' + path);
+                    this.currentAudioPlayer.volume = this.bgmVolume;
                     this.currentAudioPlayer.play();
+                    this.playingMusicPath = path;
+
+                    this.currentAudioPlayer.onended = () => { this.playingMusicPath = null; };
+                },
+
+                updateVolume() {
+                    if(this.currentAudioPlayer) {
+                        this.currentAudioPlayer.volume = this.bgmVolume;
+                    }
                 },
 
                 playVoice(text) {
@@ -279,6 +328,7 @@
                     if(text) {
                         let utterance = new SpeechSynthesisUtterance(text);
                         utterance.lang = 'id-ID';
+                        utterance.volume = 1.0; 
                         window.speechSynthesis.speak(utterance);
                     }
                 },
@@ -289,8 +339,12 @@
                         this.currentAudioPlayer.pause();
                         this.currentAudioPlayer.currentTime = 0;
                     }
+                    this.playingMusicPath = null;
                 },
 
+                // ==========================================
+                // FUNGSI MODAL & TEMPLATE
+                // ==========================================
                 openModal() {
                     if(this.arType === '2d' && !this.imageUrl2d) return alert('Upload gambar 2D dulu!');
                     if(this.arType === '3d' && !this.upload3dName && !this.selectedLibrary3d) return alert('Pilih atau upload objek 3D dulu!');
@@ -299,7 +353,7 @@
                     this.previewData = {
                         title: this.title || 'Preview Custom AR',
                         type: this.arType,
-                        src: this.arType === '2d' ? this.imageUrl2d : (this.selectedLibrary3d ? this.library3dList.find(i=>i.id === this.selectedLibrary3d).path : ''), // Catatan: file upload lokal .glb sulit dipreview di browser tanpa web server lokal, jadi kita skip src jika dari upload lokal.
+                        src: this.arType === '2d' ? this.imageUrl2d : (this.selectedLibrary3d ? this.library3dList.find(i=>i.id === this.selectedLibrary3d).path : ''),
                         music: this.selectedMusic
                     };
                     
@@ -329,11 +383,13 @@
                     if(tpl.ar_type === '2d') {
                         this.imageUrl2d = tpl.file_path;
                     } else {
-                        this.selectedLibrary3d = tpl.id;
+                        // Mencari ID dari library berdasarkan file_path (Asumsi nama file mirip)
+                        let matched3d = this.library3dList.find(item => item.path === tpl.file_path);
+                        if(matched3d) this.selectedLibrary3d = matched3d.id;
                     }
 
                     this.closeModal();
-                    this.mainTab = 'custom';
+                    this.mainTab = 'custom'; 
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
 
