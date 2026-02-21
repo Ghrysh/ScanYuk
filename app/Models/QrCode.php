@@ -17,4 +17,9 @@ class QrCode extends Model
         'scan_count',
         'is_active',
     ];
+
+    public function arAsset()
+    {
+        return $this->belongsTo(ArAsset::class, 'ar_asset_id');
+    }
 }
