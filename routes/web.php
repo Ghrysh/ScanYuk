@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\PricingPackage;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\AuthController;
@@ -82,26 +83,29 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/ar-models/{filename}', function ($filename) {
-    if (!Storage::disk('s3')->exists($filename)) {
-        abort(404);
-    }
+    $publicUrl = "http://76.13.194.10:9000/scanyuk-3d-assets/" . $filename;
+    
+    try {
+        $response = Http::timeout(10)->get($publicUrl);
+        
+        if (!$response->successful()) {
+            $internalUrl = "http://minio:9000/scanyuk-3d-assets/" . $filename;
+            $response = Http::timeout(10)->get($internalUrl);
+        }
 
-    $stream = Storage::disk('s3')->readStream($filename);
+        if (!$response->successful()) {
+            abort(404, 'File 3D tidak ditemukan di MinIO');
+        }
 
-    return response()->stream(
-        function () use ($stream) {
-            fpassthru($stream);
-            if (is_resource($stream)) {
-                fclose($stream);
-            }
-        },
-        200,
-        [
+        return response($response->body(), 200, [
             'Content-Type' => 'model/gltf-binary',
             'Access-Control-Allow-Origin' => '*',
             'Cache-Control' => 'public, max-age=31536000',
-        ]
-    );
+        ]);
+
+    } catch (\Exception $e) {
+        abort(500, 'Koneksi ke MinIO Gagal: ' . $e->getMessage());
+    }
 })->name('ar.models');
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
