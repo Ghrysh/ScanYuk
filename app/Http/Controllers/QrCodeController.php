@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Storage;
 
 class QrCodeController extends Controller
 {
-public function create()
+    public function create()
     {
         $library3dList = ArAsset::where('is_public', true)->get(['id', 'name', 'file_path as path']);
 
@@ -35,41 +35,56 @@ public function create()
     {
         $request->validate([
             'title' => 'required|string|max:255',
-            'image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+            'ar_type' => 'required|in:2d,3d',
             'narration' => 'required|string',
+            'image' => 'required_if:ar_type,2d|image|mimes:jpeg,png,jpg|max:5120', 
+            'file_3d' => 'nullable|file|max:10240',
+        ], [
+            'image.required_if' => 'Gambar 2D wajib diunggah jika Anda memilih tipe AR 2D.',
         ]);
 
-        $user = Auth::user();
+        $qrCode = new QrCodeModel(); 
+        $qrCode->user_id = auth()->id();
+        $qrCode->title = $request->title;
+        $qrCode->ar_type = $request->ar_type;
+        $qrCode->narration = $request->narration;
+        $qrCode->bgm_path = $request->bgm_path;
 
-        $currentPackage = \App\Models\PricingPackage::where('name', 'ilike', $user->role)->first();
-        $imgLimit = (int) filter_var($currentPackage->features[0] ?? 0, FILTER_SANITIZE_NUMBER_INT);
-        
-        if ($user->image >= $imgLimit && $imgLimit > 0) {
-            return back()->withErrors(['limit' => 'Kuota Image AR Anda sudah habis. Silakan Upgrade Paket.']);
+        if ($request->ar_type == '2d') {
+            $imagePath = $request->file('image')->store('ar_images', 'public');
+            $qrCode->image_path = $imagePath;
+        } 
+        else {
+            if ($request->hasFile('file_3d')) {
+                $file = $request->file('file_3d');
+                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
+
+                Storage::disk('s3')->put($filename, file_get_contents($file));
+
+                $arAsset = ArAsset::create([
+                    'user_id' => auth()->id(),
+                    'name' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                    'file_path' => env('AWS_URL') . '/' . $filename,
+                    'is_public' => false,
+                ]);
+
+                $qrCode->ar_asset_id = $arAsset->id;
+            } 
+            elseif ($request->filled('selected_3d_id')) {
+                $qrCode->ar_asset_id = $request->selected_3d_id;
+            } 
+            else {
+                return back()->withErrors(['error' => 'Silakan pilih objek 3D dari library atau upload file .glb sendiri.'])->withInput();
+            }
         }
 
-        $imagePath = $request->file('image')->store('ar_images', 'public');
+        $qrCode->uuid = Str::uuid();
+        $qrUrl = url('/api/scan/' . $qrCode->uuid); 
         
-        $uuid = (string) Str::uuid();
-        $apiUrl = url('/api/scan/' . $uuid);
+        $qrImage = base64_encode(QrCode::format('png')->size(300)->margin(2)->generate($qrUrl));
+        $qrCode->qr_code = $qrImage; 
 
-        $qrFileName = 'qrcodes/' . $uuid . '.svg';
-        $qrImage = QrCode::size(500)->margin(2)->generate($apiUrl);
-        Storage::disk('public')->put($qrFileName, $qrImage);
-
-        QrCodeModel::create([
-            'user_id' => $user->id,
-            'uuid' => $uuid,
-            'title' => $request->title,
-            'image_path' => $imagePath,
-            'narration' => $request->narration,
-            'qr_image_path' => $qrFileName,
-            'status' => 'Aktif',
-            'scan_count' => 0
-        ]);
-
-        $user->increment('image');
-        $user->increment('voice');
+        $qrCode->save();
 
         return redirect()->route('user.dashboard')->with('success', 'AR Experience berhasil dibuat!');
     }
