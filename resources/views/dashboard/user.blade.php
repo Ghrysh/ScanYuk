@@ -93,7 +93,7 @@
         <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
             <div class="flex items-center gap-2 text-slate-500 mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                <span class="text-sm font-medium">Image AR</span>
+                <span class="text-sm font-medium">Total AR</span>
             </div>
             <div>
                 <div class="text-3xl font-extrabold text-slate-900 mb-3">
@@ -159,12 +159,17 @@
             @forelse($qrCodes as $qr)
             <div class="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50 transition-colors">
                 <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-qr-code w-7 h-7 text-primary"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg>
+                    <div class="w-12 h-12 rounded-xl {{ $qr->ar_type == '3d' ? 'bg-indigo-50 text-indigo-600' : 'bg-teal-50 text-teal-600' }} flex items-center justify-center flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-7 h-7"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg>
                     </div>
                     <div>
-                        <h4 class="text-sm font-bold text-slate-900">{{ $qr->title }}</h4>
-                        <p class="text-xs text-slate-500 mt-0.5">{{ $qr->scan_count }} scan • Dibuat {{ $qr->created_at->format('Y-m-d') }}</p>
+                        <div class="flex items-center gap-2 mb-0.5">
+                            <h4 class="text-sm font-bold text-slate-900">{{ $qr->title }}</h4>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase {{ $qr->ar_type == '3d' ? 'bg-indigo-100 text-indigo-700' : 'bg-teal-100 text-teal-700' }}">
+                                {{ $qr->ar_type }}
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500">{{ $qr->scan_count }} scan • Dibuat {{ $qr->created_at->format('d M Y') }}</p>
                     </div>
                 </div>
                 
@@ -173,9 +178,9 @@
                         {{ $qr->status }}
                     </span>
                     
-                    <a href="{{ route('user.ar.download', $qr->id) }}" class="text-slate-400 hover:text-indigo-600 transition-colors" title="Download QR">
+                    <button type="button" class="text-slate-400 hover:text-indigo-600 transition-colors" title="Lihat/Download QR" onclick="window.open('{{ route('user.ar.download', $qr->id) }}', '_self')">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    </a>
+                    </button>
 
                     <form action="{{ route('user.ar.toggle-status', $qr->id) }}" method="POST" class="inline m-0 p-0">
                         @csrf
@@ -190,7 +195,6 @@
                     </form>
                 </div>
             </div>
-            
             @empty
             <div class="p-8 text-center text-slate-500">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>

@@ -82,9 +82,17 @@ class QrCodeController extends Controller
         $qrUrl = url('/api/scan/' . $qrCode->uuid); 
         
         $qrImage = base64_encode(QrCode::format('svg')->size(300)->margin(2)->generate($qrUrl));
-        $qrCode->qr_image_path = $qrImage; 
+        $qrCode->qr_image_path = $qrImage;
 
         $qrCode->save();
+
+        $user = auth()->user();
+
+        $user->increment('image');
+
+        if (!empty($request->narration)) {
+            $user->increment('voice');
+        }
 
         return redirect()->route('user.dashboard')->with('success', 'AR Experience berhasil dibuat!');
     }

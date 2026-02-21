@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             PricingPackageSeeder::class,
             AdminUserSeeder::class,
             TransactionSeeder::class,
+            ArTemplateSeeder::class,
+            ArAssetSeeder::class,
         ]);
     }
 }
