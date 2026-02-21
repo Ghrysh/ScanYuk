@@ -33,78 +33,93 @@ class QrCodeController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'ar_type' => 'required|in:2d,3d',
-            'narration' => 'required|string',
-            'image' => 'required_if:ar_type,2d|image|mimes:jpeg,png,jpg|max:5120', 
-            'file_3d' => 'nullable|file|max:51200',
-            'asset_name' => 'required_with:file_3d|string|max:100',
-        ], [
-            'image.required_if' => 'Gambar 2D wajib diunggah jika Anda memilih tipe AR 2D.',
-            'asset_name.required_with' => 'Nama objek 3D wajib diisi jika Anda mengunggah file .glb.',
-        ]);
+        try {
+            $request->validate([
+                'title' => 'required|string|max:255',
+                'ar_type' => 'required|in:2d,3d',
+                'narration' => 'required|string',
+                'image' => 'required_if:ar_type,2d|image|mimes:jpeg,png,jpg|max:5120', 
+                'file_3d' => 'nullable|file|max:51200',
+                'asset_name' => 'required_with:file_3d|string|max:100',
+            ], [
+                'image.required_if' => 'Gambar 2D wajib diunggah jika Anda memilih tipe AR 2D.',
+                'asset_name.required_with' => 'Nama objek 3D wajib diisi jika Anda mengunggah file .glb.',
+            ]);
 
-        $qrCode = new QrCodeModel(); 
-        $qrCode->user_id = auth()->id();
-        $qrCode->title = $request->title;
-        $qrCode->ar_type = $request->ar_type;
-        $qrCode->narration = $request->narration;
-        $qrCode->bgm_path = $request->bgm_path;
+            $qrCode = new QrCodeModel(); 
+            $qrCode->user_id = auth()->id();
+            $qrCode->title = $request->title;
+            $qrCode->ar_type = $request->ar_type;
+            $qrCode->narration = $request->narration;
+            $qrCode->bgm_path = $request->bgm_path;
 
-        if ($request->ar_type == '2d') {
-            $imagePath = $request->file('image')->store('ar_images', 'public');
-            $qrCode->image_path = $imagePath;
-        } 
-        else {
-            if ($request->hasFile('file_3d')) {
-                $file = $request->file('file_3d');
-                $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
-
-                try {
-                    $fileContent = file_get_contents($file->getRealPath());
-                    $upload = Storage::disk('s3')->put($filename, $fileContent);
-                    
-                    if (!$upload) {
-                        throw new \Exception("Koneksi S3 berhasil, namun MinIO menolak menulis file. Periksa hak akses bucket.");
-                    }
-                } catch (\Exception $e) {
-                    return back()->withErrors(['error' => 'Gagal mengunggah ke MinIO: ' . $e->getMessage()])->withInput();
-                }
-
-                $arAsset = ArAsset::create([
-                    'user_id' => auth()->id(),
-                    'name' => $request->asset_name,
-                    'file_path' => url('/ar-models/' . $filename),
-                    'is_public' => true,
-                ]);
-
-                $qrCode->ar_asset_id = $arAsset->id;
-            } 
-            elseif ($request->filled('selected_3d_id')) {
-                $qrCode->ar_asset_id = $request->selected_3d_id;
+            if ($request->ar_type == '2d') {
+                $imagePath = $request->file('image')->store('ar_images', 'public');
+                $qrCode->image_path = $imagePath;
             } 
             else {
-                return back()->withErrors(['error' => 'Silakan pilih objek 3D dari library atau upload file .glb sendiri.'])->withInput();
+                if ($request->hasFile('file_3d')) {
+                    $file = $request->file('file_3d');
+                    $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
+
+                    $upload = Storage::disk('s3')->putFileAs('', $file, $filename);
+                    
+                    if (!$upload) {
+                        throw new \Exception("MinIO menolak menyimpan file. Pastikan parameter 'use_path_style_endpoint' sudah ada di config/filesystems.php!");
+                    }
+
+                    $arAsset = ArAsset::create([
+                        'user_id' => auth()->id(),
+                        'name' => $request->asset_name,
+                        'file_path' => url('/ar-models/' . $filename),
+                        'is_public' => true,
+                    ]);
+
+                    $qrCode->ar_asset_id = $arAsset->id;
+                } 
+                elseif ($request->filled('selected_3d_id')) {
+                    $qrCode->ar_asset_id = $request->selected_3d_id;
+                } 
+                else {
+                    throw new \Exception("Silakan pilih objek 3D dari library atau upload file .glb sendiri.");
+                }
             }
+
+            $qrCode->uuid = Str::uuid();
+            $qrUrl = url('/api/scan/' . $qrCode->uuid); 
+            
+            $qrImage = base64_encode(QrCode::format('svg')->size(300)->margin(2)->generate($qrUrl));
+            $qrCode->qr_image_path = $qrImage;
+
+            $qrCode->save();
+
+            $user = auth()->user();
+            $user->increment('image');
+            if (!empty($request->narration)) {
+                $user->increment('voice');
+            }
+
+            if ($request->ajax() || $request->wantsJson()) {
+                session()->flash('success', 'AR Experience berhasil dibuat!');
+                return response()->json([
+                    'status' => 'success',
+                    'redirect_url' => route('user.dashboard')
+                ]);
+            }
+
+            return redirect()->route('user.dashboard')->with('success', 'AR Experience dibuat!');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['error' => collect($e->errors())->flatten()->first()], 422);
+            }
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['error' => $e->getMessage()], 500);
+            }
+            return back()->withErrors(['error' => $e->getMessage()])->withInput();
         }
-
-        $qrCode->uuid = Str::uuid();
-        $qrUrl = url('/api/scan/' . $qrCode->uuid); 
-        
-        $qrImage = base64_encode(QrCode::format('svg')->size(300)->margin(2)->generate($qrUrl));
-        $qrCode->qr_image_path = $qrImage;
-
-        $qrCode->save();
-
-        $user = auth()->user();
-        $user->increment('image');
-
-        if (!empty($request->narration)) {
-            $user->increment('voice');
-        }
-
-        return redirect()->route('user.dashboard')->with('success', 'AR Experience berhasil dibuat!');
     }
 
     public function toggleStatus(QrCodeModel $qrCode)
