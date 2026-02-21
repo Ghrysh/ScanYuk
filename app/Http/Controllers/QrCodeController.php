@@ -81,7 +81,7 @@ class QrCodeController extends Controller
         $qrCode->uuid = Str::uuid();
         $qrUrl = url('/api/scan/' . $qrCode->uuid); 
         
-        $qrImage = base64_encode(QrCode::format('png')->size(300)->margin(2)->generate($qrUrl));
+        $qrImage = base64_encode(QrCode::format('svg')->size(300)->margin(2)->generate($qrUrl));
         $qrCode->qr_code = $qrImage; 
 
         $qrCode->save();
