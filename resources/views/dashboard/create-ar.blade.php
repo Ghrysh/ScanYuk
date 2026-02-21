@@ -42,7 +42,7 @@
                 <a href="{{ route('user.dashboard') }}" class="p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                 </a>
-                <h1 class="text-lg font-bold text-slate-900">Buat AR Baru</h1>
+                <h1 class="text-lg font-bold text-slate-900">Buat AR</h1>
             </div>
             
             <div class="flex p-1 bg-slate-100 rounded-lg border border-slate-200">
@@ -191,6 +191,39 @@
             </form>
         </div>
 
+        <div x-show="mainTab === 'template'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
+            
+            <div class="relative mb-6">
+                <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-4 top-3.5 h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input type="text" x-model="searchTemplate" placeholder="Cari template siap pakai (misal: ramadhan, undangan)..." class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 focus:border-indigo-500 shadow-sm outline-none text-lg">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="tpl in filteredTemplates()" :key="tpl.id">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg hover:border-indigo-300 transition-all group cursor-pointer" @click="previewTemplate(tpl)">
+                        <div class="h-40 bg-slate-100 flex items-center justify-center relative overflow-hidden pointer-events-none-children">
+                            <template x-if="tpl.ar_type === '2d'">
+                                <img :src="tpl.file_path" class="w-full h-full object-cover">
+                            </template>
+                            <template x-if="tpl.ar_type === '3d'">
+                                <model-viewer :src="tpl.file_path" class="w-full h-full" disable-zoom disable-pan auto-rotate exposure="1.2"></model-viewer>
+                            </template>
+                            <div class="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors"></div>
+                            
+                            <span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-bold shadow-sm" :class="tpl.ar_type === '3d' ? 'bg-indigo-600 text-white' : 'bg-teal-500 text-white'" x-text="'AR ' + tpl.ar_type.toUpperCase()"></span>
+                        </div>
+                        <div class="p-5">
+                            <h3 class="font-bold text-slate-900 text-lg truncate mb-1" x-text="tpl.title"></h3>
+                            <p class="text-sm text-slate-500 line-clamp-2" x-text="tpl.narration"></p>
+                        </div>
+                    </div>
+                </template>
+                <div x-show="filteredTemplates().length === 0" class="col-span-full text-center py-10">
+                    <p class="text-slate-500">Template tidak ditemukan.</p>
+                </div>
+            </div>
+        </div>
+
         <div x-show="showModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center">
             <div x-show="showModal" x-transition.opacity class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="closeModal()"></div>
             <div x-show="showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col items-center border border-white/20">
@@ -214,6 +247,13 @@
                             <span x-show="previewData.music" class="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg> BGM On</span>
                             <span class="px-3 py-1 bg-teal-500/90 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1 animate-pulse"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg> AI Speaking</span>
                         </div>
+
+                        <template x-if="isFromTemplate">
+                            <button @click="useTemplate()" class="mt-6 w-full py-3.5 px-6 rounded-xl btn-gradient text-white font-bold shadow-lg flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                Gunakan Template Ini
+                            </button>
+                        </template>
                     </div>
                 </div>
             </div>
@@ -338,6 +378,38 @@
 
                 filtered3d() { return this.library3dList.filter(i => i.name.toLowerCase().includes(this.search3d.toLowerCase())); },
                 filteredMusic() { return this.musicList.filter(i => i.name.toLowerCase().includes(this.searchMusic.toLowerCase())); },
+
+                filteredTemplates() { return this.templates.filter(i => i.title.toLowerCase().includes(this.searchTemplate.toLowerCase()) || i.narration.toLowerCase().includes(this.searchTemplate.toLowerCase())); },
+
+                previewTemplate(tpl) {
+                    this.isFromTemplate = true;
+                    this.previewData = {
+                        title: tpl.title, type: tpl.ar_type, src: tpl.file_path, music: tpl.bgm_path, fullData: tpl
+                    };
+                    this.showModal = true;
+                    if(tpl.bgm_path) this.previewAudio(tpl.bgm_path);
+                    this.playVoice(tpl.narration);
+                },
+
+                useTemplate() {
+                    let tpl = this.previewData.fullData;
+                    
+                    this.title = tpl.title;
+                    this.arType = tpl.ar_type;
+                    this.narrationText = tpl.narration;
+                    this.selectedMusic = tpl.bgm_path;
+                    
+                    if(tpl.ar_type === '2d') {
+                        this.imageUrl2d = tpl.file_path;
+                    } else {
+                        let matched3d = this.library3dList.find(item => item.path === tpl.file_path);
+                        if(matched3d) this.selectedLibrary3d = matched3d.id;
+                    }
+
+                    this.closeModal();
+                    this.mainTab = 'custom'; 
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
                 
                 toggleAudio(path) { if (this.playingMusicPath === path) { this.stopAllAudio(); } else { this.previewAudio(path); } },
                 previewAudio(path) {
