@@ -38,7 +38,7 @@ class QrCodeController extends Controller
             'ar_type' => 'required|in:2d,3d',
             'narration' => 'required|string',
             'image' => 'required_if:ar_type,2d|image|mimes:jpeg,png,jpg|max:5120', 
-            'file_3d' => 'nullable|file|max:10240',
+            'file_3d' => 'nullable|file|max:51200',
             'asset_name' => 'required_with:file_3d|string|max:100',
         ], [
             'image.required_if' => 'Gambar 2D wajib diunggah jika Anda memilih tipe AR 2D.',
@@ -61,17 +61,21 @@ class QrCodeController extends Controller
                 $file = $request->file('file_3d');
                 $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
 
-                Storage::disk('s3')->putFileAs('', $file, $filename);
+                try {
+                    Storage::disk('s3')->put($filename, file_get_contents($file->getRealPath()));
+                } catch (\Exception $e) {
+                    return back()->withErrors(['error' => 'Gagal terhubung ke MinIO: ' . $e->getMessage()])->withInput();
+                }
 
                 $arAsset = ArAsset::create([
                     'user_id' => auth()->id(),
                     'name' => $request->asset_name,
-                    'file_path' => url('/ar-models/' . $filename), 
+                    'file_path' => url('/ar-models/' . $filename),
                     'is_public' => true,
                 ]);
 
                 $qrCode->ar_asset_id = $arAsset->id;
-            }
+            } 
             elseif ($request->filled('selected_3d_id')) {
                 $qrCode->ar_asset_id = $request->selected_3d_id;
             } 
@@ -89,7 +93,6 @@ class QrCodeController extends Controller
         $qrCode->save();
 
         $user = auth()->user();
-
         $user->increment('image');
 
         if (!empty($request->narration)) {
