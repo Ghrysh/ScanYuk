@@ -88,7 +88,7 @@
 
         </div>
 
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-16">
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-16 py-20">
             <a href="{{ route('register') }}" class="w-full sm:w-auto px-8 py-4 rounded-lg btn-gradient text-white font-bold shadow-lg shadow-indigo-200 hover:scale-105 transition-transform">
                 Buat AR Anda Sendiri
             </a>
