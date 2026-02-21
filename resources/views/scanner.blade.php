@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <style>
         body { background-color: #000; margin: 0; overflow: hidden; touch-action: none; }
         
@@ -16,17 +17,15 @@
             object-fit: cover; z-index: 10;
         }
 
-        #ar-overlay {
+        #ar-overlay-container {
             position: absolute;
             z-index: 30;
-            width: 200px; 
-            height: 200px;
-            margin-left: -100px; 
-            margin-top: -100px;
+            width: 250px; 
+            height: 250px;
+            margin-left: -125px; 
+            margin-top: -125px;
             left: 0; top: 0;
-            object-fit: contain;
             display: none;
-            filter: drop-shadow(0 25px 25px rgba(0,0,0,0.8));
             pointer-events: none;
             will-change: transform; 
         }
@@ -36,7 +35,11 @@
 
     <video id="qr-video" playsinline autoplay muted></video>
     <canvas id="qr-canvas" style="display: none;"></canvas>
-    <img id="ar-overlay" src="" alt="AR Object">
+    
+    <div id="ar-overlay-container">
+        <img x-show="arData.type === '2d'" :src="arData.src" class="w-full h-full object-contain filter drop-shadow(0 25px 25px rgba(0,0,0,0.8))">
+        <model-viewer x-show="arData.type === '3d'" :src="arData.src" class="w-full h-full" auto-rotate shadow-intensity="1" exposure="1.2"></model-viewer>
+    </div>
 
     <div class="fixed top-6 left-6 z-40">
         <a href="{{ route('home') }}" class="bg-black/40 backdrop-blur-md text-white px-5 py-2.5 rounded-full flex items-center gap-2 hover:bg-black/60 transition shadow-lg border border-white/20">
@@ -64,8 +67,11 @@
     <script>
         function arTracker() {
             return {
-                video: null, canvasElement: null, canvas: null, arOverlay: null,
+                video: null, canvasElement: null, canvas: null, arOverlayContainer: null,
                 isFetching: false, arActive: false, errorMessage: '', arCache: {}, currentQrUrl: null, lastFoundTime: 0,
+                
+                arData: { type: '2d', src: '' },
+                bgmPlayer: null,
                 
                 curX: 0, curY: 0, curScale: 0, curAngle: 0,
                 targetX: 0, targetY: 0, targetScale: 0, targetAngle: 0,
@@ -75,7 +81,7 @@
                     this.video = document.getElementById("qr-video");
                     this.canvasElement = document.getElementById("qr-canvas");
                     this.canvas = this.canvasElement.getContext("2d", { willReadFrequently: true });
-                    this.arOverlay = document.getElementById("ar-overlay");
+                    this.arOverlayContainer = document.getElementById("ar-overlay-container");
 
                     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then((stream) => {
                         this.video.srcObject = stream;
@@ -111,9 +117,10 @@
                             }
                         } else {
                             if (Date.now() - this.lastFoundTime > 500) { 
-                                this.arOverlay.style.display = 'none';
+                                this.arOverlayContainer.style.display = 'none';
                                 this.arActive = false;
                                 this.hasSnaped = false;
+                                this.stopAllAudio();
                             }
                         }
                     }
@@ -143,8 +150,8 @@
                     this.targetX = (centerX * scale) + offsetX;
                     this.targetY = (centerY * scale) + offsetY;
                     
-                    const imageSize = (qrWidth * scale) * 1.8;
-                    this.targetScale = imageSize / 200; 
+                    const imageSize = (qrWidth * scale) * 2;
+                    this.targetScale = imageSize / 250; 
                     this.targetAngle = angle;
                 },
 
@@ -154,19 +161,15 @@
                             this.curX = this.targetX; 
                             this.curY = this.targetY;
                             this.curAngle = this.targetAngle;
-                            
                             this.curScale = 0; 
-                            
-                            this.arOverlay.style.display = 'block';
+                            this.arOverlayContainer.style.display = 'block';
                             this.hasSnaped = true;
                         } else {
                             let dist = Math.hypot(this.targetX - this.curX, this.targetY - this.curY);
-                            
                             let ease = Math.min(1.0, 0.2 + (dist / 80)); 
                             
                             this.curX += (this.targetX - this.curX) * ease;
                             this.curY += (this.targetY - this.curY) * ease;
-
                             this.curScale += (this.targetScale - this.curScale) * 0.15;
 
                             let dAngle = this.targetAngle - this.curAngle;
@@ -175,7 +178,7 @@
                             this.curAngle += dAngle * ease;
                         }
 
-                        this.arOverlay.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
+                        this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
                     }
                     requestAnimationFrame(() => this.renderLoop());
                 },
@@ -186,11 +189,21 @@
                         const response = await fetch(url);
                         const result = await response.json();
                         if (response.ok && result.status === 'success') {
-                            this.arCache[url] = { image_url: result.data.image_url, narration: result.data.narration, ready: true };
-                            this.arOverlay.src = result.data.image_url;
+                            
+                            const type = result.data.ar_type;
+                            const src = type === '3d' ? result.data.file_3d_url : result.data.image_url;
+                            
+                            this.arData = { type: type, src: src };
+                            
+                            this.arCache[url] = { 
+                                narration: result.data.narration, 
+                                bgm_url: result.data.bgm_url,
+                                ready: true 
+                            };
                             
                             this.arActive = true;
-                            this.replayVoice(result.data.narration);
+                            this.playAllAudio(url);
+
                         } else {
                             this.showError("QR Code tidak valid / Limit.");
                             this.arCache[url] = { ready: false };
@@ -199,15 +212,40 @@
                     finally { this.isFetching = false; }
                 },
 
-                replayVoice(customText = null) {
-                    window.speechSynthesis.cancel();
-                    let text = customText || (this.arCache[this.currentQrUrl] ? this.arCache[this.currentQrUrl].narration : '');
-                    if (text) {
-                        let utterance = new SpeechSynthesisUtterance(text);
-                        utterance.lang = 'id-ID';
-                        window.speechSynthesis.speak(utterance);
+                playAllAudio(url) {
+                    this.stopAllAudio();
+                    const cache = this.arCache[url];
+                    
+                    if(cache) {
+                        if(cache.bgm_url) {
+                            this.bgmPlayer = new Audio(cache.bgm_url);
+                            this.bgmPlayer.volume = 0.3;
+                            this.bgmPlayer.loop = true;
+                            this.bgmPlayer.play().catch(e => console.log('BGM Play Error:', e));
+                        }
+                        
+                        if(cache.narration) {
+                            let utterance = new SpeechSynthesisUtterance(cache.narration);
+                            utterance.lang = 'id-ID';
+                            utterance.volume = 1.0;
+                            window.speechSynthesis.speak(utterance);
+                        }
                     }
                 },
+
+                replayVoice() {
+                    this.playAllAudio(this.currentQrUrl);
+                },
+
+                stopAllAudio() {
+                    window.speechSynthesis.cancel();
+                    if(this.bgmPlayer) {
+                        this.bgmPlayer.pause();
+                        this.bgmPlayer.currentTime = 0;
+                        this.bgmPlayer = null;
+                    }
+                },
+
                 showError(msg) { this.errorMessage = msg; setTimeout(() => { this.errorMessage = ''; }, 4000); }
             }
         }
