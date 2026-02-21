@@ -353,7 +353,7 @@
                     this.previewData = {
                         title: this.title || 'Preview Custom AR',
                         type: this.arType,
-                        src: this.arType === '2d' ? this.imageUrl2d : (this.selectedLibrary3d ? this.library3dList.find(i=>i.id === this.selectedLibrary3d).path : ''),
+                        src: this.arType === '2d' ? this.imageUrl2d : (this.selectedLibrary3d ? this.library3dList.find(i => i.id == this.selectedLibrary3d)?.path : ''),
                         music: this.selectedMusic
                     };
                     

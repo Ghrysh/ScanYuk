@@ -2,6 +2,7 @@
 
 use App\Models\PricingPackage;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\AdminController;
@@ -79,5 +80,12 @@ Route::middleware(['auth'])->group(function () {
     });
 
 });
+
+Route::get('/ar-models/{filename}', function ($filename) {
+    if (!Storage::disk('s3')->exists($filename)) {
+        abort(404);
+    }
+    return Storage::disk('s3')->response($filename);
+})->name('ar.models');
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
