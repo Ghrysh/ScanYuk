@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Create AR Experience - ScanYuk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='5' height='5' x='3' y='3' rx='1'%3E%3C/rect%3E%3Crect width='5' height='5' x='16' y='3' rx='1'%3E%3C/rect%3E%3Crect width='5' height='5' x='3' y='16' rx='1'%3E%3C/rect%3E%3Cpath d='M21 16h-3a2 2 0 0 0-2 2v3'%3E%3C/path%3E%3Cpath d='M21 21v.01'%3E%3C/path%3E%3Cpath d='M12 7v3a2 2 0 0 1-2 2H7'%3E%3C/path%3E%3Cpath d='M3 12h.01'%3E%3C/path%3E%3Cpath d='M12 3h.01'%3E%3C/path%3E%3Cpath d='M12 16v.01'%3E%3C/path%3E%3Cpath d='M16 12h1'%3E%3C/path%3E%3Cpath d='M21 12v.01'%3E%3C/path%3E%3Cpath d='M12 21v-1'%3E%3C/path%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
@@ -45,7 +44,22 @@
                 <input type="hidden" name="ar_type" :value="arType">
                 <input type="hidden" name="selected_3d_id" :value="selectedLibrary3d">
                 <input type="hidden" name="bgm_path" :value="selectedMusic">
-                <input type="hidden" name="bgm_volume" :value="bgmVolume"> <div>
+                <input type="hidden" name="bgm_volume" :value="bgmVolume"> 
+
+                @if ($errors->any())
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-xl" x-transition>
+                        <div class="flex items-center gap-2 text-red-600 font-bold mb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                            Oops! Pembuatan AR Gagal:
+                        </div>
+                        <ul class="list-disc pl-5 text-sm text-red-500 space-y-1">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+                <div>
                     <label class="block text-sm font-bold text-slate-900 mb-2">Judul AR (Title)</label>
                     <input type="text" name="title" x-model="title" required placeholder="Contoh: Brosur Promosi Akhir Tahun" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all">
                 </div>
@@ -74,8 +88,8 @@
                             <label class="block text-sm font-bold text-slate-900 mb-2">Opsi 1: Upload Model 3D Sendiri (.glb)</label>
                             
                             <div class="mb-4">
-                                <input type="text" name="asset_name" x-model="upload3dDisplayName" placeholder="Ketik nama objek (Misal: Mobil BMW 3D)..." class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none" :required="upload3dName !== ''" :disabled="selectedLibrary3d !== ''">
-                                <p class="text-xs text-slate-400 mt-1">Nama Model 3D Anda</p>
+                                <input type="text" name="asset_name" x-model="upload3dDisplayName" placeholder="Ketik nama objek (Misal: Mobil BMW 3D)..." class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none" :disabled="selectedLibrary3d !== ''">
+                                <p class="text-xs text-slate-400 mt-1">Nama ini akan ditampilkan di Library ScanYuk.</p>
                             </div>
 
                             <input type="file" name="file_3d" id="glb-upload" accept=".glb" class="hidden" @change="handle3dUpload" :disabled="selectedLibrary3d !== ''">
@@ -310,7 +324,7 @@
                     this.stopAllAudio();
                     this.currentAudioPlayer = new Audio('/bg_sounds/' + path);
                     this.currentAudioPlayer.volume = this.bgmVolume;
-                    this.currentAudioPlayer.play();
+                    this.currentAudioPlayer.play().catch(e => {});
                     this.playingMusicPath = path;
 
                     this.currentAudioPlayer.onended = () => { this.playingMusicPath = null; };
