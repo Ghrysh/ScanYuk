@@ -26,7 +26,7 @@
             margin-top: -125px;
             left: 0; top: 0;
             display: none;
-            pointer-events: none;
+            pointer-events: auto; 
             will-change: transform; 
         }
     </style>
@@ -38,7 +38,15 @@
     
     <div id="ar-overlay-container">
         <img x-show="arData.type === '2d'" :src="arData.src" class="w-full h-full object-contain filter drop-shadow(0 25px 25px rgba(0,0,0,0.8))">
-        <model-viewer x-show="arData.type === '3d'" :src="arData.src" class="w-full h-full" camera-controls shadow-intensity="1" exposure="1.2"></model-viewer>
+        <model-viewer 
+            x-show="arData.type === '3d'" 
+            :src="arData.src" 
+            class="w-full h-full" 
+            camera-controls 
+            shadow-intensity="1" 
+            exposure="1.2"
+            loading="eager">
+        </model-viewer>
     </div>
 
     <div class="fixed top-6 left-6 z-40">
