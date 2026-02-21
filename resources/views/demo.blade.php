@@ -2,7 +2,7 @@
 
 @section('content')
 
-<section class="w-full pt-24 md:pt-32 md:pb-24 px-6 bg-slate-50 relative overflow-hidden">
+<section class="w-full pt-24 py-20 md:pt-32 md:pb-24 px-6 bg-slate-50 relative overflow-hidden">
     
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-6xl pointer-events-none z-0 opacity-40">
         <div class="absolute top-20 left-10 w-96 h-96 bg-teal-100 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
@@ -88,7 +88,7 @@
 
         </div>
 
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-16 py-20">
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-16">
             <a href="{{ route('register') }}" class="w-full sm:w-auto px-8 py-4 rounded-lg btn-gradient text-white font-bold shadow-lg shadow-indigo-200 hover:scale-105 transition-transform">
                 Buat AR Anda Sendiri
             </a>
