@@ -11,9 +11,21 @@ use Illuminate\Support\Facades\Storage;
 
 class QrCodeController extends Controller
 {
-    public function create()
+public function create()
     {
-        return view('dashboard.create-ar'); 
+        $library3dList = ArAsset::where('is_public', true)->get(['id', 'name', 'file_path as path']);
+
+        $templates = ArTemplate::all();
+
+        $musicFiles = File::files(public_path('bg_sounds'));
+        $musicList = [];
+        foreach ($musicFiles as $file) {
+            $fileName = $file->getFilename();
+            $cleanName = ucwords(str_replace(['-', '.mp3', '_'], [' ', '', ' '], $fileName));
+            $musicList[] = ['name' => $cleanName, 'path' => $fileName];
+        }
+
+        return view('dashboard.create-ar', compact('library3dList', 'musicList', 'templates'));
     }
 
     public function store(Request $request)
