@@ -89,7 +89,7 @@
         </div>
 
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-16">
-            <a href="{{ route('register') }}" class="w-full sm:w-auto px-8 py-4 rounded-lg btn-gradient text-white font-bold shadow-lg shadow-indigo-200 hover:scale-105 transition-transform">
+            <a href="{{ route('register') }}" class="w-full sm:w-auto px-8 py-4 rounded-lg btn-gradient text-white font-bold shadow-lg shadow-indigo-200 hover:scale-105 transition-transform text-center">
                 Buat AR Anda Sendiri
             </a>
             <a href="{{ route('how-it-works') }}" class="w-full sm:w-auto px-8 py-4 rounded-lg bg-white text-teal-600 border border-teal-200 font-bold hover:bg-teal-50 transition-colors text-center">
