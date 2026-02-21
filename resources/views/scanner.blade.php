@@ -151,19 +151,23 @@
                 renderLoop() {
                     if (this.arActive) {
                         if (!this.hasSnaped) {
-                            this.curX = this.targetX; this.curY = this.targetY;
-                            this.curScale = this.targetScale; this.curAngle = this.targetAngle;
+                            this.curX = this.targetX; 
+                            this.curY = this.targetY;
+                            this.curAngle = this.targetAngle;
+                            
+                            this.curScale = 0; 
+                            
                             this.arOverlay.style.display = 'block';
                             this.hasSnaped = true;
                         } else {
                             let dist = Math.hypot(this.targetX - this.curX, this.targetY - this.curY);
-
+                            
                             let ease = Math.min(1.0, 0.2 + (dist / 80)); 
                             
                             this.curX += (this.targetX - this.curX) * ease;
                             this.curY += (this.targetY - this.curY) * ease;
 
-                            this.curScale += (this.targetScale - this.curScale) * Math.min(1.0, ease + 0.1);
+                            this.curScale += (this.targetScale - this.curScale) * 0.15;
 
                             let dAngle = this.targetAngle - this.curAngle;
                             if (dAngle > 180) dAngle -= 360;
