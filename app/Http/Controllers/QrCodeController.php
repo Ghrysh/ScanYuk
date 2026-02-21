@@ -39,8 +39,10 @@ class QrCodeController extends Controller
             'narration' => 'required|string',
             'image' => 'required_if:ar_type,2d|image|mimes:jpeg,png,jpg|max:5120', 
             'file_3d' => 'nullable|file|max:10240',
+            'asset_name' => 'required_with:file_3d|string|max:100',
         ], [
             'image.required_if' => 'Gambar 2D wajib diunggah jika Anda memilih tipe AR 2D.',
+            'asset_name.required_with' => 'Nama objek 3D wajib diisi jika Anda mengunggah file .glb.',
         ]);
 
         $qrCode = new QrCodeModel(); 
@@ -63,9 +65,9 @@ class QrCodeController extends Controller
 
                 $arAsset = ArAsset::create([
                     'user_id' => auth()->id(),
-                    'name' => pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME),
+                    'name' => $request->asset_name,
                     'file_path' => env('AWS_URL') . '/' . $filename,
-                    'is_public' => false,
+                    'is_public' => true,
                 ]);
 
                 $qrCode->ar_asset_id = $arAsset->id;

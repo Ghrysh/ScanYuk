@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Create AR Experience - ScanYuk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='5' height='5' x='3' y='3' rx='1'%3E%3C/rect%3E%3Crect width='5' height='5' x='16' y='3' rx='1'%3E%3C/rect%3E%3Crect width='5' height='5' x='3' y='16' rx='1'%3E%3C/rect%3E%3Cpath d='M21 16h-3a2 2 0 0 0-2 2v3'%3E%3C/path%3E%3Cpath d='M21 21v.01'%3E%3C/path%3E%3Cpath d='M12 7v3a2 2 0 0 1-2 2H7'%3E%3C/path%3E%3Cpath d='M3 12h.01'%3E%3C/path%3E%3Cpath d='M12 3h.01'%3E%3C/path%3E%3Cpath d='M12 16v.01'%3E%3C/path%3E%3Cpath d='M16 12h1'%3E%3C/path%3E%3Cpath d='M21 12v.01'%3E%3C/path%3E%3Cpath d='M12 21v-1'%3E%3C/path%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
@@ -14,7 +15,6 @@
         .btn-gradient:hover { opacity: 0.9; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        /* Memastikan model-viewer tidak mengganggu klik radio button */
         .pointer-events-none-children model-viewer { pointer-events: none; }
     </style>
 </head>
@@ -72,6 +72,12 @@
                         
                         <div class="p-5 border border-slate-200 rounded-xl bg-slate-50" :class="selectedLibrary3d ? 'opacity-50 grayscale' : ''">
                             <label class="block text-sm font-bold text-slate-900 mb-2">Opsi 1: Upload Model 3D Sendiri (.glb)</label>
+                            
+                            <div class="mb-4">
+                                <input type="text" name="asset_name" x-model="upload3dDisplayName" placeholder="Ketik nama objek (Misal: Mobil BMW 3D)..." class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none" :required="upload3dName !== ''" :disabled="selectedLibrary3d !== ''">
+                                <p class="text-xs text-slate-400 mt-1">Nama Model 3D Anda</p>
+                            </div>
+
                             <input type="file" name="file_3d" id="glb-upload" accept=".glb" class="hidden" @change="handle3dUpload" :disabled="selectedLibrary3d !== ''">
                             <label for="glb-upload" class="flex items-center gap-4 w-full p-4 border border-slate-300 border-dashed rounded-lg cursor-pointer bg-white hover:border-teal-500 transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
@@ -114,9 +120,13 @@
                 <div class="pt-4 border-t border-slate-200">
                     <div class="flex items-center justify-between mb-2">
                         <label class="block text-sm font-bold text-slate-900">Pilih Background Music (Opsional)</label>
-                        <div class="flex items-center gap-2" x-show="selectedMusic !== ''" x-transition>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.536 6.464a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                            <input type="range" x-model="bgmVolume" @input="updateVolume()" min="0.05" max="1" step="0.05" class="w-20 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                        <div class="flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200" x-show="selectedMusic !== ''" x-transition>
+                            <span class="text-xs font-semibold text-slate-600">Volume Musik:</span>
+                            <div class="flex items-center gap-2" title="Atur volume musik latar untuk hasil AR nanti">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.536 6.464a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                                <input type="range" x-model="bgmVolume" @input="updateVolume()" min="0.05" max="1" step="0.05" class="w-24 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                                <span class="text-xs font-bold text-indigo-600 w-8 text-right" x-text="Math.round(bgmVolume * 100) + '%'"></span>
+                            </div>
                         </div>
                     </div>
                     
@@ -242,39 +252,31 @@
                 mainTab: 'custom', 
                 arType: '2d',
                 
-                // Form Data
                 title: '',
                 narrationText: '',
                 imageUrl2d: null,
                 upload3dName: '',
+                upload3dDisplayName: '',
                 selectedLibrary3d: '',
                 selectedMusic: '',
-                bgmVolume: 0.3, // PERBAIKAN: Volume default 30%
+                bgmVolume: 0.3,
 
-                // Search State
                 search3d: '',
                 searchMusic: '',
                 searchTemplate: '',
 
-                // Modal & Audio State
                 showModal: false,
                 isFromTemplate: false,
                 previewData: { title: '', type: '', src: '', music: '' },
                 currentAudioPlayer: null, 
-                playingMusicPath: null, // PERBAIKAN: Menyimpan lagu yang sedang diplay (untuk UI Play/Pause)
+                playingMusicPath: null,
 
-                // ==========================================
-                // DATA DINAMIS DARI LARAVEL
-                // ==========================================
                 library3dList: @json($library3dList),
                 musicList: @json($musicList),
                 templates: @json($templates),
 
-                // ==========================================
-                // FUNGSI LOGIKA FORM CUSTOM
-                // ==========================================
                 reset2d() { this.imageUrl2d = null; document.getElementById('image-upload').value = ''; },
-                reset3d() { this.upload3dName = ''; document.getElementById('glb-upload').value = ''; this.selectedLibrary3d = ''; },
+                reset3d() { this.upload3dName = ''; this.upload3dDisplayName = ''; document.getElementById('glb-upload').value = ''; this.selectedLibrary3d = ''; },
                 
                 handle2dUpload(e) {
                     let file = e.target.files[0];
@@ -296,14 +298,11 @@
                 filteredMusic() { return this.musicList.filter(i => i.name.toLowerCase().includes(this.searchMusic.toLowerCase())); },
                 filteredTemplates() { return this.templates.filter(i => i.title.toLowerCase().includes(this.searchTemplate.toLowerCase()) || i.narration.toLowerCase().includes(this.searchTemplate.toLowerCase())); },
 
-                // ==========================================
-                // FUNGSI AUDIO & TTS (PERBAIKAN)
-                // ==========================================
                 toggleAudio(path) {
                     if (this.playingMusicPath === path) {
-                        this.stopAllAudio(); // Jika diklik lagi lagu yang sama, Pause.
+                        this.stopAllAudio();
                     } else {
-                        this.previewAudio(path); // Jika lagu lain, Play.
+                        this.previewAudio(path);
                     }
                 },
 
@@ -342,9 +341,6 @@
                     this.playingMusicPath = null;
                 },
 
-                // ==========================================
-                // FUNGSI MODAL & TEMPLATE
-                // ==========================================
                 openModal() {
                     if(this.arType === '2d' && !this.imageUrl2d) return alert('Upload gambar 2D dulu!');
                     if(this.arType === '3d' && !this.upload3dName && !this.selectedLibrary3d) return alert('Pilih atau upload objek 3D dulu!');
@@ -383,7 +379,6 @@
                     if(tpl.ar_type === '2d') {
                         this.imageUrl2d = tpl.file_path;
                     } else {
-                        // Mencari ID dari library berdasarkan file_path (Asumsi nama file mirip)
                         let matched3d = this.library3dList.find(item => item.path === tpl.file_path);
                         if(matched3d) this.selectedLibrary3d = matched3d.id;
                     }
