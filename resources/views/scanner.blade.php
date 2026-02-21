@@ -106,6 +106,7 @@
                                 this.fetchArData(this.currentQrUrl);
                             } 
                             else if (this.arCache[this.currentQrUrl] && this.arCache[this.currentQrUrl].ready) {
+                                this.arActive = true;
                                 this.calculateTarget(code.location);
                             }
                         } else {
