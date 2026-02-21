@@ -85,7 +85,23 @@ Route::get('/ar-models/{filename}', function ($filename) {
     if (!Storage::disk('s3')->exists($filename)) {
         abort(404);
     }
-    return Storage::disk('s3')->response($filename);
+
+    $stream = Storage::disk('s3')->readStream($filename);
+
+    return response()->stream(
+        function () use ($stream) {
+            fpassthru($stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        },
+        200,
+        [
+            'Content-Type' => 'model/gltf-binary',
+            'Access-Control-Allow-Origin' => '*',
+            'Cache-Control' => 'public, max-age=31536000',
+        ]
+    );
 })->name('ar.models');
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');

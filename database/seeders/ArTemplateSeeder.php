@@ -3,12 +3,16 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 use App\Models\ArTemplate;
 
 class ArTemplateSeeder extends Seeder
 {
     public function run(): void
     {
+
+        DB::statement('TRUNCATE TABLE ar_templates RESTART IDENTITY CASCADE');
+
         // 1. Template Ulang Tahun (3D Cake + Kado)
         ArTemplate::create([
             'title' => 'Kejutan Ulang Tahun 3D',
