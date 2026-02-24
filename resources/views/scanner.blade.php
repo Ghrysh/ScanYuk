@@ -72,7 +72,7 @@
         <span x-text="errorMessage" class="text-sm"></span>
     </div>
 
-    <script>
+<script>
         function arTracker() {
             return {
                 video: null, canvasElement: null, canvas: null, arOverlayContainer: null,
@@ -99,6 +99,8 @@
                         
                         requestAnimationFrame(() => this.logicLoop());
                         requestAnimationFrame(() => this.renderLoop());
+                        
+                        window.speechSynthesis.getVoices();
                     }).catch(err => {
                         this.showError("Akses kamera ditolak.");
                     });
@@ -206,7 +208,7 @@
                             
                             this.arCache[url] = { 
                                 narration: result.data.narration, 
-                                ai_voice: result.data.ai_voice, 
+                                ai_voice: result.data.ai_voice,
                                 custom_audio_url: result.data.custom_audio_url,
                                 bgm_url: result.data.bgm_url,
                                 ready: true 
@@ -238,17 +240,19 @@
                         if(cache.custom_audio_url) {
                             this.narrationPlayer = new Audio(cache.custom_audio_url);
                             this.narrationPlayer.volume = 1.0;
-                            this.narrationPlayer.play().catch(e => console.log('Narration Play Error:', e));
+                            this.narrationPlayer.play().catch(e => console.log('Custom Audio Play Error:', e));
                         } 
                         else if(cache.narration) {
                             let utterance = new SpeechSynthesisUtterance(cache.narration);
                             utterance.lang = 'id-ID';
                             utterance.volume = 1.0;
-
+                            
                             if(cache.ai_voice) {
                                 let voices = window.speechSynthesis.getVoices();
                                 let selectedVoice = voices.find(v => v.voiceURI === cache.ai_voice);
-                                if(selectedVoice) utterance.voice = selectedVoice;
+                                if(selectedVoice) {
+                                    utterance.voice = selectedVoice;
+                                }
                             }
                             
                             window.speechSynthesis.speak(utterance);
@@ -262,12 +266,13 @@
 
                 stopAllAudio() {
                     window.speechSynthesis.cancel();
+                    
                     if(this.bgmPlayer) {
                         this.bgmPlayer.pause();
                         this.bgmPlayer.currentTime = 0;
                         this.bgmPlayer = null;
                     }
-
+                    
                     if(this.narrationPlayer) {
                         this.narrationPlayer.pause();
                         this.narrationPlayer.currentTime = 0;
