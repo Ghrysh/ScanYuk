@@ -31,33 +31,55 @@ class QrCodeController extends Controller
         return view('dashboard.create-ar', compact('library3dList', 'musicList', 'templates'));
     }
 
-    public function store(Request $request)
+public function store(Request $request)
     {
         try {
             $request->validate([
                 'title' => 'required|string|max:255',
                 'ar_type' => 'required|in:2d,3d',
-                'narration' => 'required|string',
                 'image' => 'required_if:ar_type,2d|image|mimes:jpeg,png,jpg|max:5120', 
                 'file_3d' => 'nullable|file|max:51200',
                 'asset_name' => 'required_with:file_3d|string|max:100',
+                'narration_mode' => 'required|in:text,audio',
+                'narration' => 'required_if:narration_mode,text|nullable|string',
+                'ai_voice' => 'nullable|string',
+                'custom_audio' => 'required_if:narration_mode,audio|nullable|file|mimes:webm,mp4,mp3,wav,ogg|max:10240',
             ], [
-                'image.required_if' => 'Gambar 2D wajib diunggah jika Anda memilih tipe AR 2D.',
-                'asset_name.required_with' => 'Nama objek 3D wajib diisi jika Anda mengunggah file .glb.',
+                'image.required_if' => 'Gambar 2D wajib diunggah.',
+                'asset_name.required_with' => 'Nama objek 3D wajib diisi.',
+                'narration.required_if' => 'Teks narasi wajib diisi jika menggunakan Suara AI.',
+                'custom_audio.required_if' => 'Rekaman suara wajib ada jika memilih mode Rekam Suara.',
             ]);
 
             $qrCode = new QrCodeModel(); 
             $qrCode->user_id = auth()->id();
             $qrCode->title = $request->title;
             $qrCode->ar_type = $request->ar_type;
-            $qrCode->narration = $request->narration;
             $qrCode->bgm_path = $request->bgm_path;
+
+            if ($request->narration_mode === 'audio' && $request->hasFile('custom_audio')) {
+                $audioFile = $request->file('custom_audio');
+                $audioName = time() . '_' . Str::random(10) . '.webm';
+                $audioContent = file_get_contents($audioFile->getRealPath());
+                
+                $uploadAudio = Storage::disk('s3')->put('custom_voices/' . $audioName, $audioContent);
+                if (!$uploadAudio) {
+                    throw new \Exception("MinIO menolak menyimpan file rekaman suara.");
+                }
+                
+                $qrCode->custom_audio_path = url('/custom_voices/' . $audioName);
+                $qrCode->narration = null;
+                $qrCode->ai_voice = null;
+            } else {
+                $qrCode->narration = $request->narration;
+                $qrCode->ai_voice = $request->ai_voice;
+                $qrCode->custom_audio_path = null;
+            }
 
             if ($request->ar_type == '2d') {
                 $imagePath = $request->file('image')->store('ar_images', 'public');
                 $qrCode->image_path = $imagePath;
-            } 
-            else {
+            } else {
                 if ($request->hasFile('file_3d')) {
                     $file = $request->file('file_3d');
                     $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
@@ -65,9 +87,7 @@ class QrCodeController extends Controller
                     $fileContent = file_get_contents($file->getRealPath());
                     $upload = Storage::disk('s3')->put($filename, $fileContent);
                     
-                    if (!$upload) {
-                        throw new \Exception("Koneksi S3 berhasil, namun MinIO menolak menulis file. Pastikan nama bucket sudah diisi di config/filesystems.php!");
-                    }
+                    if (!$upload) throw new \Exception("MinIO menolak menyimpan file 3D.");
 
                     $arAsset = ArAsset::create([
                         'user_id' => auth()->id(),
@@ -75,20 +95,17 @@ class QrCodeController extends Controller
                         'file_path' => url('/ar-models/' . $filename),
                         'is_public' => true,
                     ]);
-
                     $qrCode->ar_asset_id = $arAsset->id;
-                }
+                } 
                 elseif ($request->filled('selected_3d_id')) {
                     $qrCode->ar_asset_id = $request->selected_3d_id;
-                } 
-                else {
+                } else {
                     throw new \Exception("Silakan pilih objek 3D dari library atau upload file .glb sendiri.");
                 }
             }
 
             $qrCode->uuid = Str::uuid();
             $qrUrl = url('/api/scan/' . $qrCode->uuid); 
-            
             $qrImage = base64_encode(QrCode::format('svg')->size(300)->margin(2)->generate($qrUrl));
             $qrCode->qr_image_path = $qrImage;
 
@@ -96,25 +113,16 @@ class QrCodeController extends Controller
 
             $user = auth()->user();
             $user->increment('image');
-            if (!empty($request->narration)) {
+            if (!empty($request->narration) || $request->hasFile('custom_audio')) {
                 $user->increment('voice');
             }
 
             if ($request->ajax() || $request->wantsJson()) {
                 session()->flash('success', 'AR Experience berhasil dibuat!');
-                return response()->json([
-                    'status' => 'success',
-                    'redirect_url' => route('user.dashboard')
-                ]);
+                return response()->json(['status' => 'success', 'redirect_url' => route('user.dashboard')]);
             }
-
             return redirect()->route('user.dashboard')->with('success', 'AR Experience dibuat!');
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['error' => collect($e->errors())->flatten()->first()], 422);
-            }
-            return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json(['error' => $e->getMessage()], 500);

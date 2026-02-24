@@ -15,6 +15,8 @@ class QrCode extends Model
         'ar_asset_id',
         'bgm_path',
         'narration',
+        'ai_voice',
+        'custom_audio_path',
         'qr_image_path',
         'status',
         'scan_count',

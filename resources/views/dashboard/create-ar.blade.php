@@ -17,18 +17,16 @@
         .pointer-events-none-children model-viewer { pointer-events: none; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen" x-data="arCreator()">
+<body class="bg-slate-50 min-h-screen" x-data="arCreator()" x-init="loadVoices()">
 
     <div x-show="isGenerating" style="display: none;" class="fixed inset-0 z-[200] flex items-center justify-center">
         <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm"></div>
         <div class="relative bg-white rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center text-center border border-slate-100">
             <div class="w-16 h-16 border-4 border-slate-100 border-t-teal-500 rounded-full animate-spin mb-6"></div>
             <h3 class="text-xl font-bold text-slate-900 mb-2" x-text="progress === 100 ? 'Menyelesaikan...' : 'Mengunggah & Merender...'"></h3>
-            
             <div class="w-full bg-slate-100 rounded-full h-3 mb-3 overflow-hidden">
                 <div class="bg-gradient-to-r from-teal-400 to-indigo-500 h-3 rounded-full transition-all duration-300" :style="'width: ' + progress + '%'"></div>
             </div>
-            
             <div class="flex justify-between w-full text-sm">
                 <span class="font-bold text-indigo-600" x-text="progress + '%'"></span>
                 <span class="text-slate-500 font-medium" x-text="estimatedTime"></span>
@@ -42,14 +40,11 @@
                 <a href="{{ route('user.dashboard') }}" class="p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                 </a>
-                
                 <div class="w-8 h-8 rounded bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-qr-code w-5 h-5"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg>
                 </div>
-                
-                <h1 class="block text-lg font-bold text-slate-900">Buat AR</h1>
+                <h1 class="hidden sm:block text-lg font-bold text-slate-900">Buat AR</h1>
             </div>
-            
             <div class="flex p-1 bg-slate-100 rounded-lg border border-slate-200">
                 <button @click="mainTab = 'custom'" :class="mainTab === 'custom' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="px-3 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all">Custom AR</button>
                 <button @click="mainTab = 'template'" :class="mainTab === 'template' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="px-3 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all">Template</button>
@@ -59,7 +54,6 @@
 
     <main class="py-8 px-4 max-w-4xl mx-auto pb-32">
         <div x-show="mainTab === 'custom'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-            
             <form @submit.prevent="submitForm" action="{{ route('user.ar.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
                 @csrf
                 <input type="hidden" name="ar_type" :value="arType">
@@ -103,7 +97,6 @@
                             <label class="block text-sm font-bold text-slate-900 mb-2">Opsi 1: Upload Model 3D Sendiri (.glb)</label>
                             <div class="mb-4">
                                 <input type="text" name="asset_name" x-model="upload3dDisplayName" placeholder="Ketik nama objek (Misal: Mobil BMW 3D)..." class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none" :disabled="selectedLibrary3d !== ''">
-                                <p class="text-xs text-slate-400 mt-1">Nama ini akan ditampilkan di Library ScanYuk.</p>
                             </div>
                             <input type="file" name="file_3d" id="glb-upload" accept=".glb" class="hidden" @change="handle3dUpload" :disabled="selectedLibrary3d !== ''">
                             <label for="glb-upload" class="flex items-center gap-4 w-full p-4 border border-slate-300 border-dashed rounded-lg cursor-pointer bg-white hover:border-teal-500 transition-colors">
@@ -114,9 +107,7 @@
                                 </div>
                             </label>
                         </div>
-
                         <div class="text-center text-xs font-bold text-slate-400 uppercase tracking-widest">ATAU</div>
-
                         <div class="p-5 border border-slate-200 rounded-xl bg-slate-50" :class="upload3dName ? 'opacity-50 grayscale' : ''">
                             <label class="block text-sm font-bold text-slate-900 mb-2">Opsi 2: Pilih dari Library ScanYuk</label>
                             <div class="relative mb-4">
@@ -135,7 +126,6 @@
                                         </div>
                                     </label>
                                 </template>
-                                <div x-show="filtered3d().length === 0" class="col-span-full text-center py-4 text-sm text-slate-500">Tidak ada objek 3D yang sesuai pencarian.</div>
                             </div>
                         </div>
                     </div>
@@ -180,9 +170,60 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-bold text-slate-900 mb-2">Teks Narasi Suara AI</label>
-                    <textarea x-model="narrationText" name="narration" required rows="4" placeholder="Ketik teks yang akan dibacakan oleh suara AI saat AR muncul..." class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:border-teal-500 focus:ring-2 focus:ring-teal-200 outline-none transition-all resize-none"></textarea>
+                <div class="pt-4 border-t border-slate-200">
+                    <label class="block text-sm font-bold text-slate-900 mb-4">Mode Narasi (Opsional)</label>
+                    <input type="hidden" name="narration_mode" :value="narrationMode">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <div class="p-5 border-2 rounded-xl transition-all relative" :class="narrationMode === 'text' ? 'border-teal-500 bg-white shadow-sm' : 'border-slate-200 bg-slate-50 opacity-60 grayscale'">
+                            <div x-show="narrationMode !== 'text'" @click="narrationMode = 'text'" class="absolute inset-0 z-10 cursor-pointer flex items-center justify-center bg-slate-100/50 backdrop-blur-[1px] rounded-xl opacity-0 hover:opacity-100 transition-opacity">
+                                <span class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Gunakan Fitur Ini</span>
+                            </div>
+                            
+                            <div class="flex items-center gap-2 mb-4 text-teal-600">
+                                <input type="radio" x-model="narrationMode" value="text" class="w-4 h-4 text-teal-600 focus:ring-teal-500">
+                                <label class="font-bold text-slate-900">Suara AI (Teks ke Suara)</label>
+                            </div>
+                            
+                            <select x-model="selectedVoice" name="ai_voice" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none mb-4" :disabled="narrationMode !== 'text'">
+                                <template x-for="voice in availableVoices" :key="voice.voiceURI">
+                                    <option :value="voice.voiceURI" x-text="voice.name + ' (' + voice.lang + ')'"></option>
+                                </template>
+                            </select>
+
+                            <textarea x-model="narrationText" name="narration" rows="3" placeholder="Ketik teks yang akan dibacakan oleh AI..." class="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 focus:border-teal-500 outline-none resize-none" :disabled="narrationMode !== 'text'"></textarea>
+                        </div>
+
+                        <div class="p-5 border-2 rounded-xl transition-all relative" :class="narrationMode === 'audio' ? 'border-teal-500 bg-white shadow-sm' : 'border-slate-200 bg-slate-50 opacity-60 grayscale'">
+                            <div x-show="narrationMode !== 'audio'" @click="narrationMode = 'audio'" class="absolute inset-0 z-10 cursor-pointer flex items-center justify-center bg-slate-100/50 backdrop-blur-[1px] rounded-xl opacity-0 hover:opacity-100 transition-opacity">
+                                <span class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Gunakan Fitur Ini</span>
+                            </div>
+
+                            <div class="flex items-center gap-2 mb-4 text-teal-600">
+                                <input type="radio" x-model="narrationMode" value="audio" class="w-4 h-4 text-teal-600 focus:ring-teal-500">
+                                <label class="font-bold text-slate-900">Rekam Suara Mandiri</label>
+                            </div>
+
+                            <div class="flex flex-col items-center justify-center h-full gap-3 pb-4">
+                                <p class="text-xs text-slate-500 text-center mb-2" x-show="!recordedAudioUrl">Gunakan mic HP/Laptop Anda. Maksimal 1 Menit.</p>
+                                
+                                <button type="button" x-show="!isRecording && !recordedAudioUrl" @click="startRecording()" class="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold flex items-center gap-2 transition-all shadow-md" :disabled="narrationMode !== 'audio'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd" /></svg> Mulai Merekam
+                                </button>
+                                
+                                <button type="button" x-show="isRecording" @click="stopRecording()" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-bold flex items-center gap-2 transition-all animate-pulse shadow-md">
+                                    <div class="w-3 h-3 bg-red-500 rounded-full"></div> Berhenti
+                                </button>
+
+                                <div x-show="recordedAudioUrl" class="w-full flex flex-col items-center gap-2">
+                                    <audio :src="recordedAudioUrl" controls class="w-full h-10"></audio>
+                                    <button type="button" @click="deleteRecording()" class="text-xs text-red-500 font-bold underline hover:text-red-700">Hapus & Rekam Ulang</button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-200">
@@ -197,24 +238,17 @@
         </div>
 
         <div x-show="mainTab === 'template'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-            
             <div class="relative mb-6">
                 <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-4 top-3.5 h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 <input type="text" x-model="searchTemplate" placeholder="Cari template siap pakai (misal: ramadhan, undangan)..." class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 focus:border-indigo-500 shadow-sm outline-none text-lg">
             </div>
-
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <template x-for="tpl in filteredTemplates()" :key="tpl.id">
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg hover:border-indigo-300 transition-all group cursor-pointer" @click="previewTemplate(tpl)">
                         <div class="h-40 bg-slate-100 flex items-center justify-center relative overflow-hidden pointer-events-none-children">
-                            <template x-if="tpl.ar_type === '2d'">
-                                <img :src="tpl.file_path" class="w-full h-full object-cover">
-                            </template>
-                            <template x-if="tpl.ar_type === '3d'">
-                                <model-viewer :src="tpl.file_path" class="w-full h-full" disable-zoom disable-pan auto-rotate exposure="1.2"></model-viewer>
-                            </template>
+                            <template x-if="tpl.ar_type === '2d'"><img :src="tpl.file_path" class="w-full h-full object-cover"></template>
+                            <template x-if="tpl.ar_type === '3d'"><model-viewer :src="tpl.file_path" class="w-full h-full" disable-zoom disable-pan auto-rotate exposure="1.2"></model-viewer></template>
                             <div class="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors"></div>
-                            
                             <span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-bold shadow-sm" :class="tpl.ar_type === '3d' ? 'bg-indigo-600 text-white' : 'bg-teal-500 text-white'" x-text="'AR ' + tpl.ar_type.toUpperCase()"></span>
                         </div>
                         <div class="p-5">
@@ -223,9 +257,6 @@
                         </div>
                     </div>
                 </template>
-                <div x-show="filteredTemplates().length === 0" class="col-span-full text-center py-10">
-                    <p class="text-slate-500">Template tidak ditemukan.</p>
-                </div>
             </div>
         </div>
 
@@ -238,27 +269,21 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
-
                 <div class="p-6 w-full flex flex-col items-center">
                     <div class="w-full bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-inner border border-slate-200" style="height: 300px;">
-                        <template x-if="previewData.type === '2d'">
-                            <img :src="previewData.src" class="max-w-full max-h-full object-contain">
-                        </template>
-                        <template x-if="previewData.type === '3d'">
-                            <model-viewer :src="previewData.src" auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer>
-                        </template>
+                        <template x-if="previewData.type === '2d'"><img :src="previewData.src" class="max-w-full max-h-full object-contain"></template>
+                        <template x-if="previewData.type === '3d'"><model-viewer :src="previewData.src" auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer></template>
 
                         <div class="absolute bottom-4 left-4 flex gap-2">
-                            <span x-show="previewData.music" class="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg> BGM On</span>
-                            <span class="px-3 py-1 bg-teal-500/90 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1 animate-pulse"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg> AI Speaking</span>
+                            <span x-show="previewData.music" class="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg> BGM On</span>
+                            <span x-show="previewData.hasNarration" class="px-3 py-1 bg-teal-500/90 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1 animate-pulse"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg> Suara Narasi</span>
                         </div>
-                    </div> <template x-if="isFromTemplate">
+                    </div>
+                    <template x-if="isFromTemplate">
                         <button @click="useTemplate()" class="mt-6 w-full py-3.5 px-6 rounded-xl btn-gradient text-white font-bold shadow-lg flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-                            Gunakan Template Ini
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Gunakan Template Ini
                         </button>
                     </template>
-
                 </div>
             </div>
         </div>
@@ -267,42 +292,90 @@
     <script>
         function arCreator() {
             return {
-                mainTab: 'custom', 
-                arType: '2d',
-                title: '',
+                mainTab: 'custom', arType: '2d', title: '',
+                imageUrl2d: null, upload3dName: '', upload3dDisplayName: '',
+                selectedLibrary3d: '', local3dUrl: null, 
+                
+                selectedMusic: '', bgmVolume: 0.3,
+                
+                narrationMode: 'text',
                 narrationText: '',
-                imageUrl2d: null,
-                upload3dName: '',
-                upload3dDisplayName: '',
-                selectedLibrary3d: '',
-                selectedMusic: '',
-                bgmVolume: 0.3,
-                local3dUrl: null, 
+                availableVoices: [],
+                selectedVoice: '',
+                
+                isRecording: false,
+                mediaRecorder: null,
+                audioChunks: [],
+                recordedAudioBlob: null,
+                recordedAudioUrl: null,
 
-                isGenerating: false,
-                progress: 0,
-                estimatedTime: 'Menghitung...',
-                uploadError: null,
-
+                isGenerating: false, progress: 0, estimatedTime: 'Menghitung...', uploadError: null,
                 search3d: '', searchMusic: '', searchTemplate: '',
                 showModal: false, isFromTemplate: false,
-                previewData: { title: '', type: '', src: '', music: '' },
-                currentAudioPlayer: null, playingMusicPath: null,
+                previewData: { title: '', type: '', src: '', music: '', hasNarration: false },
+                
+                currentAudioPlayer: null,
+                narrationPlayer: null,
+                playingMusicPath: null,
 
                 library3dList: @json($library3dList),
                 musicList: @json($musicList),
                 templates: @json($templates),
 
+                loadVoices() {
+                    let setVoices = () => {
+                        let voices = window.speechSynthesis.getVoices();
+                        this.availableVoices = voices.filter(v => v.lang.includes('id') || v.lang.includes('en'));
+                        if(this.availableVoices.length > 0 && !this.selectedVoice) this.selectedVoice = this.availableVoices[0].voiceURI;
+                    };
+                    setVoices();
+                    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                        window.speechSynthesis.onvoiceschanged = setVoices;
+                    }
+                },
+
+                // Fitur Rekam Suara (MediaRecorder API)
+                async startRecording() {
+                    try {
+                        let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        this.mediaRecorder = new MediaRecorder(stream);
+                        this.audioChunks = [];
+                        
+                        this.mediaRecorder.ondataavailable = e => { if(e.data.size > 0) this.audioChunks.push(e.data); };
+                        
+                        this.mediaRecorder.onstop = () => {
+                            let audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                            this.recordedAudioBlob = audioBlob;
+                            if (this.recordedAudioUrl) URL.revokeObjectURL(this.recordedAudioUrl);
+                            this.recordedAudioUrl = URL.createObjectURL(audioBlob);
+                            this.mediaRecorder.stream.getTracks().forEach(t => t.stop());
+                        };
+                        
+                        this.mediaRecorder.start();
+                        this.isRecording = true;
+                    } catch (err) {
+                        alert("Izin mikrofon ditolak atau tidak tersedia di perangkat ini.");
+                    }
+                },
+
+                stopRecording() {
+                    if(this.mediaRecorder && this.isRecording) {
+                        this.mediaRecorder.stop();
+                        this.isRecording = false;
+                    }
+                },
+
+                deleteRecording() {
+                    this.recordedAudioBlob = null;
+                    if (this.recordedAudioUrl) URL.revokeObjectURL(this.recordedAudioUrl);
+                    this.recordedAudioUrl = null;
+                },
+
                 reset2d() { this.imageUrl2d = null; document.getElementById('image-upload').value = ''; },
-                
                 reset3d() { 
-                    this.upload3dName = ''; 
-                    this.upload3dDisplayName = ''; 
-                    document.getElementById('glb-upload').value = ''; 
-                    this.selectedLibrary3d = ''; 
+                    this.upload3dName = ''; this.upload3dDisplayName = ''; document.getElementById('glb-upload').value = ''; this.selectedLibrary3d = ''; 
                     if (this.local3dUrl) { URL.revokeObjectURL(this.local3dUrl); this.local3dUrl = null; } 
                 },
-                
                 handle2dUpload(e) {
                     let file = e.target.files[0];
                     if(!file) return;
@@ -310,23 +383,28 @@
                     reader.readAsDataURL(file);
                     reader.onload = e => this.imageUrl2d = e.target.result;
                 },
-                
                 handle3dUpload(e) {
                     let file = e.target.files[0];
                     if(file) {
-                        this.upload3dName = file.name;
-                        this.selectedLibrary3d = '';
+                        this.upload3dName = file.name; this.selectedLibrary3d = '';
                         if (this.local3dUrl) URL.revokeObjectURL(this.local3dUrl); 
                         this.local3dUrl = URL.createObjectURL(file); 
                     }
                 },
 
                 submitForm(e) {
-                    this.isGenerating = true;
-                    this.progress = 0;
-                    this.uploadError = null;
+                    if (this.narrationMode === 'audio' && !this.recordedAudioBlob && !this.narrationText) {
+                         if(!confirm('Anda memilih mode rekam suara tapi belum merekam. Lanjutkan tanpa suara?')) return;
+                    }
+
+                    this.isGenerating = true; this.progress = 0; this.uploadError = null;
                     
                     let formData = new FormData(e.target);
+                    // Jika mode rekaman, masukkan file blob
+                    if (this.narrationMode === 'audio' && this.recordedAudioBlob) {
+                        formData.append('custom_audio', this.recordedAudioBlob, 'rekaman.webm');
+                    }
+                    
                     let xhr = new XMLHttpRequest();
                     xhr.open('POST', e.target.action);
                     xhr.setRequestHeader('Accept', 'application/json');
@@ -335,88 +413,53 @@
 
                     xhr.upload.addEventListener('progress', (evt) => {
                         if (evt.lengthComputable) {
-                            let percentComplete = Math.round((evt.loaded / evt.total) * 90);
-                            this.progress = percentComplete;
-
+                            this.progress = Math.round((evt.loaded / evt.total) * 90);
                             let timeElapsed = (Date.now() - startTime) / 1000; 
-                            let uploadSpeed = evt.loaded / timeElapsed; 
-                            let bytesRemaining = evt.total - evt.loaded;
-                            let secondsRemaining = Math.round(bytesRemaining / uploadSpeed);
-
-                            if (secondsRemaining > 60) {
-                                this.estimatedTime = Math.floor(secondsRemaining / 60) + ' menit ' + (secondsRemaining % 60) + ' detik';
-                            } else if (secondsRemaining > 0) {
-                                this.estimatedTime = secondsRemaining + ' detik tersisa';
-                            } else {
-                                this.estimatedTime = 'Memproses data 3D & Merender QR Code...';
-                            }
+                            let secondsRemaining = Math.round((evt.total - evt.loaded) / (evt.loaded / timeElapsed));
+                            if (secondsRemaining > 60) this.estimatedTime = Math.floor(secondsRemaining / 60) + ' m ' + (secondsRemaining % 60) + ' d';
+                            else if (secondsRemaining > 0) this.estimatedTime = secondsRemaining + ' d tersisa';
+                            else this.estimatedTime = 'Menyimpan...';
                         }
                     });
 
                     xhr.onload = () => {
                         if (xhr.status >= 200 && xhr.status < 300) {
-                            this.progress = 100;
-                            this.estimatedTime = 'Selesai! Mengalihkan ke Dashboard...';
-                            let res = JSON.parse(xhr.responseText);
-                            setTimeout(() => {
-                                window.location.href = res.redirect_url;
-                            }, 500);
+                            this.progress = 100; this.estimatedTime = 'Selesai!';
+                            setTimeout(() => { window.location.href = JSON.parse(xhr.responseText).redirect_url; }, 500);
                         } else {
                             this.isGenerating = false;
-                            try {
-                                let res = JSON.parse(xhr.responseText);
-                                this.uploadError = res.error || "Gagal membuat AR";
-                            } catch (err) {
-                                this.uploadError = "Terjadi kesalahan server (Error " + xhr.status + "). Cek konfigurasi config/filesystems.php";
-                            }
+                            try { this.uploadError = JSON.parse(xhr.responseText).error || "Gagal membuat AR"; } 
+                            catch (err) { this.uploadError = "Terjadi kesalahan server (Error " + xhr.status + ")."; }
                         }
                     };
 
-                    xhr.onerror = () => {
-                        this.isGenerating = false;
-                        this.uploadError = "Koneksi jaringan terputus. Pastikan file tidak terlalu besar.";
-                    };
-
+                    xhr.onerror = () => { this.isGenerating = false; this.uploadError = "Koneksi terputus."; };
                     xhr.send(formData);
                 },
 
                 filtered3d() { return this.library3dList.filter(i => i.name.toLowerCase().includes(this.search3d.toLowerCase())); },
                 filteredMusic() { return this.musicList.filter(i => i.name.toLowerCase().includes(this.searchMusic.toLowerCase())); },
-
                 filteredTemplates() { return this.templates.filter(i => i.title.toLowerCase().includes(this.searchTemplate.toLowerCase()) || i.narration.toLowerCase().includes(this.searchTemplate.toLowerCase())); },
 
                 previewTemplate(tpl) {
                     this.isFromTemplate = true;
-                    this.previewData = {
-                        title: tpl.title, type: tpl.ar_type, src: tpl.file_path, music: tpl.bgm_path, fullData: tpl
-                    };
+                    this.previewData = { title: tpl.title, type: tpl.ar_type, src: tpl.file_path, music: tpl.bgm_path, hasNarration: !!tpl.narration, fullData: tpl };
                     this.showModal = true;
-                    if(tpl.bgm_path) this.previewAudio(tpl.bgm_path);
-                    this.playVoice(tpl.narration);
+                    if(tpl.bgm_path) this.previewBgm(tpl.bgm_path);
+                    this.playVoice(tpl.narration, null, null);
                 },
 
                 useTemplate() {
                     let tpl = this.previewData.fullData;
-                    
-                    this.title = tpl.title;
-                    this.arType = tpl.ar_type;
-                    this.narrationText = tpl.narration;
-                    this.selectedMusic = tpl.bgm_path;
-                    
-                    if(tpl.ar_type === '2d') {
-                        this.imageUrl2d = tpl.file_path;
-                    } else {
-                        let matched3d = this.library3dList.find(item => item.path === tpl.file_path);
-                        if(matched3d) this.selectedLibrary3d = matched3d.id;
-                    }
-
-                    this.closeModal();
-                    this.mainTab = 'custom'; 
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    this.title = tpl.title; this.arType = tpl.ar_type; this.narrationText = tpl.narration; this.selectedMusic = tpl.bgm_path;
+                    this.narrationMode = 'text';
+                    if(tpl.ar_type === '2d') this.imageUrl2d = tpl.file_path;
+                    else { let matched3d = this.library3dList.find(item => item.path === tpl.file_path); if(matched3d) this.selectedLibrary3d = matched3d.id; }
+                    this.closeModal(); this.mainTab = 'custom'; window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
                 
-                toggleAudio(path) { if (this.playingMusicPath === path) { this.stopAllAudio(); } else { this.previewAudio(path); } },
-                previewAudio(path) {
+                toggleAudio(path) { if (this.playingMusicPath === path) { this.stopAllAudio(); } else { this.previewBgm(path); } },
+                previewBgm(path) {
                     this.stopAllAudio();
                     this.currentAudioPlayer = new Audio('/bg_sounds/' + path);
                     this.currentAudioPlayer.volume = this.bgmVolume;
@@ -426,11 +469,20 @@
                 },
                 updateVolume() { if(this.currentAudioPlayer) this.currentAudioPlayer.volume = this.bgmVolume; },
                 
-                playVoice(text) {
+                playVoice(text, voiceUri, audioUrl) {
                     window.speechSynthesis.cancel();
-                    if(text) {
+                    if (this.narrationPlayer) { this.narrationPlayer.pause(); this.narrationPlayer.currentTime = 0; }
+
+                    if (audioUrl) {
+                        this.narrationPlayer = new Audio(audioUrl);
+                        this.narrationPlayer.play().catch(e=>{});
+                    } else if (text) {
                         let utterance = new SpeechSynthesisUtterance(text);
                         utterance.lang = 'id-ID';
+                        if(voiceUri) {
+                            let voice = this.availableVoices.find(v => v.voiceURI === voiceUri);
+                            if(voice) utterance.voice = voice;
+                        }
                         window.speechSynthesis.speak(utterance);
                     }
                 },
@@ -438,6 +490,7 @@
                 stopAllAudio() {
                     window.speechSynthesis.cancel();
                     if(this.currentAudioPlayer) { this.currentAudioPlayer.pause(); this.currentAudioPlayer.currentTime = 0; }
+                    if(this.narrationPlayer) { this.narrationPlayer.pause(); this.narrationPlayer.currentTime = 0; }
                     this.playingMusicPath = null;
                 },
 
@@ -447,24 +500,29 @@
                     
                     let src3d = '';
                     if (this.arType === '3d') {
-                        if (this.upload3dName && this.local3dUrl) {
-                            src3d = this.local3dUrl; 
-                        } else if (this.selectedLibrary3d) {
+                        if (this.upload3dName && this.local3dUrl) src3d = this.local3dUrl; 
+                        else if (this.selectedLibrary3d) {
                             let found = this.library3dList.find(i => i.id == this.selectedLibrary3d);
                             src3d = found ? found.path : '';
                         }
                     }
 
+                    let hasNarr = (this.narrationMode === 'text' && this.narrationText) || (this.narrationMode === 'audio' && this.recordedAudioUrl);
+
                     this.previewData = {
-                        title: this.title || 'Preview Custom AR',
-                        type: this.arType,
+                        title: this.title || 'Preview Custom AR', type: this.arType,
                         src: this.arType === '2d' ? this.imageUrl2d : src3d,
-                        music: this.selectedMusic
+                        music: this.selectedMusic, hasNarration: hasNarr
                     };
                     
                     this.showModal = true;
-                    if(this.selectedMusic) this.previewAudio(this.selectedMusic);
-                    this.playVoice(this.narrationText);
+                    if(this.selectedMusic) this.previewBgm(this.selectedMusic);
+                    
+                    if (this.narrationMode === 'audio') {
+                        this.playVoice(null, null, this.recordedAudioUrl);
+                    } else {
+                        this.playVoice(this.narrationText, this.selectedVoice, null);
+                    }
                 },
 
                 closeModal() {
