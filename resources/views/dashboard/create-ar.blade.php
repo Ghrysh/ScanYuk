@@ -194,9 +194,6 @@
                             <textarea x-model="narrationText" name="narration" rows="3" placeholder="Ketik teks yang akan dibacakan oleh suara AI bawaan HP/Laptop pengguna..." class="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 focus:border-teal-500 outline-none resize-none flex-1" :disabled="narrationMode !== 'text'"></textarea>
                         </div>
 
-                            <textarea x-model="narrationText" name="narration" rows="3" placeholder="Ketik teks yang akan dibacakan oleh suara AI bawaan HP/Laptop pengguna..." class="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 focus:border-teal-500 outline-none resize-none flex-1" :disabled="narrationMode !== 'text'"></textarea>
-                        </div>
-
                         <div class="p-5 border-2 rounded-xl transition-all relative" :class="narrationMode === 'audio' ? 'border-teal-500 bg-white shadow-sm' : 'border-slate-200 bg-slate-50 opacity-60 grayscale'">
                             <div x-show="narrationMode !== 'audio'" @click="narrationMode = 'audio'" class="absolute inset-0 z-10 cursor-pointer flex items-center justify-center bg-slate-100/50 backdrop-blur-[1px] rounded-xl opacity-0 hover:opacity-100 transition-opacity">
                                 <span class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Gunakan Fitur Ini</span>
