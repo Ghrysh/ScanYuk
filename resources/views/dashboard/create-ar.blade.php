@@ -359,8 +359,10 @@
                         this.mediaRecorder.ondataavailable = e => { if(e.data.size > 0) this.audioChunks.push(e.data); };
                         
                         this.mediaRecorder.onstop = () => {
-                            let audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                            let mime = this.mediaRecorder.mimeType || 'audio/webm';
+                            let audioBlob = new Blob(this.audioChunks, { type: mime });
                             this.recordedAudioBlob = audioBlob;
+                            
                             if (this.recordedAudioUrl) URL.revokeObjectURL(this.recordedAudioUrl);
                             this.recordedAudioUrl = URL.createObjectURL(audioBlob);
                             this.mediaRecorder.stream.getTracks().forEach(t => t.stop());
@@ -413,17 +415,21 @@
                     }
 
                     this.isGenerating = true; this.progress = 0; this.uploadError = null;
-                    
                     let formData = new FormData(e.target);
-                    // Jika mode rekaman, masukkan file blob
+                    
                     if (this.narrationMode === 'audio' && this.recordedAudioBlob) {
-                        formData.append('custom_audio', this.recordedAudioBlob, 'rekaman.webm');
+                        let mime = this.recordedAudioBlob.type.toLowerCase();
+                        let ext = 'webm';
+                        if (mime.includes('mp4') || mime.includes('m4a')) ext = 'mp4';
+                        else if (mime.includes('ogg')) ext = 'ogg';
+                        else if (mime.includes('aac')) ext = 'aac';
+                        
+                        formData.append('custom_audio', this.recordedAudioBlob, 'rekaman.' + ext);
                     }
                     
                     let xhr = new XMLHttpRequest();
                     xhr.open('POST', e.target.action);
                     xhr.setRequestHeader('Accept', 'application/json');
-
                     let startTime = Date.now();
 
                     xhr.upload.addEventListener('progress', (evt) => {

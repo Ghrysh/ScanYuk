@@ -31,7 +31,7 @@ class QrCodeController extends Controller
         return view('dashboard.create-ar', compact('library3dList', 'musicList', 'templates'));
     }
 
-    public function store(Request $request)
+public function store(Request $request)
     {
         try {
             $request->validate([
@@ -43,7 +43,7 @@ class QrCodeController extends Controller
                 'narration_mode' => 'required|in:text,audio',
                 'narration' => 'required_if:narration_mode,text|nullable|string',
                 'ai_voice' => 'nullable|string',
-                'custom_audio' => 'required_if:narration_mode,audio|nullable|file|mimes:webm,mp4,mp3,wav,ogg|max:10240',
+                'custom_audio' => 'required_if:narration_mode,audio|nullable|file|max:10240',
             ], [
                 'image.required_if' => 'Gambar 2D wajib diunggah.',
                 'asset_name.required_with' => 'Nama objek 3D wajib diisi.',
@@ -58,8 +58,18 @@ class QrCodeController extends Controller
             $qrCode->bgm_path = $request->bgm_path;
 
             if ($request->narration_mode === 'audio' && $request->hasFile('custom_audio')) {
-                $audioPath = $request->file('custom_audio')->store('custom_voices', 'public');
-                $qrCode->custom_audio_path = asset('storage/' . $audioPath);
+                $audioFile = $request->file('custom_audio');
+                $ext = $audioFile->getClientOriginalExtension() ?: 'webm';
+                $audioName = time() . '_audio_' . Str::random(5) . '.' . $ext;
+                
+                $audioContent = file_get_contents($audioFile->getRealPath());
+                $uploadAudio = Storage::disk('s3')->put($audioName, $audioContent);
+                
+                if (!$uploadAudio) {
+                    throw new \Exception("MinIO menolak menyimpan file rekaman suara.");
+                }
+                
+                $qrCode->custom_audio_path = url('/ar-models/' . $audioName);
                 $qrCode->narration = null;
                 $qrCode->ai_voice = null;
             } else {
