@@ -31,7 +31,7 @@ class QrCodeController extends Controller
         return view('dashboard.create-ar', compact('library3dList', 'musicList', 'templates'));
     }
 
-public function store(Request $request)
+    public function store(Request $request)
     {
         try {
             $request->validate([
@@ -58,16 +58,8 @@ public function store(Request $request)
             $qrCode->bgm_path = $request->bgm_path;
 
             if ($request->narration_mode === 'audio' && $request->hasFile('custom_audio')) {
-                $audioFile = $request->file('custom_audio');
-                $audioName = time() . '_' . Str::random(10) . '.webm';
-                $audioContent = file_get_contents($audioFile->getRealPath());
-                
-                $uploadAudio = Storage::disk('s3')->put('custom_voices/' . $audioName, $audioContent);
-                if (!$uploadAudio) {
-                    throw new \Exception("MinIO menolak menyimpan file rekaman suara.");
-                }
-                
-                $qrCode->custom_audio_path = url('/custom_voices/' . $audioName);
+                $audioPath = $request->file('custom_audio')->store('custom_voices', 'public');
+                $qrCode->custom_audio_path = asset('storage/' . $audioPath);
                 $qrCode->narration = null;
                 $qrCode->ai_voice = null;
             } else {
