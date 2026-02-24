@@ -176,23 +176,22 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         
-                        <div class="p-5 border-2 rounded-xl transition-all relative" :class="narrationMode === 'text' ? 'border-teal-500 bg-white shadow-sm' : 'border-slate-200 bg-slate-50 opacity-60 grayscale'">
+                        <div class="p-5 border-2 rounded-xl transition-all relative flex flex-col" :class="narrationMode === 'text' ? 'border-teal-500 bg-white shadow-sm' : 'border-slate-200 bg-slate-50 opacity-60 grayscale'">
                             <div x-show="narrationMode !== 'text'" @click="narrationMode = 'text'" class="absolute inset-0 z-10 cursor-pointer flex items-center justify-center bg-slate-100/50 backdrop-blur-[1px] rounded-xl opacity-0 hover:opacity-100 transition-opacity">
                                 <span class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Gunakan Fitur Ini</span>
                             </div>
                             
-                            <div class="flex items-center gap-2 mb-4 text-teal-600">
-                                <input type="radio" x-model="narrationMode" value="text" class="w-4 h-4 text-teal-600 focus:ring-teal-500">
-                                <label class="font-bold text-slate-900">Suara AI (Teks ke Suara)</label>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2 text-teal-600">
+                                    <input type="radio" x-model="narrationMode" value="text" class="w-4 h-4 text-teal-600 focus:ring-teal-500">
+                                    <label class="font-bold text-slate-900">Suara AI (Teks ke Suara)</label>
+                                </div>
+                                <span class="text-[10px] font-extrabold bg-amber-100 text-amber-600 px-2 py-1 rounded-md uppercase tracking-wider border border-amber-200">
+                                    Pilih Suara: Coming Soon
+                                </span>
                             </div>
-                            
-                            <select x-model="selectedVoice" name="ai_voice" class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none mb-4" :disabled="narrationMode !== 'text'">
-                                <template x-for="voice in availableVoices" :key="voice.voiceURI">
-                                    <option :value="voice.voiceURI" x-text="voice.name + ' (' + voice.lang + ')'"></option>
-                                </template>
-                            </select>
 
-                            <textarea x-model="narrationText" name="narration" rows="3" placeholder="Ketik teks yang akan dibacakan oleh AI..." class="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 focus:border-teal-500 outline-none resize-none" :disabled="narrationMode !== 'text'"></textarea>
+                            <textarea x-model="narrationText" name="narration" rows="3" placeholder="Ketik teks yang akan dibacakan oleh suara AI bawaan HP/Laptop pengguna..." class="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 focus:border-teal-500 outline-none resize-none flex-1" :disabled="narrationMode !== 'text'"></textarea>
                         </div>
 
                         <div class="p-5 border-2 rounded-xl transition-all relative" :class="narrationMode === 'audio' ? 'border-teal-500 bg-white shadow-sm' : 'border-slate-200 bg-slate-50 opacity-60 grayscale'">
