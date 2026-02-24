@@ -46,6 +46,8 @@ class ScanController extends Controller
             'title' => $qr->title,
             'ar_type' => $qr->ar_type ?? '2d',
             'narration' => $qr->narration,
+            'ai_voice' => $qr->ai_voice,
+            'custom_audio_url' => $qr->custom_audio_path,
             'image_url' => $qr->image_path ? asset('storage/' . $qr->image_path) : null,
             'file_3d_url' => null,
             'bgm_url' => $qr->bgm_path ? asset('bg_sounds/' . $qr->bgm_path) : null,

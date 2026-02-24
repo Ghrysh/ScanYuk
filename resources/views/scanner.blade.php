@@ -80,6 +80,7 @@
                 
                 arData: { type: '2d', src: '' },
                 bgmPlayer: null,
+                narrationPlayer: null,
                 
                 curX: 0, curY: 0, curScale: 0, curAngle: 0,
                 targetX: 0, targetY: 0, targetScale: 0, targetAngle: 0,
@@ -205,6 +206,8 @@
                             
                             this.arCache[url] = { 
                                 narration: result.data.narration, 
+                                ai_voice: result.data.ai_voice, 
+                                custom_audio_url: result.data.custom_audio_url,
                                 bgm_url: result.data.bgm_url,
                                 ready: true 
                             };
@@ -232,10 +235,22 @@
                             this.bgmPlayer.play().catch(e => console.log('BGM Play Error:', e));
                         }
                         
-                        if(cache.narration) {
+                        if(cache.custom_audio_url) {
+                            this.narrationPlayer = new Audio(cache.custom_audio_url);
+                            this.narrationPlayer.volume = 1.0;
+                            this.narrationPlayer.play().catch(e => console.log('Narration Play Error:', e));
+                        } 
+                        else if(cache.narration) {
                             let utterance = new SpeechSynthesisUtterance(cache.narration);
                             utterance.lang = 'id-ID';
                             utterance.volume = 1.0;
+
+                            if(cache.ai_voice) {
+                                let voices = window.speechSynthesis.getVoices();
+                                let selectedVoice = voices.find(v => v.voiceURI === cache.ai_voice);
+                                if(selectedVoice) utterance.voice = selectedVoice;
+                            }
+                            
                             window.speechSynthesis.speak(utterance);
                         }
                     }
@@ -251,6 +266,12 @@
                         this.bgmPlayer.pause();
                         this.bgmPlayer.currentTime = 0;
                         this.bgmPlayer = null;
+                    }
+
+                    if(this.narrationPlayer) {
+                        this.narrationPlayer.pause();
+                        this.narrationPlayer.currentTime = 0;
+                        this.narrationPlayer = null;
                     }
                 },
 
