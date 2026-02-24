@@ -325,16 +325,31 @@
                 loadVoices() {
                     let setVoices = () => {
                         let voices = window.speechSynthesis.getVoices();
-                        this.availableVoices = voices.filter(v => v.lang.includes('id') || v.lang.includes('en'));
-                        if(this.availableVoices.length > 0 && !this.selectedVoice) this.selectedVoice = this.availableVoices[0].voiceURI;
+                        
+                        let indoVoices = voices.filter(v => {
+                            let lang = v.lang.toLowerCase().replace('_', '-');
+                            return lang.includes('id-id') || lang === 'id';
+                        });
+                        
+                        let engVoices = voices.filter(v => {
+                            let lang = v.lang.toLowerCase().replace('_', '-');
+                            return lang.includes('en-us') || lang.includes('en-gb');
+                        });
+
+                        this.availableVoices = [...indoVoices, ...engVoices];
+                        
+                        if(this.availableVoices.length > 0 && !this.selectedVoice) {
+                            this.selectedVoice = this.availableVoices[0].voiceURI;
+                        }
                     };
+                    
                     setVoices();
+                    
                     if (window.speechSynthesis.onvoiceschanged !== undefined) {
                         window.speechSynthesis.onvoiceschanged = setVoices;
                     }
                 },
 
-                // Fitur Rekam Suara (MediaRecorder API)
                 async startRecording() {
                     try {
                         let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
