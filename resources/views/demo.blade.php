@@ -45,7 +45,7 @@
 
     </div>
 
-    <div class="max-w-5xl mx-auto">
+    <div class="relative z-10 max-w-5xl mx-auto">
         
         <div class="text-center mb-12">
             <h2 class="text-2xl md:text-3xl font-bold text-slate-900">

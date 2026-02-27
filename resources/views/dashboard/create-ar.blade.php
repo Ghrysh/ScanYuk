@@ -59,7 +59,6 @@
                 <input type="hidden" name="ar_type" :value="arType">
                 <input type="hidden" name="selected_3d_id" :value="selectedLibrary3d">
                 <input type="hidden" name="bgm_path" :value="selectedMusic">
-                <input type="hidden" name="bgm_volume" :value="bgmVolume"> 
 
                 <div x-show="uploadError" style="display: none;" class="p-4 bg-red-50 border border-red-200 rounded-xl" x-transition>
                     <div class="flex items-center gap-2 text-red-600 font-bold mb-2">
@@ -132,46 +131,86 @@
                 </div>
 
                 <div class="pt-4 border-t border-slate-200">
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="block text-sm font-bold text-slate-900">Pilih Background Music (Opsional)</label>
-                        <div class="flex items-center gap-3 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200" x-show="selectedMusic !== ''" x-transition>
-                            <span class="text-xs font-semibold text-slate-600">Volume Musik:</span>
-                            <div class="flex items-center gap-2" title="Atur volume musik latar untuk hasil AR nanti">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.536 6.464a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                                <input type="range" x-model="bgmVolume" @input="updateVolume()" min="0.05" max="1" step="0.05" class="w-24 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
-                                <span class="text-xs font-bold text-indigo-600 w-8 text-right" x-text="Math.round(bgmVolume * 100) + '%'"></span>
-                            </div>
-                        </div>
-                    </div>
+                    <label class="block text-sm font-bold text-slate-900 mb-4">Background Music / BGM (Opsional)</label>
                     
-                    <div class="relative mb-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                        <input type="text" x-model="searchMusic" placeholder="Cari musik (misal: ramadhan, cinematic)..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-indigo-500 outline-none">
+                    <div class="mb-4 p-4 border border-slate-200 rounded-xl bg-white shadow-sm" :class="selectedMusic !== '' ? 'opacity-50 grayscale' : ''">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Upload Musik Sendiri (MP3/WAV)</label>
+                        <input type="file" name="custom_bgm" id="bgm-upload" accept="audio/*" class="hidden" @change="handleBgmUpload" :disabled="selectedMusic !== ''">
+                        <label for="bgm-upload" class="flex items-center gap-4 w-full p-3 border border-slate-300 border-dashed rounded-lg cursor-pointer hover:border-indigo-500 bg-slate-50 hover:bg-white transition-colors">
+                            <svg class="w-6 h-6 text-indigo-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-bold text-slate-700 truncate" x-text="customBgmFile ? customBgmFile.name : 'Pilih file audio dari perangkatmu'"></p>
+                            </div>
+                        </label>
+                        <button type="button" x-show="customBgmFile" @click="clearCustomBgm()" class="text-xs text-red-500 font-bold mt-2 hover:underline">Batal / Hapus Upload</button>
                     </div>
 
-                    <div class="max-h-48 overflow-y-auto no-scrollbar grid grid-cols-1 md:grid-cols-2 gap-2">
-                        <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-500" :class="selectedMusic === '' ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : ''">
-                            <input type="radio" x-model="selectedMusic" value="" class="text-indigo-600 focus:ring-indigo-500" @change="stopAllAudio()">
-                            <span class="text-sm font-medium text-slate-700">Tanpa Musik (Hanya Narasi)</span>
+                    <div class="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">ATAU</div>
+                    
+                    <div class="relative mb-4" :class="isCustomBgm ? 'opacity-50 grayscale pointer-events-none' : ''">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        <input type="text" x-model="searchMusic" placeholder="Cari dari Library (misal: ramadhan)..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-indigo-500 outline-none">
+                    </div>
+
+                    <div class="max-h-48 overflow-y-auto no-scrollbar grid grid-cols-1 md:grid-cols-2 gap-2" :class="isCustomBgm ? 'opacity-50 grayscale pointer-events-none' : ''">
+                        <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-500" :class="selectedMusic === '' && !isCustomBgm ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : ''">
+                            <input type="radio" x-model="selectedMusic" value="" @change="clearMusic()" class="text-indigo-600 focus:ring-indigo-500">
+                            <span class="text-sm font-medium text-slate-700">Tanpa Musik Latar</span>
                         </label>
                         
                         <template x-for="music in filteredMusic()" :key="music.path">
                             <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-indigo-500 transition-colors" :class="selectedMusic === music.path ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : ''">
                                 <label class="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
-                                    <input type="radio" x-model="selectedMusic" :value="music.path" class="text-indigo-600 focus:ring-indigo-500 flex-shrink-0">
+                                    <input type="radio" :value="music.path" x-model="selectedMusic" @change="selectLibraryMusic(music.path)" class="text-indigo-600 focus:ring-indigo-500 flex-shrink-0">
                                     <span class="text-sm font-medium text-slate-700 truncate" x-text="music.name"></span>
                                 </label>
                                 <button type="button" @click="toggleAudio(music.path)" class="p-1.5 ml-2 text-slate-400 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-100 rounded-full transition-colors flex-shrink-0">
-                                    <svg x-show="playingMusicPath !== music.path" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
-                                    <svg x-show="playingMusicPath === music.path" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                                    <svg x-show="playingMusicPath !== ('/bg_sounds/' + music.path)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                                    <svg x-show="playingMusicPath === ('/bg_sounds/' + music.path)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
                                 </button>
                             </div>
                         </template>
                     </div>
+
+                    <div x-show="bgmDuration > 0 && (selectedMusic !== '' || isCustomBgm)" class="mt-4 p-5 border border-indigo-200 bg-indigo-50/50 rounded-xl space-y-4" x-transition>
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                <h4 class="text-sm font-bold text-indigo-900">Potong Durasi Musik (Crop)</h4>
+                            </div>
+                            <div class="flex items-center gap-2" title="Atur volume latar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.536 6.464a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                                <input type="range" x-model="bgmVolume" @input="updateVolume()" min="0.05" max="1" step="0.05" class="w-20 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                                <span class="text-xs font-bold text-indigo-600 w-8 text-right" x-text="Math.round(bgmVolume * 100) + '%'"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white p-3 rounded-lg border border-indigo-100 shadow-sm">
+                                <label class="flex justify-between text-xs font-bold text-slate-500 mb-3">
+                                    <span class="text-indigo-600">Mulai (Start)</span>
+                                    <span x-text="formatTime(bgmStart)" class="bg-indigo-100 px-2 py-0.5 rounded text-indigo-700"></span>
+                                </label>
+                                <input type="range" x-model="bgmStart" :max="bgmDuration" step="1" @input="if(Number(bgmStart) >= Number(bgmEnd)) bgmStart = bgmEnd - 1" class="w-full h-1.5 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                            </div>
+                            <div class="bg-white p-3 rounded-lg border border-indigo-100 shadow-sm">
+                                <label class="flex justify-between text-xs font-bold text-slate-500 mb-3">
+                                    <span class="text-indigo-600">Selesai (End)</span>
+                                    <span x-text="formatTime(bgmEnd)" class="bg-indigo-100 px-2 py-0.5 rounded text-indigo-700"></span>
+                                </label>
+                                <input type="range" x-model="bgmEnd" :max="bgmDuration" step="1" @input="if(Number(bgmEnd) <= Number(bgmStart)) bgmEnd = Number(bgmStart) + 1" class="w-full h-1.5 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                            </div>
+                        </div>
+                        <p class="text-xs text-indigo-500/80 font-medium italic mt-2">*Hanya rentang durasi ini yang akan diputar berulang di AR Anda.</p>
+                        
+                        <input type="hidden" name="bgm_start" :value="bgmStart">
+                        <input type="hidden" name="bgm_end" :value="bgmEnd">
+                        <input type="hidden" name="bgm_volume" :value="bgmVolume"> 
+                    </div>
                 </div>
 
                 <div class="pt-4 border-t border-slate-200">
-                    <label class="block text-sm font-bold text-slate-900 mb-4">Mode Narasi (Opsional)</label>
+                    <label class="block text-sm font-bold text-slate-900 mb-4">Mode Narasi Suara (Opsional)</label>
                     <input type="hidden" name="narration_mode" :value="narrationMode">
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -295,58 +334,43 @@
                 imageUrl2d: null, upload3dName: '', upload3dDisplayName: '',
                 selectedLibrary3d: '', local3dUrl: null, 
                 
+                // Variabel BGM
                 selectedMusic: '', bgmVolume: 0.3,
+                bgmStart: 0, bgmEnd: 100, bgmDuration: 0,
+                customBgmFile: null, customBgmUrl: null, isCustomBgm: false,
                 
-                narrationMode: 'text',
-                narrationText: '',
-                availableVoices: [],
-                selectedVoice: '',
+                narrationMode: 'text', narrationText: '', availableVoices: [], selectedVoice: '',
                 
-                isRecording: false,
-                mediaRecorder: null,
-                audioChunks: [],
-                recordedAudioBlob: null,
-                recordedAudioUrl: null,
+                isRecording: false, mediaRecorder: null, audioChunks: [],
+                recordedAudioBlob: null, recordedAudioUrl: null,
 
                 isGenerating: false, progress: 0, estimatedTime: 'Menghitung...', uploadError: null,
                 search3d: '', searchMusic: '', searchTemplate: '',
                 showModal: false, isFromTemplate: false,
                 previewData: { title: '', type: '', src: '', music: '', hasNarration: false },
                 
-                currentAudioPlayer: null,
-                narrationPlayer: null,
-                playingMusicPath: null,
+                currentAudioPlayer: null, narrationPlayer: null, playingMusicPath: null,
 
                 library3dList: @json($library3dList),
                 musicList: @json($musicList),
                 templates: @json($templates),
 
+                formatTime(seconds) {
+                    let m = Math.floor(seconds / 60);
+                    let s = Math.floor(seconds % 60);
+                    return m + ':' + (s < 10 ? '0' : '') + s;
+                },
+
                 loadVoices() {
                     let setVoices = () => {
                         let voices = window.speechSynthesis.getVoices();
-                        
-                        let indoVoices = voices.filter(v => {
-                            let lang = v.lang.toLowerCase().replace('_', '-');
-                            return lang.includes('id-id') || lang === 'id';
-                        });
-                        
-                        let engVoices = voices.filter(v => {
-                            let lang = v.lang.toLowerCase().replace('_', '-');
-                            return lang.includes('en-us') || lang.includes('en-gb');
-                        });
-
+                        let indoVoices = voices.filter(v => v.lang.toLowerCase().includes('id'));
+                        let engVoices = voices.filter(v => v.lang.toLowerCase().includes('en'));
                         this.availableVoices = [...indoVoices, ...engVoices];
-                        
-                        if(this.availableVoices.length > 0 && !this.selectedVoice) {
-                            this.selectedVoice = this.availableVoices[0].voiceURI;
-                        }
+                        if(this.availableVoices.length > 0 && !this.selectedVoice) this.selectedVoice = this.availableVoices[0].voiceURI;
                     };
-                    
                     setVoices();
-                    
-                    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-                        window.speechSynthesis.onvoiceschanged = setVoices;
-                    }
+                    if (window.speechSynthesis.onvoiceschanged !== undefined) window.speechSynthesis.onvoiceschanged = setVoices;
                 },
 
                 async startRecording() {
@@ -356,22 +380,17 @@
                         this.audioChunks = [];
                         
                         this.mediaRecorder.ondataavailable = e => { if(e.data.size > 0) this.audioChunks.push(e.data); };
-                        
                         this.mediaRecorder.onstop = () => {
                             let mime = this.mediaRecorder.mimeType || 'audio/webm';
                             let audioBlob = new Blob(this.audioChunks, { type: mime });
                             this.recordedAudioBlob = audioBlob;
-                            
                             if (this.recordedAudioUrl) URL.revokeObjectURL(this.recordedAudioUrl);
                             this.recordedAudioUrl = URL.createObjectURL(audioBlob);
                             this.mediaRecorder.stream.getTracks().forEach(t => t.stop());
                         };
-                        
                         this.mediaRecorder.start();
                         this.isRecording = true;
-                    } catch (err) {
-                        alert("Izin mikrofon ditolak atau tidak tersedia di perangkat ini.");
-                    }
+                    } catch (err) { alert("Izin mikrofon ditolak atau tidak tersedia di perangkat ini."); }
                 },
 
                 stopRecording() {
@@ -408,21 +427,56 @@
                     }
                 },
 
+                // LOGIKA UNTUK UPLOAD DAN CROP MUSIK
+                handleBgmUpload(e) {
+                    let file = e.target.files[0];
+                    if(!file) return;
+                    this.isCustomBgm = true;
+                    this.selectedMusic = '';
+                    this.customBgmFile = file;
+                    if(this.customBgmUrl) URL.revokeObjectURL(this.customBgmUrl);
+                    this.customBgmUrl = URL.createObjectURL(file);
+                    this.loadDuration(this.customBgmUrl);
+                },
+                clearCustomBgm() {
+                    this.isCustomBgm = false;
+                    this.customBgmFile = null;
+                    if(this.customBgmUrl) URL.revokeObjectURL(this.customBgmUrl);
+                    this.customBgmUrl = null;
+                    document.getElementById('bgm-upload').value = '';
+                    this.bgmStart = 0; this.bgmEnd = 0; this.bgmDuration = 0;
+                    this.stopAllAudio();
+                },
+                selectLibraryMusic(path) {
+                    this.isCustomBgm = false;
+                    this.selectedMusic = path;
+                    this.clearCustomBgm();
+                    this.selectedMusic = path;
+                    this.loadDuration('/bg_sounds/' + path);
+                },
+                clearMusic() {
+                    this.selectedMusic = '';
+                    this.clearCustomBgm();
+                },
+                loadDuration(src) {
+                    let tempAudio = new Audio(src);
+                    tempAudio.onloadedmetadata = () => {
+                        this.bgmDuration = Math.floor(tempAudio.duration);
+                        this.bgmStart = 0;
+                        this.bgmEnd = this.bgmDuration;
+                    };
+                },
+
                 submitForm(e) {
                     if (this.narrationMode === 'audio' && !this.recordedAudioBlob && !this.narrationText) {
                          if(!confirm('Anda memilih mode rekam suara tapi belum merekam. Lanjutkan tanpa suara?')) return;
                     }
-
                     this.isGenerating = true; this.progress = 0; this.uploadError = null;
                     let formData = new FormData(e.target);
                     
                     if (this.narrationMode === 'audio' && this.recordedAudioBlob) {
                         let mime = this.recordedAudioBlob.type.toLowerCase();
-                        let ext = 'webm';
-                        if (mime.includes('mp4') || mime.includes('m4a')) ext = 'mp4';
-                        else if (mime.includes('ogg')) ext = 'ogg';
-                        else if (mime.includes('aac')) ext = 'aac';
-                        
+                        let ext = mime.includes('mp4') ? 'mp4' : (mime.includes('ogg') ? 'ogg' : 'webm');
                         formData.append('custom_audio', this.recordedAudioBlob, 'rekaman.' + ext);
                     }
                     
@@ -452,7 +506,6 @@
                             catch (err) { this.uploadError = "Terjadi kesalahan server (Error " + xhr.status + ")."; }
                         }
                     };
-
                     xhr.onerror = () => { this.isGenerating = false; this.uploadError = "Koneksi terputus."; };
                     xhr.send(formData);
                 },
@@ -465,7 +518,7 @@
                     this.isFromTemplate = true;
                     this.previewData = { title: tpl.title, type: tpl.ar_type, src: tpl.file_path, music: tpl.bgm_path, hasNarration: !!tpl.narration, fullData: tpl };
                     this.showModal = true;
-                    if(tpl.bgm_path) this.previewBgm(tpl.bgm_path);
+                    if(tpl.bgm_path) this.previewBgm('/bg_sounds/' + tpl.bgm_path);
                     this.playVoice(tpl.narration, null, null);
                 },
 
@@ -478,21 +531,30 @@
                     this.closeModal(); this.mainTab = 'custom'; window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
                 
-                toggleAudio(path) { if (this.playingMusicPath === path) { this.stopAllAudio(); } else { this.previewBgm(path); } },
-                previewBgm(path) {
+                toggleAudio(path) { 
+                    let src = '/bg_sounds/' + path;
+                    if (this.playingMusicPath === src) { this.stopAllAudio(); } else { this.previewBgm(src); } 
+                },
+                
+                previewBgm(src) {
                     this.stopAllAudio();
-                    this.currentAudioPlayer = new Audio('/bg_sounds/' + path);
+                    this.currentAudioPlayer = new Audio(src);
                     this.currentAudioPlayer.volume = this.bgmVolume;
+                    this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                    
+                    this.currentAudioPlayer.ontimeupdate = () => {
+                        if(this.currentAudioPlayer.currentTime >= Number(this.bgmEnd)) {
+                            this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                        }
+                    };
                     this.currentAudioPlayer.play().catch(e => {});
-                    this.playingMusicPath = path;
-                    this.currentAudioPlayer.onended = () => { this.playingMusicPath = null; };
+                    this.playingMusicPath = src;
                 },
                 updateVolume() { if(this.currentAudioPlayer) this.currentAudioPlayer.volume = this.bgmVolume; },
                 
                 playVoice(text, voiceUri, audioUrl) {
                     window.speechSynthesis.cancel();
                     if (this.narrationPlayer) { this.narrationPlayer.pause(); this.narrationPlayer.currentTime = 0; }
-
                     if (audioUrl) {
                         this.narrationPlayer = new Audio(audioUrl);
                         this.narrationPlayer.play().catch(e=>{});
@@ -528,15 +590,16 @@
                     }
 
                     let hasNarr = (this.narrationMode === 'text' && this.narrationText) || (this.narrationMode === 'audio' && this.recordedAudioUrl);
+                    let previewMusicSrc = this.isCustomBgm ? this.customBgmUrl : (this.selectedMusic ? '/bg_sounds/' + this.selectedMusic : '');
 
                     this.previewData = {
                         title: this.title || 'Preview Custom AR', type: this.arType,
                         src: this.arType === '2d' ? this.imageUrl2d : src3d,
-                        music: this.selectedMusic, hasNarration: hasNarr
+                        music: previewMusicSrc, hasNarration: hasNarr
                     };
                     
                     this.showModal = true;
-                    if(this.selectedMusic) this.previewBgm(this.selectedMusic);
+                    if(previewMusicSrc) this.previewBgm(previewMusicSrc);
                     
                     if (this.narrationMode === 'audio') {
                         this.playVoice(null, null, this.recordedAudioUrl);

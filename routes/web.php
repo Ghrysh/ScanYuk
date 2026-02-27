@@ -48,6 +48,34 @@ Route::get('/scan-ar', function () {
     return view('scanner');
 })->name('scan-ar');
 
+Route::get('/faq', function () {
+    return view('faq');
+})->name('faq');
+
+Route::get('/security', function () {
+    return view('security');
+})->name('security');
+
+Route::get('/terms', function () {
+    return view('terms');
+})->name('terms');
+
+Route::get('/partners', function () {
+    return view('partners');
+})->name('partners');
+
+Route::get('/refund-policy', function () {
+    return view('refund-policy');
+})->name('refund-policy');
+
+Route::get('/privacy', function () {
+    return view('privacy');
+})->name('privacy');
+
+Route::get('/case-studies', function () {
+    return view('case-studies');
+})->name('case-studies');
+
 Route::get('/api/scan/{uuid}', [ScanController::class, 'scanQr']);
 
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');

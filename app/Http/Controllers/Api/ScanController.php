@@ -50,7 +50,7 @@ class ScanController extends Controller
             'custom_audio_url' => $qr->custom_audio_path,
             'image_url' => $qr->image_path ? asset('storage/' . $qr->image_path) : null,
             'file_3d_url' => null,
-            'bgm_url' => $qr->bgm_path ? asset('bg_sounds/' . $qr->bgm_path) : null,
+            'bgm_url' => $qr->bgm_path ? url('/bg_sounds/' . ltrim($qr->bgm_path, '/')) : null,
         ];
 
         if ($arData['ar_type'] === '3d' && !empty($qr->ar_asset_id)) {

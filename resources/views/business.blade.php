@@ -14,7 +14,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
-            <span class="text-sm font-semibold text-slate-700">Enterprise Solutions</span>
+            <span class="text-sm font-semibold text-slate-700">Solusi Enterprise</span>
         </div>
 
         <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-slate-900 leading-tight max-w-4xl">
@@ -27,11 +27,11 @@
 
         <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
             <a href="{{ route('contact') }}" class="w-full sm:w-auto px-8 py-4 rounded-lg btn-gradient text-white font-semibold text-base shadow-lg shadow-indigo-200 hover:scale-105 transition-transform duration-200">
-                Request Demo
+                Minta Demo
             </a>
             
             <a href="{{ route('contact') }}" class="w-full sm:w-auto px-8 py-4 rounded-lg bg-white text-teal-600 border border-teal-200 font-semibold text-base hover:bg-teal-50 transition-colors">
-                Talk to Sales
+                Hubungi Tim Penjualan
             </a>
         </div>
     </div>
@@ -42,7 +42,7 @@
         
         <div class="text-center mb-16">
             <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                Use Case <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-indigo-600">Commercial</span>
+                Contoh Penggunaan <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-indigo-600">Komersial</span>
             </h2>
         </div>
 
@@ -54,8 +54,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-bold text-slate-900 mb-2">Retail</h3>
-                <p class="text-slate-500 text-sm leading-relaxed">AR product info, interactive packaging, in-store experiences.</p>
+                <h3 class="text-xl font-bold text-slate-900 mb-2">Ritel</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Informasi produk AR, kemasan interaktif, pengalaman belanja di toko.</p>
             </div>
 
             <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
@@ -64,8 +64,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0012 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75z" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-bold text-slate-900 mb-2">Museum & Tourism</h3>
-                <p class="text-slate-500 text-sm leading-relaxed">Immersive exhibitions, AR tour guides, historical overlays.</p>
+                <h3 class="text-xl font-bold text-slate-900 mb-2">Museum & Pariwisata</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Pameran imersif, pemandu wisata AR, overlay historis.</p>
             </div>
 
             <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
@@ -74,8 +74,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.499 5.24 50.534 50.534 0 00-2.658.813m-15.482 0A50.717 50.717 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-bold text-slate-900 mb-2">Education & Training</h3>
-                <p class="text-slate-500 text-sm leading-relaxed">Interactive textbooks, AR training materials, visual learning.</p>
+                <h3 class="text-xl font-bold text-slate-900 mb-2">Pendidikan & Pelatihan</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Buku teks interaktif, materi pelatihan AR, pembelajaran visual.</p>
             </div>
 
              <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
@@ -84,8 +84,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-bold text-slate-900 mb-2">Event & Exhibition</h3>
-                <p class="text-slate-500 text-sm leading-relaxed">AR booth displays, event brochures, interactive programs.</p>
+                <h3 class="text-xl font-bold text-slate-900 mb-2">Acara & Pameran</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Tampilan booth AR, brosur acara, program interaktif.</p>
             </div>
 
             <div class="bg-white p-8 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
@@ -94,8 +94,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
                     </svg>
                 </div>
-                <h3 class="text-xl font-bold text-slate-900 mb-2">Company Profile</h3>
-                <p class="text-slate-500 text-sm leading-relaxed">Interactive company profiles, AR business cards, annual reports.</p>
+                <h3 class="text-xl font-bold text-slate-900 mb-2">Profil Perusahaan</h3>
+                <p class="text-slate-500 text-sm leading-relaxed">Profil perusahaan interaktif, kartu nama AR, laporan tahunan.</p>
             </div>
 
         </div>
@@ -107,7 +107,7 @@
         
         <div class="text-center mb-16">
             <h2 class="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
-                Fitur Khusus <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-indigo-600">Commercial</span>
+                Fitur Khusus <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-indigo-600">Komersial</span>
             </h2>
             <p class="text-slate-500 max-w-2xl mx-auto">
                 Fitur enterprise-grade yang dirancang untuk skala bisnis Anda.
@@ -122,8 +122,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-1.605.42-3.113 1.157-4.418" />
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-2">Custom / Unlimited Scans</h3>
-                <p class="text-slate-500 text-sm">No scan limit restrictions for enterprise campaigns.</p>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">Scan Kustom / Tak Terbatas</h3>
+                <p class="text-slate-500 text-sm">Tanpa batasan scan untuk kampanye enterprise.</p>
             </div>
 
             <div class="bg-white p-8 rounded-2xl border border-slate-200">
@@ -132,8 +132,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-2">Multi-User Dashboard</h3>
-                <p class="text-slate-500 text-sm">Team management with role-based access control.</p>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">Dasbor Multi-Pengguna</h3>
+                <p class="text-slate-500 text-sm">Manajemen tim dengan kontrol akses berbasis peran.</p>
             </div>
 
             <div class="bg-white p-8 rounded-2xl border border-slate-200">
@@ -142,8 +142,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-2">Bulk QR Creation</h3>
-                <p class="text-slate-500 text-sm">Generate hundreds of QR codes in a single campaign.</p>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">Pembuatan QR Massal</h3>
+                <p class="text-slate-500 text-sm">Buat ratusan QR Code dalam satu kampanye.</p>
             </div>
 
             <div class="bg-white p-8 rounded-2xl border border-slate-200">
@@ -152,8 +152,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-2">Custom Branding</h3>
-                <p class="text-slate-500 text-sm">White-label QR codes with your company logo and colors.</p>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">Branding Kustom</h3>
+                <p class="text-slate-500 text-sm">QR Code dengan logo dan warna perusahaan Anda.</p>
             </div>
 
             <div class="bg-white p-8 rounded-2xl border border-slate-200">
@@ -162,8 +162,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-2">Advanced Analytics</h3>
-                <p class="text-slate-500 text-sm">Location, time-based analytics, and export reports.</p>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">Analitik Lanjutan</h3>
+                <p class="text-slate-500 text-sm">Analitik berbasis lokasi, waktu, dan ekspor laporan.</p>
             </div>
 
              <div class="bg-white p-8 rounded-2xl border border-slate-200">
@@ -173,8 +173,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-2">SLA & Dedicated Support</h3>
-                <p class="text-slate-500 text-sm">Priority support with guaranteed response times.</p>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">SLA & Dukungan Khusus</h3>
+                <p class="text-slate-500 text-sm">Dukungan prioritas dengan jaminan waktu respons.</p>
             </div>
 
         </div>
@@ -191,10 +191,10 @@
         </p>
         <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a href="{{ route('contact') }}" class="px-8 py-4 rounded-lg btn-gradient text-white font-semibold shadow-lg shadow-indigo-200 hover:scale-105 transition-transform">
-                Request Demo
+                Minta Demo
             </a>
             <a href="{{ route('contact') }}" class="px-8 py-4 rounded-lg bg-white text-teal-600 border border-teal-200 font-semibold hover:bg-teal-50 transition-colors">
-                Talk to Sales
+                Hubungi Tim Penjualan
             </a>
         </div>
     </div>

@@ -27,8 +27,8 @@
                     </div>
                 </div>
                 <div class="flex-grow">
-                    <h3 class="text-2xl font-bold text-slate-900 mb-3">Upload Image</h3>
-                    <p class="text-slate-500 mb-6">Upload gambar atau infografis yang akan menjadi konten AR Anda. Mendukung JPG dan PNG.</p>
+                    <h3 class="text-2xl font-bold text-slate-900 mb-3">Unggah Image</h3>
+                    <p class="text-slate-500 mb-6">Unggah gambar atau infografis yang akan menjadi konten AR Anda. Mendukung JPG dan PNG.</p>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="p-4 bg-slate-100 rounded-xl border border-slate-100">
@@ -61,7 +61,7 @@
                     </div>
                 </div>
                 <div class="flex-grow">
-                    <h3 class="text-2xl font-bold text-slate-900 mb-3">Write Narration</h3>
+                    <h3 class="text-2xl font-bold text-slate-900 mb-3">Tulis Narasi</h3>
                     <p class="text-slate-500 mb-6">Tulis teks narasi yang akan dikonversi menjadi suara (TTS). Audio diputar otomatis saat scan.</p>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -95,7 +95,7 @@
                     </div>
                 </div>
                 <div class="flex-grow">
-                    <h3 class="text-2xl font-bold text-slate-900 mb-3">Generate QR Code</h3>
+                    <h3 class="text-2xl font-bold text-slate-900 mb-3">Buat QR Code</h3>
                     <p class="text-slate-500 mb-6">Sistem otomatis membuat QR code unik yang terhubung ke konten AR Anda. Siap cetak.</p>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -129,7 +129,7 @@
                     </div>
                 </div>
                 <div class="flex-grow">
-                    <h3 class="text-2xl font-bold text-slate-900 mb-3">Scan → AR Appears</h3>
+                    <h3 class="text-2xl font-bold text-slate-900 mb-3">Scan → AR Muncul</h3>
                     <p class="text-slate-500 mb-6">Saat QR code di-scan, konten AR muncul — gambar overlay dan narasi suara otomatis diputar.</p>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

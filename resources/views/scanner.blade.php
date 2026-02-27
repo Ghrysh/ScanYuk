@@ -115,9 +115,18 @@
                         let imageData = this.canvas.getImageData(0, 0, this.canvasElement.width, this.canvasElement.height);
                         let code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });
 
-                        if (code && code.data.includes('/api/scan/')) {
+                        let qrData = code ? code.data : '';
+                        let uuid = null;
+
+                        if (qrData.includes('?id=')) {
+                            uuid = qrData.split('?id=')[1];
+                        } else if (qrData.includes('/api/scan/')) {
+                            uuid = qrData.split('/api/scan/')[1];
+                        }
+
+                        if (uuid) {
                             this.lastFoundTime = Date.now();
-                            this.currentQrUrl = code.data;
+                            this.currentQrUrl = '/api/scan/' + uuid;
                             
                             if (!this.arCache[this.currentQrUrl] && !this.isFetching) {
                                 this.fetchArData(this.currentQrUrl);
@@ -231,9 +240,28 @@
                     
                     if(cache) {
                         if(cache.bgm_url) {
-                            this.bgmPlayer = new Audio(cache.bgm_url);
+                            let urlParts = cache.bgm_url.split('#t=');
+                            let audioSrc = urlParts[0];
+                            
+                            this.bgmPlayer = new Audio(audioSrc);
                             this.bgmPlayer.volume = 0.3;
-                            this.bgmPlayer.loop = true;
+                            
+                            if (urlParts.length > 1 && urlParts[1]) {
+                                let times = urlParts[1].split(',');
+                                let start = parseFloat(times[0]);
+                                let end = parseFloat(times[1]);
+                                
+                                this.bgmPlayer.currentTime = start;
+                                
+                                this.bgmPlayer.ontimeupdate = () => {
+                                    if(this.bgmPlayer.currentTime >= end) {
+                                        this.bgmPlayer.currentTime = start;
+                                    }
+                                };
+                            } else {
+                                this.bgmPlayer.loop = true;
+                            }
+                            
                             this.bgmPlayer.play().catch(e => console.log('BGM Play Error:', e));
                         }
                         

@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\QrCode as QrCodeModel;
 use App\Models\ArAsset;
 use App\Models\ArTemplate;
-use Illuminate\Support\Facades\File;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -16,22 +15,32 @@ class QrCodeController extends Controller
 {
     public function create()
     {
-        $library3dList = ArAsset::where('is_public', true)->get(['id', 'name', 'file_path as path']);
+        $library3dList = ArAsset::where('is_public', true)->get(['id', 'name', 'file_path as path'])->map(function($item) {
+            if (empty($item->name)) {
+                $filename = basename($item->path);
+                $item->name = ucwords(str_replace(['-', '_', '.glb'], [' ', ' ', ''], $filename));
+            }
+            return $item;
+        });
 
         $templates = ArTemplate::all();
 
-        $musicFiles = File::files(public_path('bg_sounds'));
         $musicList = [];
-        foreach ($musicFiles as $file) {
-            $fileName = $file->getFilename();
-            $cleanName = ucwords(str_replace(['-', '.mp3', '_'], [' ', '', ' '], $fileName));
-            $musicList[] = ['name' => $cleanName, 'path' => $fileName];
+        try {
+            $musicFiles = Storage::disk('s3')->files('bg_sounds');
+            foreach ($musicFiles as $file) {
+                $fileName = basename($file);
+                $cleanName = ucwords(str_replace(['-', '.mp3', '_', '.wav', '.ogg'], [' ', '', ' ', '', ''], $fileName));
+                $musicList[] = ['name' => $cleanName, 'path' => $fileName];
+            }
+        } catch (\Exception $e) {
+            \Log::error('Gagal mengambil daftar musik dari MinIO: ' . $e->getMessage());
         }
 
         return view('dashboard.create-ar', compact('library3dList', 'musicList', 'templates'));
     }
 
-public function store(Request $request)
+    public function store(Request $request)
     {
         try {
             $request->validate([
@@ -39,37 +48,52 @@ public function store(Request $request)
                 'ar_type' => 'required|in:2d,3d',
                 'image' => 'required_if:ar_type,2d|image|mimes:jpeg,png,jpg|max:5120', 
                 'file_3d' => 'nullable|file|max:51200',
-                'asset_name' => 'required_with:file_3d|string|max:100',
+                
+                'asset_name' => 'nullable|string|max:100', 
+                
                 'narration_mode' => 'required|in:text,audio',
                 'narration' => 'required_if:narration_mode,text|nullable|string',
                 'ai_voice' => 'nullable|string',
-                'custom_audio' => 'required_if:narration_mode,audio|nullable|file|max:10240',
-            ], [
-                'image.required_if' => 'Gambar 2D wajib diunggah.',
-                'asset_name.required_with' => 'Nama objek 3D wajib diisi.',
-                'narration.required_if' => 'Teks narasi wajib diisi jika menggunakan Suara AI.',
-                'custom_audio.required_if' => 'Rekaman suara wajib ada jika memilih mode Rekam Suara.',
+                'custom_audio' => 'nullable|file|max:10240',
+                'custom_bgm' => 'nullable|file|mimes:mp3,wav,ogg,m4a|max:15360',
+                'bgm_start' => 'nullable|numeric',
+                'bgm_end' => 'nullable|numeric',
             ]);
 
             $qrCode = new QrCodeModel(); 
             $qrCode->user_id = auth()->id();
             $qrCode->title = $request->title;
             $qrCode->ar_type = $request->ar_type;
-            $qrCode->bgm_path = $request->bgm_path;
+
+            $bgmPathToSave = $request->bgm_path; 
+
+            if ($request->hasFile('custom_bgm')) {
+                $bgmFile = $request->file('custom_bgm');
+                $ext = $bgmFile->getClientOriginalExtension() ?: 'mp3';
+                $bgmName = time() . '_bgm_' . Str::random(5) . '.' . $ext;
+                
+                $bgmContent = file_get_contents($bgmFile->getRealPath());
+                $uploadBgm = Storage::disk('s3')->put('bg_sounds/' . $bgmName, $bgmContent);
+                if (!$uploadBgm) throw new \Exception("Gagal menyimpan BGM ke MinIO.");
+                
+                $bgmPathToSave = $bgmName; 
+            }
+
+            if ($bgmPathToSave && $request->filled('bgm_start') && $request->filled('bgm_end')) {
+                $bgmPathToSave .= '#t=' . $request->bgm_start . ',' . $request->bgm_end;
+            }
+            $qrCode->bgm_path = $bgmPathToSave;
 
             if ($request->narration_mode === 'audio' && $request->hasFile('custom_audio')) {
                 $audioFile = $request->file('custom_audio');
                 $ext = $audioFile->getClientOriginalExtension() ?: 'webm';
-                $audioName = time() . '_audio_' . Str::random(5) . '.' . $ext;
+                $audioName = time() . '_voice_' . Str::random(5) . '.' . $ext;
                 
                 $audioContent = file_get_contents($audioFile->getRealPath());
-                $uploadAudio = Storage::disk('s3')->put($audioName, $audioContent);
+                $uploadAudio = Storage::disk('s3')->put('custom_voices/' . $audioName, $audioContent);
+                if (!$uploadAudio) throw new \Exception("Gagal menyimpan rekaman ke MinIO.");
                 
-                if (!$uploadAudio) {
-                    throw new \Exception("MinIO menolak menyimpan file rekaman suara.");
-                }
-                
-                $qrCode->custom_audio_path = url('/ar-models/' . $audioName);
+                $qrCode->custom_audio_path = url('/custom_voices/' . $audioName);
                 $qrCode->narration = null;
                 $qrCode->ai_voice = null;
             } else {
@@ -87,14 +111,19 @@ public function store(Request $request)
                     $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
 
                     $fileContent = file_get_contents($file->getRealPath());
-                    $upload = Storage::disk('s3')->put($filename, $fileContent);
-                    
-                    if (!$upload) throw new \Exception("MinIO menolak menyimpan file 3D.");
+                    $upload = Storage::disk('s3')->put('3d/' . $filename, $fileContent);
+                    if (!$upload) throw new \Exception("Gagal menyimpan file 3D ke MinIO.");
+
+                    $finalAssetName = $request->asset_name;
+                    if (empty($finalAssetName)) {
+                        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+                        $finalAssetName = ucwords(str_replace(['-', '_'], ' ', $originalName));
+                    }
 
                     $arAsset = ArAsset::create([
                         'user_id' => auth()->id(),
-                        'name' => $request->asset_name,
-                        'file_path' => url('/ar-models/' . $filename),
+                        'name' => $finalAssetName,
+                        'file_path' => url('/3d/' . $filename),
                         'is_public' => true,
                     ]);
                     $qrCode->ar_asset_id = $arAsset->id;
@@ -102,12 +131,12 @@ public function store(Request $request)
                 elseif ($request->filled('selected_3d_id')) {
                     $qrCode->ar_asset_id = $request->selected_3d_id;
                 } else {
-                    throw new \Exception("Silakan pilih objek 3D dari library atau upload file .glb sendiri.");
+                    throw new \Exception("Pilih atau upload objek 3D terlebih dahulu.");
                 }
             }
 
             $qrCode->uuid = Str::uuid();
-            $qrUrl = url('/api/scan/' . $qrCode->uuid); 
+            $qrUrl = url('/scanner?id=' . $qrCode->uuid); 
             $qrImage = base64_encode(QrCode::format('svg')->size(300)->margin(2)->generate($qrUrl));
             $qrCode->qr_image_path = $qrImage;
 
@@ -135,27 +164,18 @@ public function store(Request $request)
 
     public function toggleStatus(QrCodeModel $qrCode)
     {
-        if ($qrCode->user_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
-        }
-
+        if ($qrCode->user_id !== Auth::id()) abort(403);
         $qrCode->status = $qrCode->status === 'Aktif' ? 'Nonaktif' : 'Aktif';
         $qrCode->save();
-
-        return back()->with('success', 'Status QR Code berhasil diubah.');
+        return back()->with('success', 'Status QR diubah.');
     }
 
     public function download(QrCodeModel $qrCode)
     {
-        if ($qrCode->user_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
-        }
-
+        if ($qrCode->user_id !== Auth::id()) abort(403);
         $identifier = $qrCode->uuid ?? $qrCode->id;
-        $apiUrl = url('/api/scan/' . $identifier);
-
+        $qrUrl = url('/scanner?id=' . $identifier);
         $imageContent = QrCode::size(500)->margin(2)->generate($apiUrl);
-
         $fileName = 'ScanYuk-AR-' . Str::slug($qrCode->title) . '.svg';
 
         return response($imageContent)

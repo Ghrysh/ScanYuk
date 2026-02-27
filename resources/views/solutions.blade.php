@@ -5,7 +5,7 @@
 <section class="w-full pt-24 pb-12 md:pt-32 md:pb-16 px-6 bg-white text-center">
     <div class="max-w-4xl mx-auto">
         <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight">
-            Solusi <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-indigo-600">By Industry</span>
+            Solusi <span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-indigo-600">Berdasarkan Industri</span>
         </h1>
         <p class="text-lg md:text-xl text-slate-500 leading-relaxed max-w-2xl mx-auto">
             ScanYuk dirancang untuk berbagai industri. Temukan solusi yang tepat untuk kebutuhan Anda.
@@ -25,7 +25,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
                     </svg>
                 </div>
-                <h3 class="text-2xl font-bold text-slate-900">Education</h3>
+                <h3 class="text-2xl font-bold text-slate-900">Pendidikan</h3>
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -57,7 +57,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                     </svg>
                 </div>
-                <h3 class="text-2xl font-bold text-slate-900">Retail</h3>
+                <h3 class="text-2xl font-bold text-slate-900">Ritel</h3>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
@@ -88,7 +88,7 @@
                          <path stroke-linecap="round" stroke-linejoin="round" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
                     </svg>
                 </div>
-                <h3 class="text-2xl font-bold text-slate-900">Hospitality & Tourism</h3>
+                <h3 class="text-2xl font-bold text-slate-900">Perhotelan & Pariwisata</h3>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
@@ -119,7 +119,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                     </svg>
                 </div>
-                <h3 class="text-2xl font-bold text-slate-900">Government</h3>
+                <h3 class="text-2xl font-bold text-slate-900">Pemerintah</h3>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
@@ -150,7 +150,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
-                <h3 class="text-2xl font-bold text-slate-900">Event Organizer</h3>
+                <h3 class="text-2xl font-bold text-slate-900">Penyelenggara Acara</h3>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
@@ -181,7 +181,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                     </svg>
                 </div>
-                <h3 class="text-2xl font-bold text-slate-900">Corporate Marketing</h3>
+                <h3 class="text-2xl font-bold text-slate-900">Pemasaran Korporasi</h3>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
