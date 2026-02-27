@@ -15,6 +15,33 @@ class QrCodeController extends Controller
 {
     public function create()
     {
+        try {
+            $allFiles = Storage::disk('s3')->allFiles();
+            
+            $glbFiles = array_filter($allFiles, function($file) {
+                return Str::endsWith(strtolower($file), '.glb');
+            });
+
+            foreach ($glbFiles as $file) {
+                $fileUrl = url('/' . ltrim($file, '/'));
+
+                $exists = ArAsset::where('file_path', $fileUrl)->exists();
+
+                if (!$exists) {
+                    $filename = basename($file);
+                    $cleanName = ucwords(str_replace(['-', '_', '.glb'], [' ', ' ', ''], $filename));
+
+                    ArAsset::create([
+                        'user_id' => auth()->id() ?? 1, 
+                        'name' => $cleanName,
+                        'file_path' => $fileUrl,
+                        'is_public' => true,
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+        }
+
         $library3dList = ArAsset::where('is_public', true)->get(['id', 'name', 'file_path as path'])->map(function($item) {
             if (empty($item->name)) {
                 $filename = basename($item->path);
@@ -34,7 +61,6 @@ class QrCodeController extends Controller
                 $musicList[] = ['name' => $cleanName, 'path' => $fileName];
             }
         } catch (\Exception $e) {
-            \Log::error('Gagal mengambil daftar musik dari MinIO: ' . $e->getMessage());
         }
 
         return view('dashboard.create-ar', compact('library3dList', 'musicList', 'templates'));
@@ -48,9 +74,7 @@ class QrCodeController extends Controller
                 'ar_type' => 'required|in:2d,3d',
                 'image' => 'required_if:ar_type,2d|image|mimes:jpeg,png,jpg|max:5120', 
                 'file_3d' => 'nullable|file|max:51200',
-                
-                'asset_name' => 'nullable|string|max:100', 
-                
+                'asset_name' => 'nullable|string|max:100',
                 'narration_mode' => 'required|in:text,audio',
                 'narration' => 'required_if:narration_mode,text|nullable|string',
                 'ai_voice' => 'nullable|string',
@@ -111,7 +135,8 @@ class QrCodeController extends Controller
                     $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
 
                     $fileContent = file_get_contents($file->getRealPath());
-                    $upload = Storage::disk('s3')->put('3d/' . $filename, $fileContent);
+                    
+                    $upload = Storage::disk('s3')->put('3D/' . $filename, $fileContent);
                     if (!$upload) throw new \Exception("Gagal menyimpan file 3D ke MinIO.");
 
                     $finalAssetName = $request->asset_name;
@@ -123,7 +148,7 @@ class QrCodeController extends Controller
                     $arAsset = ArAsset::create([
                         'user_id' => auth()->id(),
                         'name' => $finalAssetName,
-                        'file_path' => url('/3d/' . $filename),
+                        'file_path' => url('/3D/' . $filename),
                         'is_public' => true,
                     ]);
                     $qrCode->ar_asset_id = $arAsset->id;
@@ -136,7 +161,7 @@ class QrCodeController extends Controller
             }
 
             $qrCode->uuid = Str::uuid();
-            $qrUrl = url('/scanner?id=' . $qrCode->uuid); 
+            $qrUrl = url('/api/scan/' . $qrCode->uuid); 
             $qrImage = base64_encode(QrCode::format('svg')->size(300)->margin(2)->generate($qrUrl));
             $qrCode->qr_image_path = $qrImage;
 
@@ -174,7 +199,7 @@ class QrCodeController extends Controller
     {
         if ($qrCode->user_id !== Auth::id()) abort(403);
         $identifier = $qrCode->uuid ?? $qrCode->id;
-        $qrUrl = url('/scanner?id=' . $identifier);
+        $apiUrl = url('/api/scan/' . $identifier);
         $imageContent = QrCode::size(500)->margin(2)->generate($apiUrl);
         $fileName = 'ScanYuk-AR-' . Str::slug($qrCode->title) . '.svg';
 
