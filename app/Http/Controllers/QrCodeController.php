@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 class QrCodeController extends Controller
 {
-    public function create()
+public function create()
     {
         try {
             $allFiles = Storage::disk('s3')->allFiles();
@@ -23,24 +23,24 @@ class QrCodeController extends Controller
             });
 
             foreach ($glbFiles as $file) {
+
                 $fileUrl = Storage::disk('s3')->url($file);
 
                 $filename = basename($file);
                 $cleanName = preg_replace('/^[0-9]+_/', '', $filename);
                 $cleanName = ucwords(str_replace(['-', '_', '.glb'], [' ', ' ', ''], $cleanName));
 
-                $exists = ArAsset::where('file_path', $fileUrl)->orWhere('name', $cleanName)->exists();
-
-                if (!$exists) {
-                    ArAsset::create([
+                ArAsset::updateOrCreate(
+                    ['name' => $cleanName],
+                    [
                         'user_id' => auth()->id() ?? 1, 
-                        'name' => $cleanName,
                         'file_path' => $fileUrl,
                         'is_public' => true,
-                    ]);
-                }
+                    ]
+                );
             }
         } catch (\Exception $e) {
+
         }
 
         $library3dList = ArAsset::where('is_public', true)->get(['id', 'name', 'file_path as path'])->map(function($item) {
