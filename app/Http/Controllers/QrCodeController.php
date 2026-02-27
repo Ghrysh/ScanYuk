@@ -23,14 +23,15 @@ class QrCodeController extends Controller
             });
 
             foreach ($glbFiles as $file) {
-                $fileUrl = url('/' . ltrim($file, '/'));
+                $fileUrl = Storage::disk('s3')->url($file);
 
-                $exists = ArAsset::where('file_path', $fileUrl)->exists();
+                $filename = basename($file);
+                $cleanName = preg_replace('/^[0-9]+_/', '', $filename);
+                $cleanName = ucwords(str_replace(['-', '_', '.glb'], [' ', ' ', ''], $cleanName));
+
+                $exists = ArAsset::where('file_path', $fileUrl)->orWhere('name', $cleanName)->exists();
 
                 if (!$exists) {
-                    $filename = basename($file);
-                    $cleanName = ucwords(str_replace(['-', '_', '.glb'], [' ', ' ', ''], $filename));
-
                     ArAsset::create([
                         'user_id' => auth()->id() ?? 1, 
                         'name' => $cleanName,
@@ -45,10 +46,11 @@ class QrCodeController extends Controller
         $library3dList = ArAsset::where('is_public', true)->get(['id', 'name', 'file_path as path'])->map(function($item) {
             if (empty($item->name)) {
                 $filename = basename($item->path);
-                $item->name = ucwords(str_replace(['-', '_', '.glb'], [' ', ' ', ''], $filename));
+                $cleanName = preg_replace('/^[0-9]+_/', '', $filename);
+                $item->name = ucwords(str_replace(['-', '_', '.glb'], [' ', ' ', ''], $cleanName));
             }
             return $item;
-        });
+        })->unique('name')->values();
 
         $templates = ArTemplate::all();
 
@@ -74,7 +76,7 @@ class QrCodeController extends Controller
                 'ar_type' => 'required|in:2d,3d',
                 'image' => 'required_if:ar_type,2d|image|mimes:jpeg,png,jpg|max:5120', 
                 'file_3d' => 'nullable|file|max:51200',
-                'asset_name' => 'nullable|string|max:100',
+                'asset_name' => 'nullable|string|max:100', 
                 'narration_mode' => 'required|in:text,audio',
                 'narration' => 'required_if:narration_mode,text|nullable|string',
                 'ai_voice' => 'nullable|string',
@@ -117,7 +119,7 @@ class QrCodeController extends Controller
                 $uploadAudio = Storage::disk('s3')->put('custom_voices/' . $audioName, $audioContent);
                 if (!$uploadAudio) throw new \Exception("Gagal menyimpan rekaman ke MinIO.");
                 
-                $qrCode->custom_audio_path = url('/custom_voices/' . $audioName);
+                $qrCode->custom_audio_path = Storage::disk('s3')->url('custom_voices/' . $audioName);
                 $qrCode->narration = null;
                 $qrCode->ai_voice = null;
             } else {
@@ -135,20 +137,22 @@ class QrCodeController extends Controller
                     $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
 
                     $fileContent = file_get_contents($file->getRealPath());
-                    
                     $upload = Storage::disk('s3')->put('3D/' . $filename, $fileContent);
                     if (!$upload) throw new \Exception("Gagal menyimpan file 3D ke MinIO.");
+
+                    $fileUrl = Storage::disk('s3')->url('3D/' . $filename);
 
                     $finalAssetName = $request->asset_name;
                     if (empty($finalAssetName)) {
                         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-                        $finalAssetName = ucwords(str_replace(['-', '_'], ' ', $originalName));
+                        $cleanName = preg_replace('/^[0-9]+_/', '', $originalName);
+                        $finalAssetName = ucwords(str_replace(['-', '_'], ' ', $cleanName));
                     }
 
                     $arAsset = ArAsset::create([
                         'user_id' => auth()->id(),
                         'name' => $finalAssetName,
-                        'file_path' => url('/3D/' . $filename),
+                        'file_path' => $fileUrl,
                         'is_public' => true,
                     ]);
                     $qrCode->ar_asset_id = $arAsset->id;
@@ -161,7 +165,7 @@ class QrCodeController extends Controller
             }
 
             $qrCode->uuid = Str::uuid();
-            $qrUrl = url('/api/scan/' . $qrCode->uuid); 
+            $qrUrl = url('/scanner?id=' . $qrCode->uuid); 
             $qrImage = base64_encode(QrCode::format('svg')->size(300)->margin(2)->generate($qrUrl));
             $qrCode->qr_image_path = $qrImage;
 
