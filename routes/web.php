@@ -117,16 +117,22 @@ Route::get('/minio-proxy/{any}', function ($any) {
         abort(404, 'File tidak ditemukan di MinIO.');
     }
 
-    $headers = [
+    $mime = Str::endsWith(strtolower($any), '.glb') ? 'model/gltf-binary' : $disk->mimeType($any);
+    $size = $disk->size($any);
+
+    return response()->stream(function () use ($disk, $any) {
+        $stream = $disk->readStream($any);
+        fpassthru($stream);
+        if (is_resource($stream)) {
+            fclose($stream);
+        }
+    }, 200, [
+        'Content-Type' => $mime,
+        'Content-Length' => $size,
         'Access-Control-Allow-Origin' => '*',
-        'Cache-Control' => 'public, max-age=31536000, immutable'
-    ];
-
-    if (Str::endsWith(strtolower($any), '.glb')) {
-        $headers['Content-Type'] = 'model/gltf-binary';
-    }
-
-    return $disk->response($any, null, $headers);
+        'Cache-Control' => 'public, max-age=31536000, immutable',
+        'Accept-Ranges' => 'bytes'
+    ]);
 })->where('any', '.*')->name('minio.proxy');
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
