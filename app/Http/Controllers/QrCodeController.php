@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Storage;
 
 class QrCodeController extends Controller
 {
-public function create()
+    public function create()
     {
         try {
             $allFiles = Storage::disk('s3')->allFiles();
@@ -23,8 +23,7 @@ public function create()
             });
 
             foreach ($glbFiles as $file) {
-
-                $fileUrl = Storage::disk('s3')->url($file);
+                $fileUrl = url('/minio-proxy/' . ltrim($file, '/'));
 
                 $filename = basename($file);
                 $cleanName = preg_replace('/^[0-9]+_/', '', $filename);
@@ -40,7 +39,7 @@ public function create()
                 );
             }
         } catch (\Exception $e) {
-
+            // Error handling
         }
 
         $library3dList = ArAsset::where('is_public', true)->get(['id', 'name', 'file_path as path'])->map(function($item) {
@@ -119,7 +118,7 @@ public function create()
                 $uploadAudio = Storage::disk('s3')->put('custom_voices/' . $audioName, $audioContent);
                 if (!$uploadAudio) throw new \Exception("Gagal menyimpan rekaman ke MinIO.");
                 
-                $qrCode->custom_audio_path = Storage::disk('s3')->url('custom_voices/' . $audioName);
+                $qrCode->custom_audio_path = url('/minio-proxy/custom_voices/' . $audioName);
                 $qrCode->narration = null;
                 $qrCode->ai_voice = null;
             } else {
@@ -140,7 +139,7 @@ public function create()
                     $upload = Storage::disk('s3')->put('3D/' . $filename, $fileContent);
                     if (!$upload) throw new \Exception("Gagal menyimpan file 3D ke MinIO.");
 
-                    $fileUrl = Storage::disk('s3')->url('3D/' . $filename);
+                    $fileUrl = url('/minio-proxy/3D/' . $filename);
 
                     $finalAssetName = $request->asset_name;
                     if (empty($finalAssetName)) {
@@ -203,7 +202,7 @@ public function create()
     {
         if ($qrCode->user_id !== Auth::id()) abort(403);
         $identifier = $qrCode->uuid ?? $qrCode->id;
-        $apiUrl = url('/api/scan/' . $identifier);
+        $apiUrl = url('/scanner?id=' . $identifier);
         $imageContent = QrCode::size(500)->margin(2)->generate($apiUrl);
         $fileName = 'ScanYuk-AR-' . Str::slug($qrCode->title) . '.svg';
 
