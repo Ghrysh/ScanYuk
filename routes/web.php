@@ -110,21 +110,23 @@ Route::middleware(['auth'])->group(function () {
 
 });
 
-Route::get('/ar-models/{filename}', function ($filename) {
-    $internalUrl = "http://minio:9000/scanyuk-3d-assets/" . $filename;
+Route::get('/minio-proxy/{any}', function ($any) {
+    $disk = Storage::disk('s3');
+    
+    if (!$disk->exists($any)) {
+        abort(404, 'File tidak ditemukan di MinIO.');
+    }
 
-    return response()->stream(
-        function () use ($internalUrl) {
-            @readfile($internalUrl);
-        },
-        200,
-        [
-            'Content-Type' => 'model/gltf-binary',
-            'Access-Control-Allow-Origin' => '*',
-            'Cache-Control' => 'public, max-age=31536000, immutable',
-            'Accept-Ranges' => 'bytes',
-        ]
-    );
-})->name('ar.models');
+    $headers = [
+        'Access-Control-Allow-Origin' => '*',
+        'Cache-Control' => 'public, max-age=31536000, immutable'
+    ];
+
+    if (Str::endsWith(strtolower($any), '.glb')) {
+        $headers['Content-Type'] = 'model/gltf-binary';
+    }
+
+    return $disk->response($any, null, $headers);
+})->where('any', '.*')->name('minio.proxy');
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
