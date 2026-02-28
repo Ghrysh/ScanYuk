@@ -410,7 +410,7 @@
         </div>
     </main>
 
-    <script>
+<script>
         function arCreator() {
             return {
                 init() {
@@ -450,7 +450,7 @@
                 isGenerating: false, progress: 0, estimatedTime: 'Menghitung...', uploadError: null,
                 search3d: '', searchMusic: '', searchTemplate: '',
                 showModal: false, isFromTemplate: false,
-                previewData: { title: '', type: '', src: '', music: '', hasNarration: false },
+                previewData: { title: '', type: '', src: '', music: '', hasNarration: false, fullData: null },
                 
                 currentAudioPlayer: null, narrationPlayer: null, playingMusicPath: null,
 
@@ -458,6 +458,9 @@
                 musicList: @json($musicList),
                 templates: @json($templates),
 
+                // ==========================================
+                // SISTEM DOWNLOAD STREAMING PINTAR
+                // ==========================================
                 modelStates: {},
                 downloadQueue: [],
                 isBackgroundDownloading: false,
@@ -494,7 +497,6 @@
 
                 toggleDownload(id) {
                     let state = this.modelStates[id];
-                    
                     if (state.state === 'downloading') {
                         if (state.abortController) {
                             state.abortController.abort(); 
@@ -572,6 +574,127 @@
                     }
                 },
 
+                // ==========================================
+                // FUNGSI FILTER & UI YANG SEMPAT HILANG
+                // ==========================================
+                filtered3d() { return this.library3dList.filter(i => i.name.toLowerCase().includes(this.search3d.toLowerCase())); },
+                filteredMusic() { return this.musicList.filter(i => i.name.toLowerCase().includes(this.searchMusic.toLowerCase())); },
+                filteredTemplates() { return this.templates.filter(i => i.title.toLowerCase().includes(this.searchTemplate.toLowerCase()) || i.narration.toLowerCase().includes(this.searchTemplate.toLowerCase())); },
+
+                reset2d() { this.imageUrl2d = null; document.getElementById('image-upload').value = ''; },
+                reset3d() { 
+                    this.upload3dName = ''; this.upload3dDisplayName = ''; document.getElementById('glb-upload').value = ''; this.selectedLibrary3d = ''; 
+                    if (this.local3dUrl) { URL.revokeObjectURL(this.local3dUrl); this.local3dUrl = null; } 
+                },
+                handle2dUpload(e) {
+                    let file = e.target.files[0];
+                    if(!file) return;
+                    let reader = new FileReader();
+                    reader.readAsDataURL(file);
+                    reader.onload = e => this.imageUrl2d = e.target.result;
+                },
+                handle3dUpload(e) {
+                    let file = e.target.files[0];
+                    if(file) {
+                        this.upload3dName = file.name; this.selectedLibrary3d = '';
+                        if (this.local3dUrl) URL.revokeObjectURL(this.local3dUrl); 
+                        this.local3dUrl = URL.createObjectURL(file); 
+                    }
+                },
+                
+                handleBgmUpload(e) {
+                    let file = e.target.files[0];
+                    if(!file) return;
+                    this.isCustomBgm = true;
+                    this.selectedMusic = '';
+                    this.customBgmFile = file;
+                    if(this.customBgmUrl) URL.revokeObjectURL(this.customBgmUrl);
+                    this.customBgmUrl = URL.createObjectURL(file);
+                    this.previewBgm(this.customBgmUrl);
+                },
+                clearCustomBgm() {
+                    this.isCustomBgm = false;
+                    this.customBgmFile = null;
+                    if(this.customBgmUrl) URL.revokeObjectURL(this.customBgmUrl);
+                    this.customBgmUrl = null;
+                    document.getElementById('bgm-upload').value = '';
+                    this.bgmStart = 0; this.bgmEnd = 0; this.bgmDuration = 0;
+                    this.stopAllAudio();
+                },
+                clearMusic() {
+                    this.selectedMusic = '';
+                    this.clearCustomBgm();
+                },
+                selectLibraryMusic(path) {
+                    this.isCustomBgm = false;
+                    this.selectedMusic = path;
+                    this.clearCustomBgm();
+                    this.selectedMusic = path;
+                    this.previewBgm('/minio-proxy/bg_sounds/' + path);
+                },
+
+                submitForm(e) {
+                    if (this.narrationMode === 'audio' && !this.recordedAudioBlob && !this.narrationText) {
+                         if(!confirm('Anda memilih mode rekam suara tapi belum merekam. Lanjutkan tanpa suara?')) return;
+                    }
+                    this.isGenerating = true; this.progress = 0; this.uploadError = null;
+                    let formData = new FormData(e.target);
+                    
+                    if (this.narrationMode === 'audio' && this.recordedAudioBlob) {
+                        let mime = this.recordedAudioBlob.type.toLowerCase();
+                        let ext = mime.includes('mp4') ? 'mp4' : (mime.includes('ogg') ? 'ogg' : 'webm');
+                        formData.append('custom_audio', this.recordedAudioBlob, 'rekaman.' + ext);
+                    }
+                    
+                    let xhr = new XMLHttpRequest();
+                    xhr.open('POST', e.target.action);
+                    xhr.setRequestHeader('Accept', 'application/json');
+                    let startTime = Date.now();
+
+                    xhr.upload.addEventListener('progress', (evt) => {
+                        if (evt.lengthComputable) {
+                            this.progress = Math.round((evt.loaded / evt.total) * 90);
+                            let timeElapsed = (Date.now() - startTime) / 1000; 
+                            let secondsRemaining = Math.round((evt.total - evt.loaded) / (evt.loaded / timeElapsed));
+                            if (secondsRemaining > 60) this.estimatedTime = Math.floor(secondsRemaining / 60) + ' m ' + (secondsRemaining % 60) + ' d';
+                            else if (secondsRemaining > 0) this.estimatedTime = secondsRemaining + ' d tersisa';
+                            else this.estimatedTime = 'Menyimpan...';
+                        }
+                    });
+
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            this.progress = 100; this.estimatedTime = 'Selesai!';
+                            setTimeout(() => { window.location.href = JSON.parse(xhr.responseText).redirect_url; }, 500);
+                        } else {
+                            this.isGenerating = false;
+                            try { this.uploadError = JSON.parse(xhr.responseText).error || "Gagal membuat AR"; } 
+                            catch (err) { this.uploadError = "Terjadi kesalahan server (Error " + xhr.status + ")."; }
+                        }
+                    };
+                    xhr.onerror = () => { this.isGenerating = false; this.uploadError = "Koneksi terputus."; };
+                    xhr.send(formData);
+                },
+
+                previewTemplate(tpl) {
+                    this.isFromTemplate = true;
+                    this.previewData = { title: tpl.title, type: tpl.ar_type, src: tpl.file_path, music: tpl.bgm_path, hasNarration: !!tpl.narration, fullData: tpl };
+                    this.showModal = true;
+                    if(tpl.bgm_path) this.previewBgm('/minio-proxy/bg_sounds/' + tpl.bgm_path);
+                    this.playVoice(tpl.narration, null, null);
+                },
+                useTemplate() {
+                    let tpl = this.previewData.fullData;
+                    this.title = tpl.title; this.arType = tpl.ar_type; this.narrationText = tpl.narration; this.selectedMusic = tpl.bgm_path;
+                    this.narrationMode = 'text';
+                    if(tpl.ar_type === '2d') this.imageUrl2d = tpl.file_path;
+                    else { let matched3d = this.library3dList.find(item => item.path === tpl.file_path); if(matched3d) this.selectedLibrary3d = matched3d.id; }
+                    this.closeModal(); this.mainTab = 'custom'; window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+
+                // ==========================================
+                // AUDIO & NARRATION LOGIC
+                // ==========================================
                 previewBgm(src) {
                     this.stopAllAudio();
                     this.currentAudioPlayer = new Audio(src);
@@ -601,6 +724,7 @@
                         }
                     });
                 },
+                
                 updateVolume() { if(this.currentAudioPlayer) this.currentAudioPlayer.volume = this.bgmVolume; },
 
                 updateCrop(type) {
