@@ -179,19 +179,11 @@
                                             </div>
 
                                             <template x-if="modelStates[item.id]?.state === 'loaded'">
-                                                <div x-show="isPreviewLoading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/80">
-                                                    <div class="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                                                    <p class="text-white font-bold text-sm mb-2">Memuat Pratinjau...</p>
-                                                    <div class="w-48 bg-slate-700 rounded-full h-2">
-                                                        <div class="bg-teal-500 h-2 rounded-full" :style="`width: ${previewProgress}%`"></div>
-                                                    </div>
-                                                </div>
                                                 <model-viewer 
                                                     :src="modelStates[item.id].url" 
                                                     class="w-full h-full" 
                                                     disable-zoom 
                                                     disable-pan 
-                                                    camera-controls="false"
                                                     shadow-intensity="0" 
                                                     exposure="1"
                                                     environment-image="neutral" 
@@ -391,14 +383,8 @@
                         <div class="h-40 bg-slate-100 flex items-center justify-center relative overflow-hidden pointer-events-none-children">
                             <template x-if="tpl.ar_type === '2d'"><img :src="tpl.file_path" class="w-full h-full object-cover"></template>
                             <template x-if="tpl.ar_type === '3d'">
-                            <div x-show="isPreviewLoading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/80">
-                                <div class="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                                <p class="text-white font-bold text-sm mb-2">Memuat Pratinjau...</p>
-                                <div class="w-48 bg-slate-700 rounded-full h-2">
-                                    <div class="bg-teal-500 h-2 rounded-full" :style="`width: ${previewProgress}%`"></div>
-                                </div>
-                            </div>    
-                            <model-viewer :src="tpl.file_path" class="w-full h-full" disable-zoom disable-pan auto-rotate exposure="1.2"></model-viewer></template>
+                                <model-viewer :src="tpl.file_path" class="w-full h-full" disable-zoom disable-pan auto-rotate exposure="1.2"></model-viewer>
+                            </template>
                             <div class="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors"></div>
                             <span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-bold shadow-sm" :class="tpl.ar_type === '3d' ? 'bg-indigo-600 text-white' : 'bg-teal-500 text-white'" x-text="'AR ' + tpl.ar_type.toUpperCase()"></span>
                         </div>
@@ -435,14 +421,16 @@
                     <div class="w-full bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-inner border border-slate-200" style="height: 300px;">
                         <template x-if="previewData.type === '2d'"><img :src="previewData.src" class="max-w-full max-h-full object-contain"></template>
                         <template x-if="previewData.type === '3d'">
-                        <div x-show="isPreviewLoading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/80">
-                            <div class="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                            <p class="text-white font-bold text-sm mb-2">Memuat Pratinjau...</p>
-                            <div class="w-48 bg-slate-700 rounded-full h-2">
-                                <div class="bg-teal-500 h-2 rounded-full" :style="`width: ${previewProgress}%`"></div>
+                            <div class="w-full h-full relative"> <div x-show="isPreviewLoading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/80">
+                                    <div class="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                                    <p class="text-white font-bold text-sm mb-2">Memuat Pratinjau...</p>
+                                    <div class="w-48 bg-slate-700 rounded-full h-2">
+                                        <div class="bg-teal-500 h-2 rounded-full" :style="`width: ${previewProgress}%`"></div>
+                                    </div>
+                                </div>    
+                                <model-viewer :src="previewData.src" auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer>
                             </div>
-                        </div>    
-                        <model-viewer :src="previewData.src" auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer></template>
+                        </template>
 
                         <div class="absolute bottom-4 left-4 flex gap-2">
                             <span x-show="previewData.music" class="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg> BGM On</span>
