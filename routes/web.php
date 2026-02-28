@@ -111,40 +111,37 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/minio-proxy/{any}', function ($any) {
-    $cleanPath = urldecode($any);
+    $disk = Storage::disk('s3');
 
-    $localPath = public_path('scanyuk_cache/' . $cleanPath);
-
-    if (!file_exists($localPath)) {
-        $disk = Storage::disk('s3');
-
-        $targetMinioPath = $disk->exists($cleanPath) ? $cleanPath : $any;
-
+    $targetMinioPath = $any;
+    if (!$disk->exists($targetMinioPath)) {
+        $targetMinioPath = urldecode($any);
         if (!$disk->exists($targetMinioPath)) {
-            abort(404, 'File tidak ditemukan di MinIO.');
-        }
-
-        $dir = dirname($localPath);
-        if (!is_dir($dir)) {
-            mkdir($dir, 0755, true);
-        }
-
-        $readStream = $disk->readStream($targetMinioPath);
-        $writeStream = fopen($localPath, 'w');
-
-        if ($readStream && $writeStream) {
-            stream_copy_to_stream($readStream, $writeStream);
-            fclose($writeStream);
-            if (is_resource($readStream)) fclose($readStream);
-        } else {
-            abort(500, 'Gagal memproses file dari MinIO');
+            $targetMinioPath = str_replace('+', ' ', $targetMinioPath);
+            if (!$disk->exists($targetMinioPath)) {
+                abort(404, 'File tidak ditemukan di MinIO.');
+            }
         }
     }
 
-    $encodedSegments = array_map('rawurlencode', explode('/', $cleanPath));
-    $safeUrlPath = implode('/', $encodedSegments);
+    $ext = pathinfo($targetMinioPath, PATHINFO_EXTENSION);
+    $safeFileName = md5($targetMinioPath) . '.' . ($ext ?: 'glb');
+    $localPath = public_path('scanyuk_cache/' . $safeFileName);
 
-    return redirect(url('/scanyuk_cache/' . $safeUrlPath));
+    if (!file_exists($localPath)) {
+        $dir = dirname($localPath);
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+
+        $stream = $disk->readStream($targetMinioPath);
+        if ($stream) {
+            file_put_contents($localPath, $stream);
+            if (is_resource($stream)) fclose($stream);
+        } else {
+            abort(500, 'Gagal membaca stream dari MinIO');
+        }
+    }
+
+    return redirect(url('/scanyuk_cache/' . $safeFileName));
 })->where('any', '.*')->name('minio.proxy');
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
