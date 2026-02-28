@@ -49,20 +49,27 @@ class PaymentController extends Controller
         $requestBodyHash = hash('sha256', $jsonBody);
         $stringToSign = "POST:" . $va . ":" . $requestBodyHash . ":" . $apiKey;
         $signature = hash_hmac('sha256', $stringToSign, $apiKey);
+        $timestamp = date('YmdHis');
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'signature' => $signature,
             'va' => $va,
+            'timestamp' => $timestamp
         ])->post($url, $body);
 
         $resData = $response->json();
 
-        if ($response->successful() && $resData['Status'] == 200) {
+        if ($response->successful() && isset($resData['Status']) && $resData['Status'] == 200) {
             return redirect($resData['Data']['Url']);
         }
 
-        return back()->withErrors(['error' => 'Gagal terhubung ke gateway pembayaran. Silakan coba lagi.']);
+        dd([
+            'message' => 'GAGAL MENGHUBUNGI IPAYMU!',
+            'Pesan dari iPaymu' => $resData, 
+            'Cek VA Kamu' => $va, 
+            'Cek API Key' => $apiKey
+        ]);
     }
 
     public function callback(Request $request)
