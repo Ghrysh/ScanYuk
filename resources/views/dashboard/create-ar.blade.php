@@ -115,21 +115,25 @@
                             </div>
                             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-72 overflow-y-auto p-1">
                                 <template x-for="item in filtered3d()" :key="item.id">
-                                    <label class="flex flex-col bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden relative group" :class="selectedLibrary3d === item.id ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : ''">
+                                    <label class="flex flex-col bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden" :class="selectedLibrary3d === item.id ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : ''">
                                         
-                                        <div class="h-24 bg-slate-50 flex flex-col items-center justify-center text-slate-400 group-hover:text-teal-500 transition-colors">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mb-1 drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.27 6.96L12 12l8.73-5.04M12 22.08V12" />
-                                            </svg>
-                                            <span class="text-[10px] font-bold uppercase tracking-wider">Pilih Model</span>
+                                        <div class="h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center">
+                                            <model-viewer 
+                                                :src="item.path" 
+                                                class="w-full h-full" 
+                                                disable-zoom 
+                                                disable-pan 
+                                                camera-controls="false"
+                                                shadow-intensity="0" 
+                                                exposure="0.9"
+                                                loading="lazy">
+                                            </model-viewer>
                                         </div>
-
-                                        <div class="p-3 border-t border-slate-100 flex items-start gap-2 bg-white">
+                                        
+                                        <div class="p-3 border-t border-slate-100 flex items-start gap-2">
                                             <input type="radio" x-model="selectedLibrary3d" :value="item.id" class="mt-0.5 text-teal-500 focus:ring-teal-500" :disabled="upload3dName !== ''">
                                             <span class="text-xs font-bold text-slate-700 leading-tight line-clamp-2" x-text="item.name"></span>
                                         </div>
-                                        
                                     </label>
                                 </template>
                             </div>
