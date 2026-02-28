@@ -111,21 +111,40 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/minio-proxy/{any}', function ($any) {
-    $localPath = public_path('scanyuk_cache/' . $any);
-    
+    $cleanPath = urldecode($any);
+
+    $localPath = public_path('scanyuk_cache/' . $cleanPath);
+
     if (!file_exists($localPath)) {
         $disk = Storage::disk('s3');
-        if (!$disk->exists($any)) abort(404, 'File tidak ditemukan di MinIO.');
-        
-        $dir = dirname($localPath);
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
 
-        file_put_contents($localPath, $disk->get($any));
+        $targetMinioPath = $disk->exists($cleanPath) ? $cleanPath : $any;
+
+        if (!$disk->exists($targetMinioPath)) {
+            abort(404, 'File tidak ditemukan di MinIO.');
+        }
+
+        $dir = dirname($localPath);
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $readStream = $disk->readStream($targetMinioPath);
+        $writeStream = fopen($localPath, 'w');
+
+        if ($readStream && $writeStream) {
+            stream_copy_to_stream($readStream, $writeStream);
+            fclose($writeStream);
+            if (is_resource($readStream)) fclose($readStream);
+        } else {
+            abort(500, 'Gagal memproses file dari MinIO');
+        }
     }
 
-    $encodedPath = implode('/', array_map('rawurlencode', explode('/', $any)));
+    $encodedSegments = array_map('rawurlencode', explode('/', $cleanPath));
+    $safeUrlPath = implode('/', $encodedSegments);
 
-    return redirect(url('/scanyuk_cache/' . $encodedPath));
+    return redirect(url('/scanyuk_cache/' . $safeUrlPath));
 })->where('any', '.*')->name('minio.proxy');
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
