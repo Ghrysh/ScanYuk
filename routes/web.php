@@ -9,6 +9,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\Api\ScanController;
+use App\Http\Controllers\PaymentController;
 
 Route::get('/', function () {
     return view('home');
