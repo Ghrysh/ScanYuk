@@ -21,7 +21,7 @@ class AdminController extends Controller
         
         $totalScans = User::sum('scan'); 
         
-        $totalRevenue = Transaction::where('status', 'Success')->sum('amount');
+        $totalRevenue = Transaction::where('status', 'Paid')->sum('amount');
 
         return view('admin.dashboard', compact(
             'packages', 

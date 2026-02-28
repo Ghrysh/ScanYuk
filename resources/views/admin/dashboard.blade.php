@@ -356,14 +356,16 @@
                         <td class="px-6 py-4 text-slate-900">{{ $txn->user->name }}</td>
                         <td class="px-6 py-4">
                             <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                {{ $txn->package->name == 'Starter' ? 'bg-teal-50 text-teal-600' : 
-                                ($txn->package->name == 'Professional' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600') }}">
+                                {{ strtolower($txn->package->name) == 'pemula' ? 'bg-teal-50 text-teal-600' : 
+                                (strtolower($txn->package->name) == 'profesional' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600') }}">
                                 {{ $txn->package->name }}
                             </span>
                         </td>
                         <td class="px-6 py-4 font-bold text-slate-900">Rp{{ number_format($txn->amount, 0, ',', '.') }}</td>
                         <td class="px-6 py-4">
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold {{ $txn->status == 'Success' ? 'bg-teal-100 text-teal-700' : 'bg-purple-100 text-purple-700' }}">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold 
+                                {{ $txn->status == 'Paid' ? 'bg-teal-100 text-teal-700' : 
+                                ($txn->status == 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">
                                 {{ $txn->status }}
                             </span>
                         </td>

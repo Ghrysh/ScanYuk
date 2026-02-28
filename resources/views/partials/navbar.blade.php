@@ -72,6 +72,9 @@
                     <span class="text-sm font-medium text-slate-600">
                         Hi, {{ Auth::user()->name }}
                     </span>
+                    <a href="{{ Auth::user()->role === 'admin' ? route('admin.dashboard') : route('user.dashboard') }}" class="px-4 py-2 rounded-lg bg-teal-50 text-teal-600 text-sm font-bold hover:bg-teal-100 transition-colors">
+                        Dashboard
+                    </a>
                     <form action="{{ route('logout') }}" method="POST" class="inline">
                         @csrf
                         <button type="submit" class="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 text-sm font-medium hover:bg-slate-50 hover:text-red-600 transition-colors">

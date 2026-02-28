@@ -14,7 +14,7 @@
     $scanPercent = $scanLimit > 0 ? min(($user->scan / $scanLimit) * 100, 100) : 0;
 @endphp
 
-<div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-10" x-data="{ showPackages: false, showLimitModal: false }">
+<div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-10" x-data="{ showPackages: false, showLimitModal: false, showWarningModal: false, selectedPkg: null }">
     
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div>
@@ -27,10 +27,17 @@
                 Upgrade Paket
             </button>
             @if($user->image >= $imgLimit)
-                <button @click="showLimitModal = true" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl btn-gradient text-white font-semibold text-sm transition-colors shadow-sm shadow-indigo-200 cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
-                    Buat AR
-                </button>
+                @if($user->role === 'business')
+                    <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 font-semibold text-sm hover:bg-amber-100 transition-colors shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                        Hubungi Tim Penjualan
+                    </a>
+                @else
+                    <button @click="showLimitModal = true" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl btn-gradient text-white font-semibold text-sm transition-colors shadow-sm cursor-pointer">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                        Buat AR
+                    </button>
+                @endif
             @else
                 <a href="{{ route('user.ar.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl btn-gradient text-white font-semibold text-sm transition-colors shadow-sm shadow-indigo-200">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
@@ -82,13 +89,9 @@
                             Paket Aktif
                         </div>
                     @else
-                        <form action="{{ route('payment.checkout') }}" method="POST" class="w-full">
-                            @csrf
-                            <input type="hidden" name="package_id" value="{{ $pkg->id }}">
-                            <button type="submit" class="w-full py-2.5 rounded-lg btn-gradient text-white font-bold text-sm transition-colors">
-                                Bayar
-                            </button>
-                        </form>
+                        <button type="button" @click="selectedPkg = {{ $pkg->id }}; showWarningModal = true" class="w-full py-2.5 rounded-lg btn-gradient text-white font-bold text-sm transition-colors">
+                            Bayar
+                        </button>
                     @endif
                 </div>
                 @endforeach
@@ -220,20 +223,47 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
             </div>
             
-            <h3 class="font-extrabold text-slate-900 text-2xl mb-2">Kuota AR Habis!</h3>
+            <h3 class="font-extrabold text-slate-900 text-2xl mb-2">
+                {{ $user->role === 'business' ? 'Limit Tertinggi Tercapai!' : 'Kuota AR Habis!' }}
+            </h3>
             <p class="text-sm text-slate-500 mb-8 leading-relaxed">
-                Anda telah mencapai batas maksimal pembuatan AR untuk paket saat ini <span class="font-bold text-slate-700">({{ $imgLimit }} AR)</span>. Silakan upgrade paket Anda untuk membuat lebih banyak AR tanpa batas.
+                Anda telah mencapai batas maksimal {{ $imgLimit }} AR. 
+                @if($user->role === 'business')
+                    Untuk penawaran limit tanpa batas, silakan hubungi tim kami untuk membuat paket Custom.
+                @else
+                    Silakan upgrade paket Anda untuk mereset dan membuat lebih banyak AR.
+                @endif
             </p>
             
             <div class="w-full space-y-3">
-                <button @click="showLimitModal = false; showPackages = true; setTimeout(() => { window.scrollTo({ top: document.getElementById('packages-section').offsetTop - 20, behavior: 'smooth' }) }, 300)" class="w-full py-3.5 px-4 rounded-xl btn-gradient text-white font-bold shadow-lg shadow-indigo-200 flex items-center justify-center gap-2 hover:scale-[1.02] transition-transform">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                    Lihat Pilihan Paket
-                </button>
-                <button @click="showLimitModal = false" class="w-full py-3.5 px-4 rounded-xl border-2 border-slate-200 text-slate-500 font-bold hover:bg-slate-50 hover:text-slate-700 transition-colors">
-                    Nanti Saja
-                </button>
+                @if($user->role === 'business')
+                    <a href="{{ route('contact') }}" class="w-full block py-3.5 px-4 rounded-xl btn-gradient text-white font-bold shadow-lg shadow-indigo-200">Hubungi Tim Kami</a>
+                @else
+                    <button @click="showLimitModal = false; showPackages = true;..." class="w-full block py-3.5 px-4 rounded-xl btn-gradient text-white font-bold shadow-lg shadow-indigo-200">Lihat Pilihan Paket</button>
+                @endif
+                <button @click="showLimitModal = false" class="w-full py-3.5 px-4 rounded-xl border-2 border-slate-200 text-slate-500 font-bold hover:bg-slate-50 hover:text-slate-700 transition-colors">Nanti Saja</button>
             </div>
+        </div>
+    </div>
+    <div x-show="showWarningModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center">
+        <div x-show="showWarningModal" x-transition.opacity class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="showWarningModal = false"></div>
+        <div x-show="showWarningModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 p-8 text-center">
+            
+            <div class="w-20 h-20 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-5 border-4 border-amber-100">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            
+            <h3 class="font-extrabold text-slate-900 text-xl mb-2">Peringatan Penting!</h3>
+            <p class="text-sm text-slate-600 mb-6 bg-amber-50 border border-amber-100 p-4 rounded-xl text-left">
+                Membeli paket baru (meskipun paket yang sama) akan <strong>MENGHAPUS & MERESET</strong> seluruh data QR Code Anda saat ini ke 0. Harap <span class="font-bold">Download</span> QR Code Anda jika masih ingin menggunakannya!
+            </p>
+            
+            <form action="{{ route('payment.checkout') }}" method="POST" class="w-full flex gap-3">
+                @csrf
+                <input type="hidden" name="package_id" x-bind:value="selectedPkg">
+                <button type="button" @click="showWarningModal = false" class="w-1/2 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors">Batal</button>
+                <button type="submit" class="w-1/2 py-3 rounded-xl btn-gradient text-white font-bold transition-colors shadow-lg">Lanjut Bayar</button>
+            </form>
         </div>
     </div>
 </div>

@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
+use App\Mail\PaymentSuccessMail;
+use Illuminate\Support\Facades\Mail;
 
 class PaymentController extends Controller
 {
@@ -72,11 +74,16 @@ class PaymentController extends Controller
         ]);
     }
 
+    public function autoCheckout($package_id)
+    {
+        $request = new Request(['package_id' => $package_id]);
+        return $this->checkout($request);
+    }
+
     public function callback(Request $request)
     {
         $status_code = $request->status_code;
         $transactionId = $request->reference_id;
-
         $transaction = Transaction::find($transactionId);
 
         if ($transaction) {
@@ -86,26 +93,18 @@ class PaymentController extends Controller
                 $user = User::find($transaction->user_id);
                 $package = PricingPackage::find($transaction->pricing_package_id);
                 
-                $roleMap = [
-                    'Bisnis' => User::ROLE_BUSINESS,
-                    'Profesional' => User::ROLE_PROFESSIONAL,
-                    'Pemula' => User::ROLE_STARTER,
-                    'Gratis' => User::ROLE_FREE
-                ];
-
+                $roleMap = ['Bisnis' => User::ROLE_BUSINESS, 'Profesional' => User::ROLE_PROFESSIONAL, 'Pemula' => User::ROLE_STARTER, 'Gratis' => User::ROLE_FREE];
                 $newRole = $roleMap[$package->name] ?? strtolower($package->name);
 
-                $user->update([
-                    'role' => $newRole,
-                    'image' => 0,
-                    'voice' => 0,
-                    'scan' => 0
-                ]);
+                \App\Models\QrCode::where('user_id', $user->id)->delete();
+                $user->update(['role' => $newRole, 'image' => 0, 'voice' => 0, 'scan' => 0]);
+
+                Mail::to($user->email)->send(new PaymentSuccessMail($user, $package, $transaction));
+
             } elseif ($status_code == -1 || strtolower($request->status) == 'expired') {
                 $transaction->update(['status' => 'Failed']);
             }
         }
-
         return response()->json(['status' => 'OK']);
     }
 }

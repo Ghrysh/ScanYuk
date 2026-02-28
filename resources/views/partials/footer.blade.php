@@ -16,7 +16,7 @@
                 </p>
                 
                 <div class="text-sm text-slate-500 leading-relaxed">
-                    <p class="font-bold text-slate-700 mb-1">PT Berkah Teknologi Terkini</p>
+                    <p class="font-bold text-slate-700 mb-1">PT Berkah Teknologi Terdepan</p>
                     <p>Gedung Jaya Lomba 5 unit A.6</p>
                     <p>Jl. M H Thamrin No.12, RT.002/RW.001</p>
                     <p>Kb. Sirih, Kec. Menteng</p>
@@ -60,7 +60,7 @@
         </div>
 
         <div class="border-t border-slate-200 pt-6 md:pt-8 flex flex-col md:flex-row justify-between items-center text-xs md:text-sm text-slate-500 gap-4 text-center md:text-left">
-            <p>© 2026 ScanYuk — PT Berkah Teknologi Terkini. Hak cipta dilindungi.</p>
+            <p>© 2026 ScanYuk — PT Berkah Teknologi Terdepan. Hak cipta dilindungi.</p>
             <div class="flex flex-wrap justify-center gap-4 md:gap-6">
                 <a href="{{ route('terms') }}" class="hover:text-teal-600 transition-colors">Syarat & Ketentuan</a>
                 <a href="{{ route('refund-policy') }}" class="hover:text-teal-600 transition-colors">Kebijakan Pengembalian</a>

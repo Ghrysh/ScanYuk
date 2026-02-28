@@ -16,7 +16,7 @@
         <div class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
             <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 mb-4 tracking-tight">1. Pendahuluan</h2>
             <p class="text-sm md:text-[15px] text-slate-500 leading-relaxed font-medium">
-                Selamat datang di ScanYuk, layanan yang dikelola oleh PT Berkah Teknologi Terkini. Dengan mengakses dan menggunakan platform ScanYuk, Anda menyetujui untuk terikat oleh Syarat & Ketentuan ini. Jika Anda tidak menyetujui ketentuan ini, mohon untuk tidak menggunakan layanan kami.
+                Selamat datang di ScanYuk, layanan yang dikelola oleh PT Berkah Teknologi Terdepan. Dengan mengakses dan menggunakan platform ScanYuk, Anda menyetujui untuk terikat oleh Syarat & Ketentuan ini. Jika Anda tidak menyetujui ketentuan ini, mohon untuk tidak menggunakan layanan kami.
             </p>
         </div>
 
@@ -67,7 +67,7 @@
             <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 mb-4 tracking-tight">6. Hak Kekayaan Intelektual</h2>
             <ul class="list-disc pl-5 text-sm md:text-[15px] text-slate-500 leading-relaxed font-medium space-y-3 marker:text-slate-400">
                 <li>Pengguna memiliki hak penuh atas Konten AR yang mereka buat dan unggah.</li>
-                <li>Platform ScanYuk, termasuk desain, kode, dan merek dagang, adalah milik PT Berkah Teknologi Terkini.</li>
+                <li>Platform ScanYuk, termasuk desain, kode, dan merek dagang, adalah milik PT Berkah Teknologi Terdepan.</li>
                 <li>Pengguna memberikan lisensi terbatas kepada kami untuk menampilkan Konten AR melalui fitur pemindaian.</li>
             </ul>
         </div>
@@ -96,7 +96,7 @@
         <div class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
             <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 mb-4 tracking-tight">10. Kontak</h2>
             <p class="text-sm md:text-[15px] text-slate-500 leading-relaxed font-medium">
-                PT Berkah Teknologi Terkini<br>
+                PT Berkah Teknologi Terdepan<br>
                 Gedung Jaya Lomba 5 unit A.6<br>
                 Jl. M H Thamrin No.12, RT.002/RW.001<br>
                 Kb. Sirih, Kec. Menteng, Jakarta Pusat 10340

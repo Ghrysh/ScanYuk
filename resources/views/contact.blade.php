@@ -99,7 +99,7 @@
                         </div>
                         <div>
                             <h3 class="text-sm font-bold text-slate-900 mb-0.5">Perusahaan</h3>
-                            <p class="text-[13px] text-slate-500 font-medium">PT Berkah Teknologi Terkini</p>
+                            <p class="text-[13px] text-slate-500 font-medium">PT Berkah Teknologi Terdepan</p>
                         </div>
                     </div>
 

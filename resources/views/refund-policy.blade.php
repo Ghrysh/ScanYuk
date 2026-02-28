@@ -16,7 +16,7 @@
         <div class="bg-white rounded-2xl border border-slate-200 p-6 md:p-8 shadow-sm">
             <h2 class="text-[17px] md:text-[19px] font-bold text-slate-900 mb-4 tracking-tight">1. Ketentuan Umum</h2>
             <p class="text-sm md:text-[15px] text-slate-500 leading-relaxed font-medium">
-                PT Berkah Teknologi Terkini ("Kami") berkomitmen untuk memberikan layanan terbaik kepada seluruh pengguna ScanYuk. Kebijakan pengembalian dana ini mengatur prosedur dan ketentuan pengembalian dana atas pembelian paket layanan di platform ScanYuk.
+                PT Berkah Teknologi Terdepan ("Kami") berkomitmen untuk memberikan layanan terbaik kepada seluruh pengguna ScanYuk. Kebijakan pengembalian dana ini mengatur prosedur dan ketentuan pengembalian dana atas pembelian paket layanan di platform ScanYuk.
             </p>
         </div>
 
