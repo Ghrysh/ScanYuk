@@ -173,7 +173,7 @@
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-slate-200">
+<div class="pt-4 border-t border-slate-200">
                     <label class="block text-sm font-bold text-slate-900 mb-4">Background Music / BGM (Opsional)</label>
                     
                     <div class="mb-4 p-4 border border-slate-200 rounded-xl bg-white shadow-sm" :class="selectedMusic !== '' ? 'opacity-50 grayscale' : ''">
@@ -195,56 +195,81 @@
                         <input type="text" x-model="searchMusic" placeholder="Cari dari Library (misal: ramadhan)..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-indigo-500 outline-none">
                     </div>
 
-                    <div class="max-h-48 overflow-y-auto no-scrollbar grid grid-cols-1 md:grid-cols-2 gap-2" :class="isCustomBgm ? 'opacity-50 grayscale pointer-events-none' : ''">
-                        <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:border-indigo-500" :class="selectedMusic === '' && !isCustomBgm ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : ''">
+                    <div class="space-y-2 max-h-56 overflow-y-auto pr-2 custom-scrollbar" :class="isCustomBgm ? 'opacity-50 grayscale pointer-events-none' : ''">
+                        <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-500" :class="selectedMusic === '' && !isCustomBgm ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : ''">
                             <input type="radio" x-model="selectedMusic" value="" @change="clearMusic()" class="text-indigo-600 focus:ring-indigo-500">
-                            <span class="text-sm font-medium text-slate-700">Tanpa Musik Latar</span>
+                            <span class="text-sm font-bold text-slate-700">Tanpa Musik Latar</span>
                         </label>
-                        
+
                         <template x-for="music in filteredMusic()" :key="music.path">
-                            <div class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:border-indigo-500 transition-colors" :class="selectedMusic === music.path ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : ''">
-                                <label class="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
-                                    <input type="radio" :value="music.path" x-model="selectedMusic" @change="selectLibraryMusic(music.path)" class="text-indigo-600 focus:ring-indigo-500 flex-shrink-0">
-                                    <span class="text-sm font-medium text-slate-700 truncate" x-text="music.name"></span>
-                                </label>
-                                <button type="button" @click="toggleAudio(music.path)" class="p-1.5 ml-2 text-slate-400 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-100 rounded-full transition-colors flex-shrink-0">
-                                    <svg x-show="playingMusicPath !== ('/bg_sounds/' + music.path)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
-                                    <svg x-show="playingMusicPath === ('/bg_sounds/' + music.path)" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
-                                </button>
+                            <div @click="selectAndPlayMusic(music)" 
+                                 class="flex items-center justify-between p-3 bg-white border rounded-xl cursor-pointer transition-all group"
+                                 :class="selectedMusic === music.path ? 'border-teal-500 bg-teal-50/50 ring-1 ring-teal-500 shadow-sm' : 'border-slate-200 hover:border-teal-300 hover:shadow-sm'">
+                                
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center text-teal-500 group-hover:scale-105 transition-transform">
+                                        <svg x-show="playingMusicPath !== '/minio-proxy/bg_sounds/' + music.path" class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                                        <div x-show="playingMusicPath === '/minio-proxy/bg_sounds/' + music.path" class="flex items-end gap-0.5 h-4">
+                                            <div class="w-1 bg-teal-500 animate-[bounce_1s_infinite] rounded-t-sm" style="height: 100%"></div>
+                                            <div class="w-1 bg-teal-500 animate-[bounce_1s_infinite] rounded-t-sm" style="height: 60%; animation-delay: 0.2s"></div>
+                                            <div class="w-1 bg-teal-500 animate-[bounce_1s_infinite] rounded-t-sm" style="height: 80%; animation-delay: 0.4s"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-sm font-bold text-slate-700" x-text="music.name"></span>
+                                        <span class="text-[10px]" :class="playingMusicPath === '/minio-proxy/bg_sounds/' + music.path ? 'text-teal-600 font-bold' : 'text-slate-400'">
+                                            <span x-text="playingMusicPath === '/minio-proxy/bg_sounds/' + music.path ? 'Sedang diputar...' : 'Ketuk untuk memutar'"></span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <input type="radio" x-model="selectedMusic" :value="music.path" class="w-5 h-5 text-teal-500 focus:ring-teal-500 border-slate-300 pointer-events-none">
                             </div>
                         </template>
                     </div>
 
-                    <div x-show="bgmDuration > 0 && (selectedMusic !== '' || isCustomBgm)" class="mt-4 p-5 border border-indigo-200 bg-indigo-50/50 rounded-xl space-y-4" x-transition>
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center gap-2">
+                    <div x-show="bgmDuration > 0 && (selectedMusic !== '' || isCustomBgm)" x-transition.opacity.duration.300ms class="mt-6 border-t border-slate-200 pt-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <label class="flex items-center gap-2 text-sm font-bold text-slate-700">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                <h4 class="text-sm font-bold text-indigo-900">Potong Durasi Musik (Crop)</h4>
-                            </div>
-                            <div class="flex items-center gap-2" title="Atur volume latar">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.536 6.464a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                                <input type="range" x-model="bgmVolume" @input="updateVolume()" min="0.05" max="1" step="0.05" class="w-20 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
-                                <span class="text-xs font-bold text-indigo-600 w-8 text-right" x-text="Math.round(bgmVolume * 100) + '%'"></span>
-                            </div>
-                        </div>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-white p-3 rounded-lg border border-indigo-100 shadow-sm">
-                                <label class="flex justify-between text-xs font-bold text-slate-500 mb-3">
-                                    <span class="text-indigo-600">Mulai (Start)</span>
-                                    <span x-text="formatTime(bgmStart)" class="bg-indigo-100 px-2 py-0.5 rounded text-indigo-700"></span>
-                                </label>
-                                <input type="range" x-model="bgmStart" :max="bgmDuration" step="1" @input="if(Number(bgmStart) >= Number(bgmEnd)) bgmStart = bgmEnd - 1" class="w-full h-1.5 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
-                            </div>
-                            <div class="bg-white p-3 rounded-lg border border-indigo-100 shadow-sm">
-                                <label class="flex justify-between text-xs font-bold text-slate-500 mb-3">
-                                    <span class="text-indigo-600">Selesai (End)</span>
-                                    <span x-text="formatTime(bgmEnd)" class="bg-indigo-100 px-2 py-0.5 rounded text-indigo-700"></span>
-                                </label>
-                                <input type="range" x-model="bgmEnd" :max="bgmDuration" step="1" @input="if(Number(bgmEnd) <= Number(bgmStart)) bgmEnd = Number(bgmStart) + 1" class="w-full h-1.5 bg-indigo-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                                <span>Potong Bagian Lagu</span>
+                            </label>
+                            <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-teal-600 bg-teal-50 border border-teal-200 px-2 py-1 rounded-md" x-text="Math.floor(bgmEnd - bgmStart) + ' Detik'"></span>
+                                <div class="flex items-center gap-1" title="Atur volume latar">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.536 6.464a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                                    <input type="range" x-model="bgmVolume" @input="updateVolume()" min="0.05" max="1" step="0.05" class="w-16 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                                </div>
                             </div>
                         </div>
-                        <p class="text-xs text-indigo-500/80 font-medium italic mt-2">*Hanya rentang durasi ini yang akan diputar berulang di AR Anda.</p>
+
+                        <div class="relative w-full h-14 bg-slate-800 rounded-xl overflow-hidden flex items-center shadow-inner select-none mb-4">
+                            <div class="absolute inset-0 flex items-center justify-between px-1 opacity-40">
+                                <template x-for="i in 40">
+                                    <div class="w-1 bg-teal-200 rounded-full" :style="`height: ${Math.random() * 60 + 20}%`"></div>
+                                </template>
+                            </div>
+                            <div class="absolute top-0 bottom-0 bg-teal-500/40 border-x-4 border-teal-400 transition-all duration-100 shadow-[0_0_15px_rgba(20,184,166,0.4)]"
+                                 :style="`left: ${(bgmStart / audioDuration) * 100}%; width: ${((bgmEnd - bgmStart) / audioDuration) * 100}%`">
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4">
+                            <div class="flex-1 space-y-1">
+                                <label class="text-[10px] uppercase font-bold text-slate-500 flex justify-between">
+                                    <span>Mulai</span>
+                                    <span class="text-teal-600" x-text="formatTime(bgmStart)"></span>
+                                </label>
+                                <input type="range" min="0" :max="Math.max(0, bgmEnd - 1)" step="0.5" x-model.number="bgmStart" @input="updateCrop('start')" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-500 hover:accent-teal-600">
+                            </div>
+                            <div class="flex-1 space-y-1">
+                                <label class="text-[10px] uppercase font-bold text-slate-500 flex justify-between">
+                                    <span>Selesai</span>
+                                    <span class="text-teal-600" x-text="formatTime(bgmEnd)"></span>
+                                </label>
+                                <input type="range" :min="Number(bgmStart) + 1" :max="audioDuration" step="0.5" x-model.number="bgmEnd" @input="updateCrop('end')" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-500 hover:accent-teal-600">
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2 italic">*Geser titik mulai, lagu akan otomatis diputar untuk preview.</p>
                         
                         <input type="hidden" name="bgm_start" :value="bgmStart">
                         <input type="hidden" name="bgm_end" :value="bgmEnd">
@@ -379,7 +404,7 @@
                 
                 // Variabel BGM
                 selectedMusic: '', bgmVolume: 0.3,
-                bgmStart: 0, bgmEnd: 100, bgmDuration: 0,
+                audioDuration: 100, bgmStart: 0, bgmEnd: 30, bgmDuration: 0,
                 customBgmFile: null, customBgmUrl: null, isCustomBgm: false,
                 
                 narrationMode: 'text', narrationText: '', availableVoices: [], selectedVoice: '',
@@ -399,9 +424,19 @@
                 templates: @json($templates),
 
                 formatTime(seconds) {
-                    let m = Math.floor(seconds / 60);
-                    let s = Math.floor(seconds % 60);
-                    return m + ':' + (s < 10 ? '0' : '') + s;
+                    if(!seconds || isNaN(seconds)) return "0:00";
+                    let min = Math.floor(seconds / 60);
+                    let sec = Math.floor(seconds % 60);
+                    return min + ":" + (sec < 10 ? '0' : '') + sec;
+                },
+
+                selectAndPlayMusic(music) {
+                    this.selectedMusic = music.path;
+                    this.isCustomBgm = false;
+                    this.clearCustomBgm();
+                    
+                    let src = '/minio-proxy/bg_sounds/' + music.path;
+                    this.previewBgm(src);
                 },
 
                 loadVoices() {
@@ -561,7 +596,7 @@
                     this.isFromTemplate = true;
                     this.previewData = { title: tpl.title, type: tpl.ar_type, src: tpl.file_path, music: tpl.bgm_path, hasNarration: !!tpl.narration, fullData: tpl };
                     this.showModal = true;
-                    if(tpl.bgm_path) this.previewBgm('/bg_sounds/' + tpl.bgm_path);
+                    if(tpl.bgm_path) this.previewBgm('/minio-proxy/bg_sounds/' + tpl.bgm_path);
                     this.playVoice(tpl.narration, null, null);
                 },
 
@@ -582,18 +617,52 @@
                 previewBgm(src) {
                     this.stopAllAudio();
                     this.currentAudioPlayer = new Audio(src);
-                    this.currentAudioPlayer.volume = this.bgmVolume;
-                    this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+
+                    this.currentAudioPlayer.preload = 'auto'; 
                     
-                    this.currentAudioPlayer.ontimeupdate = () => {
-                        if(this.currentAudioPlayer.currentTime >= Number(this.bgmEnd)) {
-                            this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                    this.currentAudioPlayer.addEventListener('loadedmetadata', () => {
+                        this.audioDuration = this.currentAudioPlayer.duration;
+                        
+                        if (this.audioDuration > 30) {
+                            if(this.bgmEnd === 100 || this.bgmEnd > this.audioDuration) {
+                                this.bgmEnd = 30;
+                            }
+                        } else {
+                            this.bgmEnd = this.audioDuration;
                         }
-                    };
-                    this.currentAudioPlayer.play().catch(e => {});
-                    this.playingMusicPath = src;
+
+                        this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                        this.currentAudioPlayer.volume = this.bgmVolume;
+                        
+                        this.currentAudioPlayer.play().catch(e => {
+                            console.log("Browser menahan auto-play, silakan klik ulang.");
+                        });
+                        
+                        this.playingMusicPath = src;
+                    });
+
+                    this.currentAudioPlayer.addEventListener('timeupdate', () => {
+                        if (this.bgmEnd && this.currentAudioPlayer.currentTime >= Number(this.bgmEnd)) {
+                            this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                            this.currentAudioPlayer.play(); 
+                        }
+                    });
                 },
                 updateVolume() { if(this.currentAudioPlayer) this.currentAudioPlayer.volume = this.bgmVolume; },
+
+                updateCrop(type) {
+                    if (Number(this.bgmStart) >= Number(this.bgmEnd)) {
+                        if(type === 'start') this.bgmStart = Number(this.bgmEnd) - 1;
+                        if(type === 'end') this.bgmEnd = Number(this.bgmStart) + 1;
+                    }
+
+                    if (this.currentAudioPlayer && !this.currentAudioPlayer.paused) {
+                        this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                    } else if (this.currentAudioPlayer) {
+                        this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                        this.currentAudioPlayer.play().catch(e => {});
+                    }
+                },
                 
                 playVoice(text, voiceUri, audioUrl) {
                     window.speechSynthesis.cancel();
@@ -633,7 +702,7 @@
                     }
 
                     let hasNarr = (this.narrationMode === 'text' && this.narrationText) || (this.narrationMode === 'audio' && this.recordedAudioUrl);
-                    let previewMusicSrc = this.isCustomBgm ? this.customBgmUrl : (this.selectedMusic ? '/bg_sounds/' + this.selectedMusic : '');
+                    let previewMusicSrc = this.isCustomBgm ? this.customBgmUrl : (this.selectedMusic ? '/minio-proxy/bg_sounds/' + this.selectedMusic : '');
 
                     this.previewData = {
                         title: this.title || 'Preview Custom AR', type: this.arType,
