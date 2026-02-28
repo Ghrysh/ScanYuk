@@ -112,36 +112,28 @@ Route::middleware(['auth'])->group(function () {
 
 Route::get('/minio-proxy/{any}', function ($any) {
     $disk = Storage::disk('s3');
-
-    $targetMinioPath = $any;
-    if (!$disk->exists($targetMinioPath)) {
-        $targetMinioPath = urldecode($any);
-        if (!$disk->exists($targetMinioPath)) {
-            $targetMinioPath = str_replace('+', ' ', $targetMinioPath);
-            if (!$disk->exists($targetMinioPath)) {
-                abort(404, 'File tidak ditemukan di MinIO.');
+    
+    $target = $any;
+    if (!$disk->exists($target)) {
+        $target = urldecode($any);
+        if (!$disk->exists($target)) {
+            $target = str_replace('+', ' ', $target);
+            if (!$disk->exists($target)) {
+                abort(404, 'File 3D tidak ditemukan di MinIO.');
             }
         }
     }
 
-    $ext = pathinfo($targetMinioPath, PATHINFO_EXTENSION);
-    $safeFileName = md5($targetMinioPath) . '.' . ($ext ?: 'glb');
-    $localPath = public_path('scanyuk_cache/' . $safeFileName);
+    $headers = [
+        'Access-Control-Allow-Origin' => '*',
+        'Cache-Control' => 'no-transform, public, max-age=31536000, immutable', 
+    ];
 
-    if (!file_exists($localPath)) {
-        $dir = dirname($localPath);
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
-
-        $stream = $disk->readStream($targetMinioPath);
-        if ($stream) {
-            file_put_contents($localPath, $stream);
-            if (is_resource($stream)) fclose($stream);
-        } else {
-            abort(500, 'Gagal membaca stream dari MinIO');
-        }
+    if (\Illuminate\Support\Str::endsWith(strtolower($target), '.glb')) {
+        $headers['Content-Type'] = 'model/gltf-binary';
     }
 
-    return redirect(url('/scanyuk_cache/' . $safeFileName));
+    return $disk->response($target, null, $headers);
 })->where('any', '.*')->name('minio.proxy');
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
