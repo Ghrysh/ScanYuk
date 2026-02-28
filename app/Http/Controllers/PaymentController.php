@@ -66,27 +66,31 @@ class PaymentController extends Controller
 
     private function sendToIpaymu($body)
     {
-        $va = config('services.ipaymu.va');
-        $apiKey = config('services.ipaymu.api_key');
-        $url = config('services.ipaymu.env') === 'sandbox' ? 'https://sandbox.ipaymu.com/api/v2/payment' : 'https://my.ipaymu.com/api/v2/payment';
+        $va = config('services.ipaymu.va') ?? env('IPAYMU_VA');
+        $apiKey = config('services.ipaymu.api_key') ?? env('IPAYMU_API_KEY');
+        $envMode = config('services.ipaymu.env') ?? env('IPAYMU_ENV', 'sandbox');
+
+        if (empty($va) || empty($apiKey)) {
+            dd('SISTEM BERHENTI: File .env kamu tidak terbaca atau IPAYMU_VA / IPAYMU_API_KEY masih kosong!');
+        }
+
+        $url = $envMode === 'sandbox' ? 'https://sandbox.ipaymu.com/api/v2/payment' : 'https://my.ipaymu.com/api/v2/payment';
         
         $jsonBody = json_encode($body, JSON_UNESCAPED_SLASHES);
         $signature = hash_hmac('sha256', "POST:" . $va . ":" . hash('sha256', $jsonBody) . ":" . $apiKey, $apiKey);
 
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json', 'signature' => $signature, 'va' => $va, 'timestamp' => date('YmdHis')
+        $response = \Illuminate\Support\Facades\Http::withHeaders([
+            'Content-Type' => 'application/json', 
+            'signature' => $signature, 
+            'va' => $va, 
+            'timestamp' => date('YmdHis')
         ])->post($url, $body);
 
         $resData = $response->json();
+        
         if ($response->successful() && isset($resData['Status']) && $resData['Status'] == 200) {
             return redirect($resData['Data']['Url']);
         }
-        
-        dd([
-            'PESAN' => 'IPAYMU MENOLAK REQUEST!',
-            'DATA_DARI_IPAYMU' => $resData,
-            'YANG_DIKIRIM_KESANA' => $body
-        ]);
 
         return back()->withErrors(['error' => 'Gagal terhubung ke gateway pembayaran iPaymu.']);
     }
