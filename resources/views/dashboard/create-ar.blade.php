@@ -410,23 +410,14 @@
         </div>
     </main>
 
-<script>
+    <script>
         function arCreator() {
             return {
                 init() {
                     this.loadVoices();
                     
                     this.library3dList.forEach(item => {
-                        this.modelStates[item.id] = { 
-                            state: 'idle', 
-                            progress: 0, 
-                            url: null, 
-                            path: item.path,
-                            downloadedBytes: 0,
-                            chunks: [],
-                            totalBytes: 0,
-                            abortController: null
-                        };
+                        this.modelStates[item.id] = { state: 'idle', progress: 0, url: null, path: item.path };
                     });
 
                     setTimeout(() => {
@@ -450,7 +441,7 @@
                 isGenerating: false, progress: 0, estimatedTime: 'Menghitung...', uploadError: null,
                 search3d: '', searchMusic: '', searchTemplate: '',
                 showModal: false, isFromTemplate: false,
-                previewData: { title: '', type: '', src: '', music: '', hasNarration: false, fullData: null },
+                previewData: { title: '', type: '', src: '', music: '', hasNarration: false },
                 
                 currentAudioPlayer: null, narrationPlayer: null, playingMusicPath: null,
 
@@ -458,9 +449,6 @@
                 musicList: @json($musicList),
                 templates: @json($templates),
 
-                // ==========================================
-                // SISTEM DOWNLOAD STREAMING PINTAR
-                // ==========================================
                 modelStates: {},
                 downloadQueue: [],
                 isBackgroundDownloading: false,
@@ -474,8 +462,11 @@
                             })
                             .catch(() => ({ id: item.id, size: 999999999 }));
                     });
+                    
                     let results = await Promise.all(sizePromises);
+                    
                     results.sort((a, b) => a.size - b.size);
+                    
                     this.downloadQueue = results.map(r => r.id);
                     this.processQueue();
                 },
@@ -487,7 +478,7 @@
                     this.isBackgroundDownloading = true;
                     let nextId = this.downloadQueue.shift();
 
-                    if (this.modelStates[nextId] && this.modelStates[nextId].state === 'idle') {
+                    if (this.modelStates[nextId].state === 'idle') {
                         await this.downloadModel(nextId);
                     }
 
@@ -495,91 +486,114 @@
                     this.processQueue();
                 },
 
-                toggleDownload(id) {
-                    let state = this.modelStates[id];
-                    if (state.state === 'downloading') {
-                        if (state.abortController) {
-                            state.abortController.abort(); 
-                        }
-                    } else if (state.state === 'idle' || state.state === 'paused') {
+                prioritizeDownload(id) {
+                    if (this.modelStates[id] && this.modelStates[id].state === 'idle') {
                         this.downloadQueue = this.downloadQueue.filter(i => i !== id);
                         this.downloadModel(id);
                     }
                 },
 
-                async downloadModel(id) {
-                    let state = this.modelStates[id];
-                    if (state.state === 'loaded') return;
-
-                    state.state = 'downloading';
-                    state.abortController = new AbortController();
-                    
-                    let startByte = state.downloadedBytes || 0;
-                    let headers = {};
-                    
-                    if (startByte > 0) {
-                        headers['Range'] = `bytes=${startByte}-`;
-                    }
-
-                    try {
-                        let response = await fetch(state.path, {
-                            headers: headers,
-                            signal: state.abortController.signal
-                        });
-
-                        if (!response.ok) throw new Error("Gagal mengunduh");
-
-                        if (response.status === 200 && startByte > 0) {
-                            startByte = 0;
-                            state.chunks = [];
-                            state.downloadedBytes = 0;
-                        }
-
-                        let contentLength = response.headers.get('content-length');
-                        if (contentLength) {
-                            state.totalBytes = startByte + parseInt(contentLength, 10);
-                        }
-
-                        let reader = response.body.getReader();
-                        state.chunks = state.chunks || [];
-
-                        while (true) {
-                            const {done, value} = await reader.read();
-                            if (done) break;
-                            
-                            state.chunks.push(value);
-                            state.downloadedBytes += value.length;
-                            
-                            if (state.totalBytes) {
-                                state.progress = Math.round((state.downloadedBytes / state.totalBytes) * 100);
+                downloadModel(id) {
+                    return new Promise((resolve) => {
+                        if (this.modelStates[id].state !== 'idle') return resolve();
+                        
+                        this.modelStates[id].state = 'downloading';
+                        this.modelStates[id].progress = 0;
+                        
+                        let xhr = new XMLHttpRequest();
+                        xhr.open('GET', this.modelStates[id].path, true);
+                        xhr.responseType = 'blob';
+                        
+                        xhr.onprogress = (e) => {
+                            if (e.lengthComputable) {
+                                this.modelStates[id].progress = Math.round((e.loaded / e.total) * 100);
                             } else {
-                                state.progress = Math.min(99, state.progress + 1);
+                                this.modelStates[id].progress = Math.min(90, this.modelStates[id].progress + 5);
                             }
-                        }
+                        };
+                        
+                        xhr.onload = () => {
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                let blobUrl = URL.createObjectURL(xhr.response);
+                                this.modelStates[id].url = blobUrl;
+                                this.modelStates[id].state = 'loaded';
+                                this.modelStates[id].progress = 100;
+                            } else {
+                                this.modelStates[id].state = 'idle';
+                            }
+                            resolve();
+                        };
+                        
+                        xhr.onerror = () => {
+                            this.modelStates[id].state = 'idle';
+                            resolve();
+                        };
+                        
+                        xhr.send();
+                    });
+                },
 
-                        let blob = new Blob(state.chunks, { type: 'model/gltf-binary' });
-                        state.url = URL.createObjectURL(blob);
-                        state.state = 'loaded';
-                        state.progress = 100;
-                        state.chunks = [];
 
-                    } catch (err) {
-                        if (err.name === 'AbortError') {
-                            state.state = 'paused';
-                        } else {
-                            state.state = 'idle';
-                            state.downloadedBytes = 0;
-                            state.chunks = [];
-                        }
+                formatTime(seconds) {
+                    if(!seconds || isNaN(seconds)) return "0:00";
+                    let min = Math.floor(seconds / 60);
+                    let sec = Math.floor(seconds % 60);
+                    return min + ":" + (sec < 10 ? '0' : '') + sec;
+                },
+
+                selectAndPlayMusic(music) {
+                    this.selectedMusic = music.path;
+                    this.isCustomBgm = false;
+                    this.clearCustomBgm();
+                    
+                    let src = '/minio-proxy/bg_sounds/' + music.path;
+                    this.previewBgm(src);
+                },
+
+                loadVoices() {
+                    let setVoices = () => {
+                        let voices = window.speechSynthesis.getVoices();
+                        let indoVoices = voices.filter(v => v.lang.toLowerCase().includes('id'));
+                        let engVoices = voices.filter(v => v.lang.toLowerCase().includes('en'));
+                        this.availableVoices = [...indoVoices, ...engVoices];
+                        if(this.availableVoices.length > 0 && !this.selectedVoice) this.selectedVoice = this.availableVoices[0].voiceURI;
+                    };
+                    setVoices();
+                    if (window.speechSynthesis.onvoiceschanged !== undefined) window.speechSynthesis.onvoiceschanged = setVoices;
+                },
+
+                async startRecording() {
+                    try {
+                        let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                        this.mediaRecorder = new MediaRecorder(stream);
+                        this.audioChunks = [];
+                        
+                        this.mediaRecorder.ondataavailable = e => { if(e.data.size > 0) this.audioChunks.push(e.data); };
+                        this.mediaRecorder.onstop = () => {
+                            let mime = this.mediaRecorder.mimeType || 'audio/webm';
+                            let audioBlob = new Blob(this.audioChunks, { type: mime });
+                            this.recordedAudioBlob = audioBlob;
+                            if (this.recordedAudioUrl) URL.revokeObjectURL(this.recordedAudioUrl);
+                            this.recordedAudioUrl = URL.createObjectURL(audioBlob);
+                            this.mediaRecorder.stream.getTracks().forEach(t => t.stop());
+                        };
+                        this.mediaRecorder.start();
+                        this.isRecording = true;
+                    } catch (err) { alert("Izin mikrofon ditolak atau tidak tersedia di perangkat ini."); }
+                },
+
+                stopRecording() {
+                    if(this.mediaRecorder && this.isRecording) {
+                        this.mediaRecorder.stop();
+                        this.isRecording = false;
                     }
                 },
 
-                // ==========================================
-                // FUNGSI FILTER & UI YANG SEMPAT HILANG
-                // ==========================================
-                filtered3d() { return this.library3dList.filter(i => i.name.toLowerCase().includes(this.search3d.toLowerCase())); },
-                filteredMusic() { return this.musicList.filter(i => i.name.toLowerCase().includes(this.searchMusic.toLowerCase())); },
-                filteredTemplates() { return this.templates.filter(i => i.title.toLowerCase().includes(this.searchTemplate.toLowerCase()) || i.narration.toLowerCase().includes(this.searchTemplate.toLowerCase())); },
+                deleteRecording() {
+                    this.recordedAudioBlob = null;
+                    if (this.recordedAudioUrl) URL.revokeObjectURL(this.recordedAudioUrl);
+                    this.recordedAudioUrl = null;
+                },
 
                 reset2d() { this.imageUrl2d = null; document.getElementById('image-upload').value = ''; },
                 reset3d() { 
@@ -601,7 +615,7 @@
                         this.local3dUrl = URL.createObjectURL(file); 
                     }
                 },
-                
+
                 handleBgmUpload(e) {
                     let file = e.target.files[0];
                     if(!file) return;
@@ -621,17 +635,16 @@
                     this.bgmStart = 0; this.bgmEnd = 0; this.bgmDuration = 0;
                     this.stopAllAudio();
                 },
+                selectLibraryMusic(path) {
+                    this.isCustomBgm = false;
+                    this.selectedMusic = path;
+                    this.clearCustomBgm();
+                    this.selectedMusic = path;
+                    this.previewBgm('/minio-proxy/bg_sounds/' + path);
+                },
                 clearMusic() {
                     this.selectedMusic = '';
                     this.clearCustomBgm();
-                },
-                selectAndPlayMusic(music) {
-                    this.selectedMusic = music.path;
-                    this.isCustomBgm = false;
-                    this.clearCustomBgm();
-                    
-                    let src = '/minio-proxy/bg_sounds/' + music.path;
-                    this.previewBgm(src);
                 },
 
                 submitForm(e) {
@@ -677,6 +690,10 @@
                     xhr.send(formData);
                 },
 
+                filtered3d() { return this.library3dList.filter(i => i.name.toLowerCase().includes(this.search3d.toLowerCase())); },
+                filteredMusic() { return this.musicList.filter(i => i.name.toLowerCase().includes(this.searchMusic.toLowerCase())); },
+                filteredTemplates() { return this.templates.filter(i => i.title.toLowerCase().includes(this.searchTemplate.toLowerCase()) || i.narration.toLowerCase().includes(this.searchTemplate.toLowerCase())); },
+
                 previewTemplate(tpl) {
                     this.isFromTemplate = true;
                     this.previewData = { title: tpl.title, type: tpl.ar_type, src: tpl.file_path, music: tpl.bgm_path, hasNarration: !!tpl.narration, fullData: tpl };
@@ -684,6 +701,7 @@
                     if(tpl.bgm_path) this.previewBgm('/minio-proxy/bg_sounds/' + tpl.bgm_path);
                     this.playVoice(tpl.narration, null, null);
                 },
+
                 useTemplate() {
                     let tpl = this.previewData.fullData;
                     this.title = tpl.title; this.arType = tpl.ar_type; this.narrationText = tpl.narration; this.selectedMusic = tpl.bgm_path;
@@ -692,10 +710,12 @@
                     else { let matched3d = this.library3dList.find(item => item.path === tpl.file_path); if(matched3d) this.selectedLibrary3d = matched3d.id; }
                     this.closeModal(); this.mainTab = 'custom'; window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
-
-                // ==========================================
-                // AUDIO & NARRATION LOGIC
-                // ==========================================
+                
+                toggleAudio(path) { 
+                    let src = '/minio-proxy/bg_sounds/' + path;
+                    if (this.playingMusicPath === src) { this.stopAllAudio(); } else { this.previewBgm(src); } 
+                },
+                
                 previewBgm(src) {
                     this.stopAllAudio();
                     this.currentAudioPlayer = new Audio(src);
@@ -703,16 +723,22 @@
                     
                     this.currentAudioPlayer.addEventListener('loadedmetadata', () => {
                         this.audioDuration = this.currentAudioPlayer.duration;
+                        
                         this.bgmDuration = this.audioDuration;
                         
-                        this.bgmStart = 0;
-                        this.bgmEnd = this.audioDuration;
+                        if (this.audioDuration > 30) {
+                            if(this.bgmEnd === 100 || this.bgmEnd > this.audioDuration) {
+                                this.bgmEnd = 30;
+                            }
+                        } else {
+                            this.bgmEnd = this.audioDuration;
+                        }
 
                         this.currentAudioPlayer.currentTime = Number(this.bgmStart);
                         this.currentAudioPlayer.volume = this.bgmVolume;
                         
                         this.currentAudioPlayer.play().catch(e => {
-                            console.log("Browser memblokir auto-play");
+                            console.log("Browser menahan auto-play, silakan klik ulang.");
                         });
                         
                         this.playingMusicPath = src;
@@ -725,7 +751,6 @@
                         }
                     });
                 },
-                
                 updateVolume() { if(this.currentAudioPlayer) this.currentAudioPlayer.volume = this.bgmVolume; },
 
                 updateCrop(type) {
