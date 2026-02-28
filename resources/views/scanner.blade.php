@@ -233,8 +233,10 @@
                             const src = type === '3d' ? result.data.file_3d_url : result.data.image_url;
                             
                             this.arCache[url] = { 
-                                narration: result.data.narration, ai_voice: result.data.ai_voice,
-                                custom_audio_url: result.data.custom_audio_url, bgm_url: result.data.bgm_url,
+                                narration: result.data.narration, 
+                                ai_voice: result.data.ai_voice,
+                                custom_audio_url: result.data.custom_audio_url,
+                                bgm_url: result.data.bgm_url,
                                 ready: true 
                             };
                             
@@ -243,11 +245,11 @@
                             
                             this.isLoading = true;
                             this.loadingProgress = 0;
-                            this.loadingStatusText = 'Mengunduh Media & Model 3D...';
+                            this.loadingStatusText = 'Menyiapkan 3D & Audio...';
                             
                             this.arData = { type: type, src: src };
-
-                            this.playAllAudioSynchronized(url, type);
+                            
+                            this.playAllMediaSynchronized(url, type);
 
                         } else {
                             this.showError("QR Code tidak valid / Limit.");
@@ -260,7 +262,7 @@
                     } 
                 },
 
-                playAllAudioSynchronized(url, type) {
+                playAllMediaSynchronized(url, type) {
                     this.stopAllAudio();
                     const cache = this.arCache[url];
                     if(!cache) return;
@@ -268,7 +270,7 @@
                     let promises = [];
 
                     if (type === '3d') {
-                        const modelPromise = new Promise((resolve) => {
+                        promises.push(new Promise((resolve) => {
                             this.$nextTick(() => {
                                 const viewer = document.querySelector('#ar-overlay-container model-viewer');
                                 if(!viewer) return resolve();
@@ -281,18 +283,17 @@
                                     }
                                 };
                                 viewer.addEventListener('progress', onProgress);
-                                setTimeout(resolve, 20000);
+                                setTimeout(resolve, 25000);
                             });
-                        });
-                        promises.push(modelPromise);
+                        }));
                     } else {
                         this.loadingProgress = 100;
-                        promises.push(Promise.resolve());
                     }
 
                     if (cache.bgm_url) {
                         let urlParts = cache.bgm_url.split('#t=');
                         this.bgmPlayer = new Audio(urlParts[0]);
+                        this.bgmPlayer.preload = 'auto';
                         this.bgmPlayer.volume = 0.3;
 
                         if (urlParts.length > 1 && urlParts[1]) {
@@ -305,32 +306,33 @@
                             this.bgmPlayer.loop = true;
                         }
 
-                        const bgmPromise = new Promise((resolve) => {
+                        promises.push(new Promise((resolve) => {
                             this.bgmPlayer.addEventListener('canplaythrough', resolve, { once: true });
                             this.bgmPlayer.addEventListener('error', resolve, { once: true });
-                            this.bgmPlayer.load();
-                        });
-                        promises.push(bgmPromise);
+                            this.bgmPlayer.load(); 
+                        }));
                     }
 
                     let usingRecordedAudio = false;
                     if (cache.custom_audio_url) {
                         usingRecordedAudio = true;
                         this.narrationPlayer = new Audio(cache.custom_audio_url);
+                        this.narrationPlayer.preload = 'auto';
                         this.narrationPlayer.volume = 1.0;
-                        const voicePromise = new Promise((resolve) => {
+                        
+                        promises.push(new Promise((resolve) => {
                             this.narrationPlayer.addEventListener('canplaythrough', resolve, { once: true });
                             this.narrationPlayer.addEventListener('error', resolve, { once: true });
                             this.narrationPlayer.load();
-                        });
-                        promises.push(voicePromise);
+                        }));
                     }
 
                     Promise.all(promises).then(() => {
                         this.isLoading = false;
+                        this.loadingProgress = 100;
 
-                        if(this.bgmPlayer) this.bgmPlayer.play().catch(e => {});
-                        if(this.narrationPlayer) this.narrationPlayer.play().catch(e => {});
+                        if(this.bgmPlayer) this.bgmPlayer.play().catch(e => console.log('BGM Play Error:', e));
+                        if(this.narrationPlayer) this.narrationPlayer.play().catch(e => console.log('Voice Play Error:', e));
 
                         if(!usingRecordedAudio && cache.narration) {
                             let utterance = new SpeechSynthesisUtterance(cache.narration);
@@ -346,7 +348,9 @@
                 },
 
                 replayVoice() {
-                    this.playAllAudio(this.currentQrUrl);
+                    if (this.currentQrUrl) {
+                        this.playAllMediaSynchronized(this.currentQrUrl, this.arData.type);
+                    }
                 },
 
                 stopAllAudio() {
