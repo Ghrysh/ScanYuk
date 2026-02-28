@@ -3,9 +3,11 @@
 @section('content')
 
 @php
-    $imgLimit = (int) filter_var($currentPackage->features[0] ?? 0, FILTER_SANITIZE_NUMBER_INT);
-    $voiceLimit = (int) filter_var($currentPackage->features[1] ?? 0, FILTER_SANITIZE_NUMBER_INT);
-    $scanLimit = (int) filter_var($currentPackage->features[2] ?? 0, FILTER_SANITIZE_NUMBER_INT);
+    $features = $currentPackage ? $currentPackage->features : [];
+    
+    $imgLimit = (int) filter_var($features[0] ?? 0, FILTER_SANITIZE_NUMBER_INT);
+    $voiceLimit = (int) filter_var($features[1] ?? 0, FILTER_SANITIZE_NUMBER_INT);
+    $scanLimit = (int) filter_var($features[2] ?? 0, FILTER_SANITIZE_NUMBER_INT);
 
     $imgPercent = $imgLimit > 0 ? min(($user->image / $imgLimit) * 100, 100) : 0;
     $voicePercent = $voiceLimit > 0 ? min(($user->voice / $voiceLimit) * 100, 100) : 0;
@@ -37,7 +39,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
             </div>
             <div>
-                <h3 class="text-lg font-bold text-slate-900">Paket {{ ucfirst($user->role) }}</h3>
+                <h3 class="text-lg font-bold text-slate-900">Paket {{ $currentPackage->name ?? ucfirst($user->role) }}</h3>
                 <p class="text-sm text-slate-500">Kuota tidak expired selama belum dipakai</p>
             </div>
         </div>
@@ -54,7 +56,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 @foreach($packages as $pkg)
                 <div class="rounded-xl border p-6 flex flex-col h-full transition-all 
-                    {{ strtolower($pkg->name) === $user->role ? 'border-teal-500 bg-teal-50/20 shadow-md shadow-teal-100/50' : 'border-slate-200 hover:border-indigo-300 bg-white' }}">
+                    {{ ($currentPackage && $pkg->id === $currentPackage->id) ? 'border-teal-500 bg-teal-50/20 shadow-md shadow-teal-100/50' : 'border-slate-200 hover:border-indigo-300 bg-white' }}">
                     
                     <h4 class="text-base font-bold text-slate-900 mb-1">{{ $pkg->name }}</h4>
                     <div class="text-2xl font-extrabold text-slate-900 mb-4">
@@ -67,7 +69,7 @@
                         @endforeach
                     </ul>
 
-                    @if(strtolower($pkg->name) === $user->role)
+                    @if($currentPackage && $pkg->id === $currentPackage->id)
                         <div class="w-full py-2.5 rounded-lg flex items-center justify-center gap-2 text-teal-600 font-bold text-sm">
                             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                             Paket Aktif

@@ -11,10 +11,22 @@ class UserDashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
         $packages = PricingPackage::all();
+
+        $roleMap = [
+            'business' => 'Bisnis',
+            'professional' => 'Profesional',
+            'starter' => 'Pemula',
+            'free' => 'Gratis'
+        ];
         
-        $currentPackage = PricingPackage::where('name', 'ilike', $user->role)->first();
+        $searchRole = $roleMap[strtolower($user->role)] ?? $user->role;
+        
+        $currentPackage = PricingPackage::where('name', 'like', "%{$searchRole}%")->first();
+
+        if (!$currentPackage && $packages->isNotEmpty()) {
+            $currentPackage = $packages->where('price', 0)->first() ?? $packages->first();
+        }
 
         $qrCodes = $user->qrCodes()->latest()->get();
 
