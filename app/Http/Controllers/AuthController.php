@@ -20,13 +20,20 @@ class AuthController extends Controller
     }
 
     public function showRegister(Request $request) {
-        $plan = $request->query('plan', 'free');
+        $planParam = strtolower($request->query('plan', 'free'));
 
-        $allowedPlans = ['free', 'starter', 'professional', 'business'];
-        
-        if (!in_array($plan, $allowedPlans)) {
-            $plan = 'free';
-        }
+        $planMap = [
+            'gratis'       => 'free',
+            'free'         => 'free',
+            'pemula'       => 'starter',
+            'starter'      => 'starter',
+            'profesional'  => 'professional',
+            'professional' => 'professional',
+            'bisnis'       => 'business',
+            'business'     => 'business',
+        ];
+
+        $plan = $planMap[$planParam] ?? 'free';
 
         return view('auth.register', ['plan' => $plan]);
     }
@@ -64,7 +71,7 @@ class AuthController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8',
             'otp_combined' => 'required|numeric|digits:6',
-            'plan' => 'nullable|in:free,starter,professional,business' 
+            'plan' => 'nullable|string'
         ]);
 
         $verification = DB::table('otp_verifications')
@@ -77,7 +84,14 @@ class AuthController extends Controller
             return back()->withErrors(['otp_combined' => 'Kode OTP salah atau sudah kadaluarsa.'])->withInput();
         }
 
-        $role = $request->input('plan', 'free');
+        $planInput = strtolower($request->input('plan', 'free'));
+        $planMap = [
+            'gratis' => 'free', 'free' => 'free',
+            'pemula' => 'starter', 'starter' => 'starter',
+            'profesional' => 'professional', 'professional' => 'professional',
+            'bisnis' => 'business', 'business' => 'business'
+        ];
+        $targetPlan = $planMap[$planInput] ?? 'free';
 
         $user = User::create([
             'name' => $request->name,
@@ -87,20 +101,25 @@ class AuthController extends Controller
         ]);
 
         DB::table('otp_verifications')->where('email', $request->email)->delete();
+
         Auth::login($user);
 
-        $plan = $request->input('plan', 'free');
-        if ($plan !== 'free') {
-            $roleMap = ['starter' => 'Pemula', 'professional' => 'Profesional', 'business' => 'Bisnis'];
-            $pkgName = $roleMap[$plan] ?? '';
-            $package = \App\Models\PricingPackage::where('name', 'like', "%{$pkgName}%")->first();
+        if ($targetPlan !== 'free') {
+            $roleMap = [
+                'starter' => 'Pemula', 
+                'professional' => 'Profesional', 
+                'business' => 'Bisnis'
+            ];
             
+            $pkgName = $roleMap[$targetPlan] ?? '';
+            $package = \App\Models\PricingPackage::where('name', 'like', "%{$pkgName}%")->first();
+
             if ($package && $package->price > 0) {
                 return redirect()->route('payment.auto', ['package_id' => $package->id]);
             }
         }
 
-        return redirect()->route('user.dashboard')->with('success', 'Registrasi berhasil!');
+        return redirect()->route('user.dashboard')->with('success', 'Registrasi berhasil! Selamat datang.');
     }
 
     public function login(Request $request) {
