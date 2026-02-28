@@ -164,7 +164,7 @@ class QrCodeController extends Controller
             }
 
             $qrCode->uuid = Str::uuid();
-            $qrUrl = url('/scanner?id=' . $qrCode->uuid); 
+            $qrUrl = url('/scan-ar'); 
             $qrImage = base64_encode(QrCode::format('svg')->size(300)->margin(2)->generate($qrUrl));
             $qrCode->qr_image_path = $qrImage;
 
