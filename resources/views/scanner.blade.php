@@ -87,6 +87,10 @@
                 hasSnaped: false,
 
                 startCamera() {
+                    if (window.history.replaceState) {
+                        window.history.replaceState({}, document.title, "/scan-ar");
+                    }
+
                     this.video = document.getElementById("qr-video");
                     this.canvasElement = document.getElementById("qr-canvas");
                     this.canvas = this.canvasElement.getContext("2d", { willReadFrequently: true });
