@@ -203,8 +203,9 @@ class QrCodeController extends Controller
     public function download(QrCodeModel $qrCode)
     {
         if ($qrCode->user_id !== Auth::id()) abort(403);
-        $identifier = $qrCode->uuid ?? $qrCode->id;
-        $apiUrl = url('/scanner?id=' . $identifier);
+        
+        $apiUrl = url('/scan-ar'); 
+        
         $imageContent = QrCode::size(500)->margin(2)->generate($apiUrl);
         $fileName = 'ScanYuk-AR-' . Str::slug($qrCode->title) . '.svg';
 
