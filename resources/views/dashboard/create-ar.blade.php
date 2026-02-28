@@ -141,6 +141,7 @@
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                 </svg>
                                                 <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Unduh Model</span>
+                                                <span class="text-[8px] font-semibold text-slate-400 mt-0.5 tracking-wider" x-text="formatBytes(modelStates[item.id]?.totalBytes)"></span>
                                             </div>
 
                                             <div x-show="modelStates[item.id]?.state === 'downloading'" 
@@ -157,6 +158,7 @@
                                                     </div>
                                                 </div>
                                                 <span class="text-[8px] font-bold text-teal-600 uppercase tracking-wider">Loading</span>
+                                                <span class="text-[8px] font-semibold text-teal-600/80 mt-0.5 tracking-widest" x-text="formatBytes(modelStates[item.id]?.downloadedBytes) + ' / ' + formatBytes(modelStates[item.id]?.totalBytes)"></span>
                                             </div>
 
                                             <div x-show="modelStates[item.id]?.state === 'paused'" 
@@ -173,6 +175,7 @@
                                                     </div>
                                                 </div>
                                                 <span class="text-[8px] font-bold text-amber-600 uppercase tracking-wider">Pause</span>
+                                                <span class="text-[8px] font-semibold text-amber-600/80 mt-0.5 tracking-widest" x-text="formatBytes(modelStates[item.id]?.downloadedBytes) + ' / ' + formatBytes(modelStates[item.id]?.totalBytes)"></span>
                                             </div>
 
                                             <template x-if="modelStates[item.id]?.state === 'loaded'">
@@ -476,7 +479,9 @@
                         return fetch(item.path, { method: 'HEAD' })
                             .then(res => {
                                 let size = res.headers.get('content-length');
-                                return { id: item.id, size: size ? parseInt(size) : 999999999 };
+                                let parsedSize = size ? parseInt(size) : 0;
+                                this.modelStates[item.id].totalBytes = parsedSize; 
+                                return { id: item.id, size: parsedSize || 999999999 };
                             })
                             .catch(() => ({ id: item.id, size: 999999999 }));
                     });
@@ -499,6 +504,14 @@
 
                     this.isBackgroundDownloading = false;
                     this.processQueue();
+                },
+
+                formatBytes(bytes) {
+                    if (!bytes || bytes === 0 || bytes === 999999999) return 'Menghitung...';
+                    const k = 1024;
+                    const sizes = ['B', 'KB', 'MB', 'GB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
                 },
 
                 toggleDownload(id) {
