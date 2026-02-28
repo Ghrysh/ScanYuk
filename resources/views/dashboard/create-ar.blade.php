@@ -118,26 +118,32 @@
                                     <label class="flex flex-col bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden" :class="selectedLibrary3d === item.id ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : ''">
                                         
                                         <div class="h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center overflow-hidden"
-                                            x-data="{ loaded: false }"
+                                            x-data="{ inView: false, progress: 0, isLoaded: false }"
                                             x-init="
                                                 let observer = new IntersectionObserver(entries => {
                                                     if (entries[0].isIntersecting) {
-                                                        loaded = true;
-                                                        // HENTIKAN PANTAUAN: Begitu 3D muncul, jangan pernah dihapus/didownload ulang
+                                                        inView = true;
                                                         observer.disconnect(); 
                                                     }
                                                 }, { rootMargin: '150px' });
                                                 observer.observe($el);
                                             ">
                                             
-                                            <div x-show="!loaded" class="absolute inset-0 flex flex-col items-center justify-center text-slate-300">
-                                                <svg class="animate-spin h-6 w-6 text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                                </svg>
+                                            <div x-show="!isLoaded" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100 transition-opacity duration-300">
+                                                <div class="relative flex items-center justify-center w-10 h-10">
+                                                    <svg class="w-full h-full text-slate-200" viewBox="0 0 36 36">
+                                                        <path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" />
+                                                    </svg>
+                                                    <svg class="absolute inset-0 w-full h-full text-teal-500 transition-all duration-200 ease-out" viewBox="0 0 36 36">
+                                                        <path :stroke-dasharray="progress + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+                                                    </svg>
+                                                    <div class="absolute inset-0 flex items-center justify-center">
+                                                        <span class="text-[10px] font-bold text-teal-600" x-text="progress + '%'"></span>
+                                                    </div>
+                                                </div>
                                             </div>
 
-                                            <template x-if="loaded">
+                                            <template x-if="inView">
                                                 <model-viewer 
                                                     :src="item.path" 
                                                     class="w-full h-full" 
@@ -147,7 +153,11 @@
                                                     shadow-intensity="0" 
                                                     exposure="1"
                                                     environment-image="neutral" 
-                                                    loading="lazy">
+                                                    loading="lazy"
+                                                    @progress="progress = Math.round($event.detail.totalProgress * 100)"
+                                                    @load="isLoaded = true; progress = 100">
+                                                    
+                                                    <div slot="progress-bar" class="hidden"></div>
                                                 </model-viewer>
                                             </template>
                                         </div>
