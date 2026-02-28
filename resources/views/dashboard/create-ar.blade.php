@@ -117,35 +117,33 @@
                                 <template x-for="item in filtered3d()" :key="item.id">
                                     <label class="flex flex-col bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden" :class="selectedLibrary3d === item.id ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : ''">
                                         
-                                        <div class="h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center overflow-hidden"
-                                            x-data="{ inView: false, progress: 0, isLoaded: false }"
-                                            x-init="
-                                                let observer = new IntersectionObserver(entries => {
-                                                    if (entries[0].isIntersecting) {
-                                                        inView = true;
-                                                        observer.disconnect(); 
-                                                    }
-                                                }, { rootMargin: '150px' });
-                                                observer.observe($el);
-                                            ">
+                                        <div class="h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center overflow-hidden">
                                             
-                                            <div x-show="!isLoaded" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100 transition-opacity duration-300">
+                                            <div x-show="modelStates[item.id]?.state === 'idle'" 
+                                                @click.prevent="prioritizeDownload(item.id)"
+                                                class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-colors pointer-events-auto"
+                                                title="Klik untuk mendownload duluan">
+                                                <svg class="w-8 h-8 text-teal-500 mb-1 drop-shadow-sm hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                </svg>
+                                                <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Unduh Model</span>
+                                            </div>
+
+                                            <div x-show="modelStates[item.id]?.state === 'downloading'" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100 transition-opacity duration-300">
                                                 <div class="relative flex items-center justify-center w-10 h-10">
-                                                    <svg class="w-full h-full text-slate-200" viewBox="0 0 36 36">
-                                                        <path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" />
-                                                    </svg>
+                                                    <svg class="w-full h-full text-slate-200" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
                                                     <svg class="absolute inset-0 w-full h-full text-teal-500 transition-all duration-200 ease-out" viewBox="0 0 36 36">
-                                                        <path :stroke-dasharray="progress + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+                                                        <path :stroke-dasharray="(modelStates[item.id]?.progress || 0) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
                                                     </svg>
                                                     <div class="absolute inset-0 flex items-center justify-center">
-                                                        <span class="text-[10px] font-bold text-teal-600" x-text="progress + '%'"></span>
+                                                        <span class="text-[10px] font-bold text-teal-600" x-text="(modelStates[item.id]?.progress || 0) + '%'"></span>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <template x-if="inView">
+                                            <template x-if="modelStates[item.id]?.state === 'loaded'">
                                                 <model-viewer 
-                                                    :src="item.path" 
+                                                    :src="modelStates[item.id].url" 
                                                     class="w-full h-full" 
                                                     disable-zoom 
                                                     disable-pan 
@@ -153,13 +151,9 @@
                                                     shadow-intensity="0" 
                                                     exposure="1"
                                                     environment-image="neutral" 
-                                                    loading="lazy"
-                                                    @progress="progress = Math.round($event.detail.totalProgress * 100)"
-                                                    @load="isLoaded = true; progress = 100">
-                                                    
-                                                    <div slot="progress-bar" class="hidden"></div>
-                                                </model-viewer>
+                                                    loading="eager"> </model-viewer>
                                             </template>
+
                                         </div>
                                         
                                         <div class="p-3 border-t border-slate-100 flex items-start gap-2">
@@ -398,11 +392,22 @@
     <script>
         function arCreator() {
             return {
+                init() {
+                    this.loadVoices();
+                    
+                    this.library3dList.forEach(item => {
+                        this.modelStates[item.id] = { state: 'idle', progress: 0, url: null, path: item.path };
+                    });
+
+                    setTimeout(() => {
+                        this.sortAndStartQueue();
+                    }, 1000);
+                },
+
                 mainTab: 'custom', arType: '2d', title: '',
                 imageUrl2d: null, upload3dName: '', upload3dDisplayName: '',
                 selectedLibrary3d: '', local3dUrl: null, 
                 
-                // Variabel BGM
                 selectedMusic: '', bgmVolume: 0.3,
                 audioDuration: 100, bgmStart: 0, bgmEnd: 30, bgmDuration: 0,
                 customBgmFile: null, customBgmUrl: null, isCustomBgm: false,
@@ -422,6 +427,90 @@
                 library3dList: @json($library3dList),
                 musicList: @json($musicList),
                 templates: @json($templates),
+
+                modelStates: {},
+                downloadQueue: [],
+                isBackgroundDownloading: false,
+
+                async sortAndStartQueue() {
+                    let sizePromises = this.library3dList.map(item => {
+                        return fetch(item.path, { method: 'HEAD' })
+                            .then(res => {
+                                let size = res.headers.get('content-length');
+                                return { id: item.id, size: size ? parseInt(size) : 999999999 };
+                            })
+                            .catch(() => ({ id: item.id, size: 999999999 }));
+                    });
+                    
+                    let results = await Promise.all(sizePromises);
+                    
+                    results.sort((a, b) => a.size - b.size);
+                    
+                    this.downloadQueue = results.map(r => r.id);
+                    this.processQueue();
+                },
+
+                async processQueue() {
+                    if (this.downloadQueue.length === 0) return;
+                    if (this.isBackgroundDownloading) return;
+
+                    this.isBackgroundDownloading = true;
+                    let nextId = this.downloadQueue.shift();
+
+                    if (this.modelStates[nextId].state === 'idle') {
+                        await this.downloadModel(nextId);
+                    }
+
+                    this.isBackgroundDownloading = false;
+                    this.processQueue();
+                },
+
+                prioritizeDownload(id) {
+                    if (this.modelStates[id] && this.modelStates[id].state === 'idle') {
+                        this.downloadQueue = this.downloadQueue.filter(i => i !== id);
+                        this.downloadModel(id);
+                    }
+                },
+
+                downloadModel(id) {
+                    return new Promise((resolve) => {
+                        if (this.modelStates[id].state !== 'idle') return resolve();
+                        
+                        this.modelStates[id].state = 'downloading';
+                        this.modelStates[id].progress = 0;
+                        
+                        let xhr = new XMLHttpRequest();
+                        xhr.open('GET', this.modelStates[id].path, true);
+                        xhr.responseType = 'blob';
+                        
+                        xhr.onprogress = (e) => {
+                            if (e.lengthComputable) {
+                                this.modelStates[id].progress = Math.round((e.loaded / e.total) * 100);
+                            } else {
+                                this.modelStates[id].progress = Math.min(90, this.modelStates[id].progress + 5);
+                            }
+                        };
+                        
+                        xhr.onload = () => {
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                let blobUrl = URL.createObjectURL(xhr.response);
+                                this.modelStates[id].url = blobUrl;
+                                this.modelStates[id].state = 'loaded';
+                                this.modelStates[id].progress = 100;
+                            } else {
+                                this.modelStates[id].state = 'idle';
+                            resolve();
+                        };
+                        
+                        xhr.onerror = () => {
+                            this.modelStates[id].state = 'idle';
+                            resolve();
+                        };
+                        
+                        xhr.send();
+                    });
+                },
+
 
                 formatTime(seconds) {
                     if(!seconds || isNaN(seconds)) return "0:00";
@@ -505,7 +594,6 @@
                     }
                 },
 
-                // LOGIKA UNTUK UPLOAD DAN CROP MUSIK
                 handleBgmUpload(e) {
                     let file = e.target.files[0];
                     if(!file) return;
@@ -514,7 +602,7 @@
                     this.customBgmFile = file;
                     if(this.customBgmUrl) URL.revokeObjectURL(this.customBgmUrl);
                     this.customBgmUrl = URL.createObjectURL(file);
-                    this.loadDuration(this.customBgmUrl);
+                    this.previewBgm(this.customBgmUrl);
                 },
                 clearCustomBgm() {
                     this.isCustomBgm = false;
@@ -530,19 +618,11 @@
                     this.selectedMusic = path;
                     this.clearCustomBgm();
                     this.selectedMusic = path;
-                    this.loadDuration('/bg_sounds/' + path);
+                    this.previewBgm('/minio-proxy/bg_sounds/' + path);
                 },
                 clearMusic() {
                     this.selectedMusic = '';
                     this.clearCustomBgm();
-                },
-                loadDuration(src) {
-                    let tempAudio = new Audio(src);
-                    tempAudio.onloadedmetadata = () => {
-                        this.bgmDuration = Math.floor(tempAudio.duration);
-                        this.bgmStart = 0;
-                        this.bgmEnd = this.bgmDuration;
-                    };
                 },
 
                 submitForm(e) {
@@ -610,18 +690,19 @@
                 },
                 
                 toggleAudio(path) { 
-                    let src = '/bg_sounds/' + path;
+                    let src = '/minio-proxy/bg_sounds/' + path;
                     if (this.playingMusicPath === src) { this.stopAllAudio(); } else { this.previewBgm(src); } 
                 },
                 
                 previewBgm(src) {
                     this.stopAllAudio();
                     this.currentAudioPlayer = new Audio(src);
-
                     this.currentAudioPlayer.preload = 'auto'; 
                     
                     this.currentAudioPlayer.addEventListener('loadedmetadata', () => {
                         this.audioDuration = this.currentAudioPlayer.duration;
+                        
+                        this.bgmDuration = this.audioDuration;
                         
                         if (this.audioDuration > 30) {
                             if(this.bgmEnd === 100 || this.bgmEnd > this.audioDuration) {
@@ -696,8 +777,8 @@
                     if (this.arType === '3d') {
                         if (this.upload3dName && this.local3dUrl) src3d = this.local3dUrl; 
                         else if (this.selectedLibrary3d) {
-                            let found = this.library3dList.find(i => i.id == this.selectedLibrary3d);
-                            src3d = found ? found.path : '';
+                            let state = this.modelStates[this.selectedLibrary3d];
+                            src3d = (state && state.state === 'loaded') ? state.url : this.library3dList.find(i => i.id == this.selectedLibrary3d).path;
                         }
                     }
 
