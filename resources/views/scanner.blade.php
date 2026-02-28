@@ -29,6 +29,8 @@
             pointer-events: auto; 
             will-change: transform; 
         }
+
+        model-viewer::part(default-progress-bar) { display: none; }
     </style>
 </head>
 <body x-data="arTracker()" x-init="startCamera()">
@@ -37,6 +39,15 @@
     <canvas id="qr-canvas" style="display: none;"></canvas>
     
     <div id="ar-overlay-container">
+        <div x-show="isLoading" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/90 backdrop-blur-sm">
+            <div class="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p class="text-white font-bold mb-2">Mempersiapkan AR Experience...</p>
+            <div class="w-64 bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                <div class="bg-teal-500 h-2.5 rounded-full transition-all duration-200" :style="`width: ${loadingProgress}%`"></div>
+            </div>
+            <p class="text-teal-400 text-sm font-bold mt-2" x-text="`${loadingProgress}%`"></p>
+            <p class="text-slate-400 text-xs mt-1" x-text="loadingStatusText"></p>
+        </div>
         <img x-show="arData.type === '2d'" :src="arData.src" class="w-full h-full object-contain filter drop-shadow(0 25px 25px rgba(0,0,0,0.8))">
         <model-viewer 
             x-show="arData.type === '3d'" 
@@ -85,6 +96,10 @@
                 curX: 0, curY: 0, curScale: 0, curAngle: 0,
                 targetX: 0, targetY: 0, targetScale: 0, targetAngle: 0,
                 hasSnaped: false,
+
+                isLoading: false,
+                loadingProgress: 0,
+                loadingStatusText: 'Mengunduh model 3D...',
 
                 startCamera() {
                     if (window.history.replaceState) {
@@ -217,79 +232,117 @@
                             const type = result.data.ar_type;
                             const src = type === '3d' ? result.data.file_3d_url : result.data.image_url;
                             
-                            this.arData = { type: type, src: src };
-                            
                             this.arCache[url] = { 
-                                narration: result.data.narration, 
-                                ai_voice: result.data.ai_voice,
-                                custom_audio_url: result.data.custom_audio_url,
-                                bgm_url: result.data.bgm_url,
+                                narration: result.data.narration, ai_voice: result.data.ai_voice,
+                                custom_audio_url: result.data.custom_audio_url, bgm_url: result.data.bgm_url,
                                 ready: true 
                             };
                             
+                            this.isFetching = false;
                             this.arActive = true;
-                            this.playAllAudio(url);
+                            
+                            this.isLoading = true;
+                            this.loadingProgress = 0;
+                            this.loadingStatusText = 'Mengunduh Media & Model 3D...';
+                            
+                            this.arData = { type: type, src: src };
+
+                            this.playAllAudioSynchronized(url, type);
 
                         } else {
                             this.showError("QR Code tidak valid / Limit.");
                             this.arCache[url] = { ready: false };
+                            this.isFetching = false;
                         }
-                    } catch (error) { this.showError("Terjadi kesalahan jaringan."); } 
-                    finally { this.isFetching = false; }
+                    } catch (error) { 
+                        this.showError("Terjadi kesalahan jaringan."); 
+                        this.isFetching = false;
+                    } 
                 },
 
-                playAllAudio(url) {
+                playAllAudioSynchronized(url, type) {
                     this.stopAllAudio();
                     const cache = this.arCache[url];
-                    
-                    if(cache) {
-                        if(cache.bgm_url) {
-                            let urlParts = cache.bgm_url.split('#t=');
-                            let audioSrc = urlParts[0];
-                            
-                            this.bgmPlayer = new Audio(audioSrc);
-                            this.bgmPlayer.volume = 0.3;
-                            
-                            if (urlParts.length > 1 && urlParts[1]) {
-                                let times = urlParts[1].split(',');
-                                let start = parseFloat(times[0]);
-                                let end = parseFloat(times[1]);
-                                
-                                this.bgmPlayer.currentTime = start;
-                                
-                                this.bgmPlayer.ontimeupdate = () => {
-                                    if(this.bgmPlayer.currentTime >= end) {
-                                        this.bgmPlayer.currentTime = start;
+                    if(!cache) return;
+
+                    let promises = [];
+
+                    if (type === '3d') {
+                        const modelPromise = new Promise((resolve) => {
+                            this.$nextTick(() => {
+                                const viewer = document.querySelector('#ar-overlay-container model-viewer');
+                                if(!viewer) return resolve();
+
+                                const onProgress = (event) => {
+                                    this.loadingProgress = Math.round(event.detail.totalProgress * 100);
+                                    if (event.detail.totalProgress === 1) {
+                                        viewer.removeEventListener('progress', onProgress);
+                                        resolve();
                                     }
                                 };
-                            } else {
-                                this.bgmPlayer.loop = true;
-                            }
-                            
-                            this.bgmPlayer.play().catch(e => console.log('BGM Play Error:', e));
+                                viewer.addEventListener('progress', onProgress);
+                                setTimeout(resolve, 20000);
+                            });
+                        });
+                        promises.push(modelPromise);
+                    } else {
+                        this.loadingProgress = 100;
+                        promises.push(Promise.resolve());
+                    }
+
+                    if (cache.bgm_url) {
+                        let urlParts = cache.bgm_url.split('#t=');
+                        this.bgmPlayer = new Audio(urlParts[0]);
+                        this.bgmPlayer.volume = 0.3;
+
+                        if (urlParts.length > 1 && urlParts[1]) {
+                            let times = urlParts[1].split(',');
+                            this.bgmPlayer.currentTime = parseFloat(times[0]);
+                            this.bgmPlayer.ontimeupdate = () => {
+                                if(this.bgmPlayer.currentTime >= parseFloat(times[1])) this.bgmPlayer.currentTime = parseFloat(times[0]);
+                            };
+                        } else {
+                            this.bgmPlayer.loop = true;
                         }
-                        
-                        if(cache.custom_audio_url) {
-                            this.narrationPlayer = new Audio(cache.custom_audio_url);
-                            this.narrationPlayer.volume = 1.0;
-                            this.narrationPlayer.play().catch(e => console.log('Custom Audio Play Error:', e));
-                        } 
-                        else if(cache.narration) {
+
+                        const bgmPromise = new Promise((resolve) => {
+                            this.bgmPlayer.addEventListener('canplaythrough', resolve, { once: true });
+                            this.bgmPlayer.addEventListener('error', resolve, { once: true });
+                            this.bgmPlayer.load();
+                        });
+                        promises.push(bgmPromise);
+                    }
+
+                    let usingRecordedAudio = false;
+                    if (cache.custom_audio_url) {
+                        usingRecordedAudio = true;
+                        this.narrationPlayer = new Audio(cache.custom_audio_url);
+                        this.narrationPlayer.volume = 1.0;
+                        const voicePromise = new Promise((resolve) => {
+                            this.narrationPlayer.addEventListener('canplaythrough', resolve, { once: true });
+                            this.narrationPlayer.addEventListener('error', resolve, { once: true });
+                            this.narrationPlayer.load();
+                        });
+                        promises.push(voicePromise);
+                    }
+
+                    Promise.all(promises).then(() => {
+                        this.isLoading = false;
+
+                        if(this.bgmPlayer) this.bgmPlayer.play().catch(e => {});
+                        if(this.narrationPlayer) this.narrationPlayer.play().catch(e => {});
+
+                        if(!usingRecordedAudio && cache.narration) {
                             let utterance = new SpeechSynthesisUtterance(cache.narration);
                             utterance.lang = 'id-ID';
-                            utterance.volume = 1.0;
-                            
                             if(cache.ai_voice) {
                                 let voices = window.speechSynthesis.getVoices();
                                 let selectedVoice = voices.find(v => v.voiceURI === cache.ai_voice);
-                                if(selectedVoice) {
-                                    utterance.voice = selectedVoice;
-                                }
+                                if(selectedVoice) utterance.voice = selectedVoice;
                             }
-                            
                             window.speechSynthesis.speak(utterance);
                         }
-                    }
+                    });
                 },
 
                 replayVoice() {

@@ -51,7 +51,10 @@ class QrCodeController extends Controller
             return $item;
         })->unique('name')->values();
 
-        $templates = ArTemplate::all();
+        $templates = ArTemplate::all()->map(function($template) {
+            $template->path = $template->file_path;
+            return $template;
+        });
 
         $musicList = [];
         try {

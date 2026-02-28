@@ -10,7 +10,9 @@ class ArTemplateSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::statement('TRUNCATE TABLE ar_templates RESTART IDENTITY CASCADE');
+        \Illuminate\Support\Facades\Schema::disableForeignKeyConstraints();
+        ArTemplate::truncate();
+        \Illuminate\Support\Facades\Schema::enableForeignKeyConstraints();
 
         // 1. Template Ulang Tahun (3D Cake + Kado)
         ArTemplate::create([
