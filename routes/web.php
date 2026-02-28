@@ -108,6 +108,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard/ar/{qrCode}/download', [\App\Http\Controllers\QrCodeController::class, 'download'])->name('user.ar.download');
     });
 
+    Route::post('/checkout', [PaymentController::class, 'checkout'])->name('payment.checkout');
+
 });
 
 Route::get('/minio-proxy/{any}', function ($any) {

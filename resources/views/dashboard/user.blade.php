@@ -82,7 +82,7 @@
                             Paket Aktif
                         </div>
                     @else
-                        <form action="#" method="POST" class="w-full">
+                        <form action="{{ route('payment.checkout') }}" method="POST" class="w-full">
                             @csrf
                             <input type="hidden" name="package_id" value="{{ $pkg->id }}">
                             <button type="submit" class="w-full py-2.5 rounded-lg btn-gradient text-white font-bold text-sm transition-colors">
