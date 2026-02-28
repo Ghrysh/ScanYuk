@@ -169,7 +169,7 @@ class QrCodeController extends Controller
             }
 
             $qrCode->uuid = Str::uuid();
-            $qrUrl = url('/scan-ar'); 
+            $qrUrl = url('/scan-ar?id=' . $qrCode->uuid);
             $qrImage = base64_encode(QrCode::format('svg')->size(300)->margin(2)->generate($qrUrl));
             $qrCode->qr_image_path = $qrImage;
 
@@ -207,7 +207,7 @@ class QrCodeController extends Controller
     {
         if ($qrCode->user_id !== Auth::id()) abort(403);
         
-        $apiUrl = url('/scan-ar'); 
+        $apiUrl = url('/scan-ar?id=' . $qrCode->uuid);
         
         $imageContent = QrCode::size(500)->margin(2)->generate($apiUrl);
         $fileName = 'ScanYuk-AR-' . Str::slug($qrCode->title) . '.svg';
