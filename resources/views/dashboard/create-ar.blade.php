@@ -611,9 +611,18 @@
                     }
                 },
 
-                filtered3d() { return this.library3dList.filter(i => i.name.toLowerCase().includes(this.search3d.toLowerCase())); },
-                filteredMusic() { return this.musicList.filter(i => i.name.toLowerCase().includes(this.searchMusic.toLowerCase())); },
-                filteredTemplates() { return this.templates.filter(i => i.title.toLowerCase().includes(this.searchTemplate.toLowerCase()) || i.narration.toLowerCase().includes(this.searchTemplate.toLowerCase())); },
+                filtered3d() { 
+                    return this.library3dList.filter(i => (i.name || '').toLowerCase().includes(this.search3d.toLowerCase())); 
+                },
+                filteredMusic() { 
+                    return this.musicList.filter(i => (i.name || '').toLowerCase().includes(this.searchMusic.toLowerCase())); 
+                },
+                filteredTemplates() { 
+                    return this.templates.filter(i => 
+                        (i.title || '').toLowerCase().includes(this.searchTemplate.toLowerCase()) || 
+                        (i.narration || '').toLowerCase().includes(this.searchTemplate.toLowerCase())
+                    ); 
+                },
 
                 reset2d() { this.imageUrl2d = null; document.getElementById('image-upload').value = ''; },
                 reset3d() { 
