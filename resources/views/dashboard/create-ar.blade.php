@@ -499,6 +499,7 @@
                                 this.modelStates[id].progress = 100;
                             } else {
                                 this.modelStates[id].state = 'idle';
+                            }
                             resolve();
                         };
                         
