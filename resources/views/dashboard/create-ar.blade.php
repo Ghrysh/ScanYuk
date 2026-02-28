@@ -527,6 +527,13 @@
                     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
                 },
 
+                formatTime(seconds) {
+                    if(!seconds || isNaN(seconds)) return "0:00";
+                    let min = Math.floor(seconds / 60);
+                    let sec = Math.floor(seconds % 60);
+                    return min + ":" + (sec < 10 ? '0' : '') + sec;
+                },
+
                 toggleDownload(id) {
                     let state = this.modelStates[id];
                     if (state.state === 'downloading') {
