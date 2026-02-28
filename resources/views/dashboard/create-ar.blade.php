@@ -119,8 +119,12 @@
                                         
                                         <div class="h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center overflow-hidden"
                                             x-data="{ inView: false }"
-                                            x-intersect.margin.50px="inView = true"
-                                            x-intersect:leave="inView = false">
+                                            x-init="
+                                                let observer = new IntersectionObserver(entries => {
+                                                    inView = entries[0].isIntersecting;
+                                                }, { rootMargin: '50px' });
+                                                observer.observe($el);
+                                            ">
                                             
                                             <div x-show="!inView" class="absolute inset-0 flex flex-col items-center justify-center text-slate-300">
                                                 <svg class="animate-spin h-6 w-6 text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -150,7 +154,7 @@
                                         </div>
                                     </label>
                                 </template>
-                            </div>
+                            </div>`
                         </div>
                     </div>
                 </div>
