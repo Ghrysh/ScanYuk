@@ -111,28 +111,21 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/minio-proxy/{any}', function ($any) {
-    $disk = Storage::disk('s3');
+    $localPath = public_path('scanyuk_cache/' . $any);
     
-    if (!$disk->exists($any)) {
-        abort(404, 'File tidak ditemukan di MinIO.');
+    if (!file_exists($localPath)) {
+        $disk = Storage::disk('s3');
+        if (!$disk->exists($any)) abort(404, 'File tidak ditemukan di MinIO.');
+        
+        $dir = dirname($localPath);
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+
+        file_put_contents($localPath, $disk->get($any));
     }
 
-    $mime = Str::endsWith(strtolower($any), '.glb') ? 'model/gltf-binary' : $disk->mimeType($any);
-    $size = $disk->size($any);
+    $encodedPath = implode('/', array_map('rawurlencode', explode('/', $any)));
 
-    return response()->stream(function () use ($disk, $any) {
-        $stream = $disk->readStream($any);
-        fpassthru($stream);
-        if (is_resource($stream)) {
-            fclose($stream);
-        }
-    }, 200, [
-        'Content-Type' => $mime,
-        'Content-Length' => $size,
-        'Access-Control-Allow-Origin' => '*',
-        'Cache-Control' => 'public, max-age=31536000, immutable',
-        'Accept-Ranges' => 'bytes'
-    ]);
+    return redirect(url('/scanyuk_cache/' . $encodedPath));
 })->where('any', '.*')->name('minio.proxy');
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
