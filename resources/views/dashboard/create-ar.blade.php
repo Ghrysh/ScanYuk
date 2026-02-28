@@ -688,9 +688,6 @@
                 },
 
                 submitForm(e) {
-                    if (this.narrationMode === 'audio' && !this.recordedAudioBlob && !this.narrationText) {
-                         if(!confirm('Anda memilih mode rekam suara tapi belum merekam. Lanjutkan tanpa suara?')) return;
-                    }
                     this.isGenerating = true; this.progress = 0; this.uploadError = null;
                     let formData = new FormData(e.target);
                     

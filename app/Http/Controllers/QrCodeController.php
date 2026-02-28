@@ -76,10 +76,12 @@ class QrCodeController extends Controller
                 'image' => 'required_if:ar_type,2d|image|mimes:jpeg,png,jpg|max:5120', 
                 'file_3d' => 'nullable|file|max:51200',
                 'asset_name' => 'nullable|string|max:100', 
-                'narration_mode' => 'required|in:text,audio',
-                'narration' => 'required_if:narration_mode,text|nullable|string',
+                
+                'narration_mode' => 'nullable|in:text,audio',
+                'narration' => 'nullable|string',
                 'ai_voice' => 'nullable|string',
                 'custom_audio' => 'nullable|file|max:10240',
+                
                 'custom_bgm' => 'nullable|file|mimes:mp3,wav,ogg,m4a|max:15360',
                 'bgm_start' => 'nullable|numeric',
                 'bgm_end' => 'nullable|numeric',
