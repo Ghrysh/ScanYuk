@@ -625,12 +625,13 @@
                     this.selectedMusic = '';
                     this.clearCustomBgm();
                 },
-                selectLibraryMusic(path) {
+                selectAndPlayMusic(music) {
+                    this.selectedMusic = music.path;
                     this.isCustomBgm = false;
-                    this.selectedMusic = path;
                     this.clearCustomBgm();
-                    this.selectedMusic = path;
-                    this.previewBgm('/minio-proxy/bg_sounds/' + path);
+                    
+                    let src = '/minio-proxy/bg_sounds/' + music.path;
+                    this.previewBgm(src);
                 },
 
                 submitForm(e) {
