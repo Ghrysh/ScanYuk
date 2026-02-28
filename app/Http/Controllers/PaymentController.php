@@ -17,9 +17,11 @@ class PaymentController extends Controller
 {
     public function registerCheckout($refId)
     {
-    if (!$userData) {
-                dd('ERROR CACHE: Data pendaftaran gagal disimpan sementara. Cek CACHE_DRIVER di .env kamu!');
-    }
+        $userData = Cache::get($refId);
+
+        if (!$userData) {
+            dd('ERROR CACHE: Data pendaftaran gagal disimpan sementara. Cek CACHE_DRIVER di .env kamu!');
+        }
         $package = PricingPackage::findOrFail($userData['package_id']);
 
         $body = [
