@@ -118,16 +118,19 @@
                                     <label class="flex flex-col bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden" :class="selectedLibrary3d === item.id ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : ''">
                                         
                                         <div class="h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center">
-                                            <model-viewer 
-                                                :src="item.path" 
-                                                class="w-full h-full" 
-                                                disable-zoom 
-                                                disable-pan 
-                                                camera-controls="false"
-                                                shadow-intensity="0" 
-                                                exposure="0.9"
-                                                loading="lazy">
-                                            </model-viewer>
+                                            <template x-if="inView">
+                                                <model-viewer 
+                                                    :src="item.path" 
+                                                    class="w-full h-full" 
+                                                    disable-zoom 
+                                                    disable-pan 
+                                                    camera-controls="false"
+                                                    shadow-intensity="0" 
+                                                    exposure="1"
+                                                    environment-image="neutral" 
+                                                    loading="lazy">
+                                                </model-viewer>
+                                            </template>
                                         </div>
                                         
                                         <div class="p-3 border-t border-slate-100 flex items-start gap-2">
