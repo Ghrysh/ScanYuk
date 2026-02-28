@@ -74,10 +74,10 @@ class AuthController extends Controller
             'plan' => 'nullable|string'
         ]);
 
-        $verification = DB::table('otp_verifications')
+        $verification = \Illuminate\Support\Facades\DB::table('otp_verifications')
             ->where('email', $request->email)
             ->where('otp_code', $request->otp_combined)
-            ->where('expires_at', '>', Carbon::now())
+            ->where('expires_at', '>', \Carbon\Carbon::now())
             ->first();
 
         if (!$verification) {
@@ -93,32 +93,36 @@ class AuthController extends Controller
         ];
         $targetPlan = $planMap[$planInput] ?? 'free';
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'free', 
-        ]);
-
-        DB::table('otp_verifications')->where('email', $request->email)->delete();
-
-        Auth::login($user);
+        \Illuminate\Support\Facades\DB::table('otp_verifications')->where('email', $request->email)->delete();
 
         if ($targetPlan !== 'free') {
-            $roleMap = [
-                'starter' => 'Pemula', 
-                'professional' => 'Profesional', 
-                'business' => 'Bisnis'
-            ];
-            
+            $roleMap = ['starter' => 'Pemula', 'professional' => 'Profesional', 'business' => 'Bisnis'];
             $pkgName = $roleMap[$targetPlan] ?? '';
             $package = \App\Models\PricingPackage::where('name', 'like', "%{$pkgName}%")->first();
-
+            
             if ($package && $package->price > 0) {
-                return redirect()->route('payment.auto', ['package_id' => $package->id]);
+                $refId = 'reg_' . \Illuminate\Support\Str::random(15);
+                
+                \Illuminate\Support\Facades\Cache::put($refId, [
+                    'name' => $request->name,
+                    'email' => $request->email,
+                    'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+                    'role' => $targetPlan,
+                    'package_id' => $package->id
+                ], now()->addHours(24));
+                
+                return redirect()->route('payment.register_checkout', ['refId' => $refId]);
             }
         }
 
+        $user = \App\Models\User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => \Illuminate\Support\Facades\Hash::make($request->password),
+            'role' => 'free', 
+        ]);
+
+        \Illuminate\Support\Facades\Auth::login($user);
         return redirect()->route('user.dashboard')->with('success', 'Registrasi berhasil! Selamat datang.');
     }
 

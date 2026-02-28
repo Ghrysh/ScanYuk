@@ -92,6 +92,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/send-otp', [AuthController::class, 'sendOtp'])->name('send-otp');
 });
 
+Route::get('/checkout/register/{refId}', [\App\Http\Controllers\PaymentController::class, 'registerCheckout'])->name('payment.register_checkout');
+
 Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['role:admin'])->group(function () {
@@ -109,7 +111,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard/ar/{qrCode}/download', [\App\Http\Controllers\QrCodeController::class, 'download'])->name('user.ar.download');
     });
 
-    Route::post('/checkout', [PaymentController::class, 'checkout'])->name('payment.checkout');
+    Route::post('/checkout', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
 
     Route::get('/checkout/auto/{package_id}', [\App\Http\Controllers\PaymentController::class, 'autoCheckout'])->name('payment.auto');
 
