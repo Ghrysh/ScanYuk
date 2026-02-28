@@ -115,6 +115,8 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/checkout/auto/{package_id}', [\App\Http\Controllers\PaymentController::class, 'autoCheckout'])->name('payment.auto');
 
+    Route::get('/checkout/cancel/{id}', [\App\Http\Controllers\PaymentController::class, 'cancel'])->name('payment.cancel');
+
 });
 
 Route::get('/minio-proxy/{any}', function ($any) {

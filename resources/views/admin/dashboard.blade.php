@@ -364,7 +364,7 @@
                         <td class="px-6 py-4 font-bold text-slate-900">Rp{{ number_format($txn->amount, 0, ',', '.') }}</td>
                         <td class="px-6 py-4">
                             <span class="px-3 py-1 rounded-full text-xs font-semibold 
-                                {{ $txn->status == 'Paid' ? 'bg-teal-100 text-teal-700' : 
+                                {{ $txn->status == 'Berhasil' ? 'bg-teal-100 text-teal-700' : 
                                 ($txn->status == 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">
                                 {{ $txn->status }}
                             </span>

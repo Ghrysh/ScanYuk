@@ -18,9 +18,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PricingPackageSeeder::class,
             AdminUserSeeder::class,
-            TransactionSeeder::class,
             ArTemplateSeeder::class,
-            ArAssetSeeder::class,
         ]);
     }
 }
