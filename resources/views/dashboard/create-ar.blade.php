@@ -15,6 +15,20 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .pointer-events-none-children model-viewer { pointer-events: none; }
+        
+        .dual-range input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none; 
+            background: transparent;
+            pointer-events: none;
+        }
+        .dual-range input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            pointer-events: all;
+            width: 30px;
+            height: 56px;
+            cursor: ew-resize;
+        }
     </style>
 </head>
 <body class="bg-slate-50 min-h-screen" x-data="arCreator()">
@@ -223,8 +237,11 @@
                                 
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center text-teal-500 group-hover:scale-105 transition-transform">
-                                        <svg x-show="playingMusicPath !== '/minio-proxy/bg_sounds/' + music.path" class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
-                                        <div x-show="playingMusicPath === '/minio-proxy/bg_sounds/' + music.path" class="flex items-end gap-0.5 h-4">
+                                        <svg x-show="selectedMusic !== music.path || (selectedMusic === music.path && !isBgmPlaying && !isBgmLoading)" class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                                        
+                                        <svg x-show="selectedMusic === music.path && isBgmLoading" class="animate-spin w-5 h-5 text-teal-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+
+                                        <div x-show="selectedMusic === music.path && isBgmPlaying" class="flex items-end gap-0.5 h-4">
                                             <div class="w-1 bg-teal-500 animate-[bounce_1s_infinite] rounded-t-sm" style="height: 100%"></div>
                                             <div class="w-1 bg-teal-500 animate-[bounce_1s_infinite] rounded-t-sm" style="height: 60%; animation-delay: 0.2s"></div>
                                             <div class="w-1 bg-teal-500 animate-[bounce_1s_infinite] rounded-t-sm" style="height: 80%; animation-delay: 0.4s"></div>
@@ -232,12 +249,15 @@
                                     </div>
                                     <div class="flex flex-col">
                                         <span class="text-sm font-bold text-slate-700" x-text="music.name"></span>
-                                        <span class="text-[10px]" :class="playingMusicPath === '/minio-proxy/bg_sounds/' + music.path ? 'text-teal-600 font-bold' : 'text-slate-400'">
-                                            <span x-text="playingMusicPath === '/minio-proxy/bg_sounds/' + music.path ? 'Sedang diputar...' : 'Ketuk untuk memutar'"></span>
+                                        <span class="text-[10px]" :class="selectedMusic === music.path ? 'text-teal-600 font-bold' : 'text-slate-400'">
+                                            <span x-show="selectedMusic !== music.path">Ketuk untuk memutar</span>
+                                            <span x-show="selectedMusic === music.path && isBgmLoading">Memuat audio...</span>
+                                            <span x-show="selectedMusic === music.path && isBgmPlaying">Sedang diputar (Klik untuk Pause)</span>
+                                            <span x-show="selectedMusic === music.path && !isBgmPlaying && !isBgmLoading">Di-pause (Klik untuk Lanjutkan)</span>
                                         </span>
                                     </div>
                                 </div>
-                                <input type="radio" x-model="selectedMusic" :value="music.path" class="w-5 h-5 text-teal-500 focus:ring-teal-500 border-slate-300 pointer-events-none">
+                                <input type="radio" x-model="selectedMusic" :value="music.path" class="w-5 h-5 text-teal-500 focus:ring-teal-500 border-slate-300 pointer-events-none hidden">
                             </div>
                         </template>
                     </div>
@@ -249,48 +269,40 @@
                                 <span>Potong Bagian Lagu</span>
                             </label>
                             <div class="flex items-center gap-3">
+                                <span class="text-xs font-bold text-slate-500" x-text="formatTime(bgmStart) + ' - ' + formatTime(bgmEnd)"></span>
                                 <span class="text-xs font-bold text-teal-600 bg-teal-50 border border-teal-200 px-2 py-1 rounded-md" x-text="Math.floor(bgmEnd - bgmStart) + ' Detik'"></span>
-                                <div class="flex items-center gap-1" title="Atur volume latar">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.536 6.464a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-                                    <input type="range" x-model="bgmVolume" @input="updateVolume()" min="0.05" max="1" step="0.05" class="w-16 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
-                                </div>
                             </div>
                         </div>
 
-                        <div class="relative w-full h-14 bg-slate-800 rounded-xl overflow-hidden flex items-center shadow-inner select-none mb-4">
-                            <div class="absolute inset-0 flex items-center justify-between px-1 opacity-40">
+                        <div class="relative w-full h-14 bg-slate-800 rounded-xl overflow-hidden shadow-inner select-none mb-2 dual-range group">
+                            <div class="absolute inset-0 flex items-center justify-between px-1 opacity-40 pointer-events-none">
                                 <template x-for="i in 40">
-                                    <div class="w-1 bg-teal-200 rounded-full" :style="`height: ${Math.random() * 60 + 20}%`"></div>
+                                    <div class="w-1 bg-teal-200 rounded-full transition-all duration-200" :style="`height: ${Math.random() * 60 + 20}%`"></div>
                                 </template>
                             </div>
-                            <div class="absolute top-0 bottom-0 bg-teal-500/40 border-x-4 border-teal-400 transition-all duration-100 shadow-[0_0_15px_rgba(20,184,166,0.4)]"
+                            
+                            <div class="absolute top-0 bottom-0 bg-teal-500/30 border-x-4 border-teal-400 transition-all duration-75 pointer-events-none shadow-[0_0_15px_rgba(20,184,166,0.4)]"
                                  :style="`left: ${(bgmStart / audioDuration) * 100}%; width: ${((bgmEnd - bgmStart) / audioDuration) * 100}%`">
+                                 <div class="absolute top-1/2 -left-1.5 w-1 h-6 bg-white rounded-full -translate-y-1/2 opacity-90 shadow-md"></div>
+                                 <div class="absolute top-1/2 -right-1.5 w-1 h-6 bg-white rounded-full -translate-y-1/2 opacity-90 shadow-md"></div>
                             </div>
-                        </div>
 
-                        <div class="flex gap-4">
-                            <div class="flex-1 space-y-1">
-                                <label class="text-[10px] uppercase font-bold text-slate-500 flex justify-between">
-                                    <span>Mulai</span>
-                                    <span class="text-teal-600" x-text="formatTime(bgmStart)"></span>
-                                </label>
-                                <input type="range" min="0" :max="Math.max(0, bgmEnd - 1)" step="0.5" x-model.number="bgmStart" @input="updateCrop('start')" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-500 hover:accent-teal-600">
-                            </div>
-                            <div class="flex-1 space-y-1">
-                                <label class="text-[10px] uppercase font-bold text-slate-500 flex justify-between">
-                                    <span>Selesai</span>
-                                    <span class="text-teal-600" x-text="formatTime(bgmEnd)"></span>
-                                </label>
-                                <input type="range" :min="Number(bgmStart) + 1" :max="audioDuration" step="0.5" x-model.number="bgmEnd" @input="updateCrop('end')" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-teal-500 hover:accent-teal-600">
+                            <input type="range" min="0" :max="Math.max(0, bgmEnd - 1)" step="0.5" x-model.number="bgmStart" @input="updateCrop('start')" class="absolute inset-0 w-full h-full opacity-0 z-10">
+                            <input type="range" :min="Number(bgmStart) + 1" :max="audioDuration" step="0.5" x-model.number="bgmEnd" @input="updateCrop('end')" class="absolute inset-0 w-full h-full opacity-0 z-20">
+                        </div>
+                        
+                        <div class="flex items-center justify-between mt-2">
+                            <p class="text-[10px] text-slate-400 italic flex-1">*Geser garis ujung kiri dan kanan pada kotak hijau di atas untuk memotong lagu.</p>
+                            <div class="flex items-center gap-1.5 ml-4" title="Atur volume latar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.536 6.464a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                                <input type="range" x-model="bgmVolume" @input="updateVolume()" min="0.05" max="1" step="0.05" class="w-16 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
                             </div>
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-2 italic">*Geser titik mulai, lagu akan otomatis diputar untuk preview.</p>
                         
                         <input type="hidden" name="bgm_start" :value="bgmStart">
                         <input type="hidden" name="bgm_end" :value="bgmEnd">
                         <input type="hidden" name="bgm_volume" :value="bgmVolume"> 
                     </div>
-                </div>
 
                 <div class="pt-4 border-t border-slate-200">
                     <label class="block text-sm font-bold text-slate-900 mb-4">Mode Narasi Suara (Opsional)</label>
@@ -439,7 +451,7 @@
                 selectedLibrary3d: '', local3dUrl: null, 
                 
                 selectedMusic: '', bgmVolume: 0.3,
-                audioDuration: 100, bgmStart: 0, bgmEnd: 30, bgmDuration: 0,
+                audioDuration: 100, bgmStart: 0, bgmEnd: 30, bgmDuration: 0, isBgmLoading: false, isBgmPlaying: false,
                 customBgmFile: null, customBgmUrl: null, isCustomBgm: false,
                 
                 narrationMode: 'text', narrationText: '', availableVoices: [], selectedVoice: '',
@@ -615,6 +627,17 @@
                     this.clearCustomBgm();
                 },
                 selectAndPlayMusic(music) {
+                    if (this.selectedMusic === music.path) {
+                        if (this.currentAudioPlayer) {
+                            if (this.isBgmPlaying || this.isBgmLoading) {
+                                this.currentAudioPlayer.pause();
+                            } else {
+                                this.currentAudioPlayer.play();
+                            }
+                        }
+                        return;
+                    }
+
                     this.selectedMusic = music.path;
                     this.isCustomBgm = false;
                     this.clearCustomBgm();
@@ -683,8 +706,21 @@
 
                 previewBgm(src) {
                     this.stopAllAudio();
+                    
+                    this.isBgmLoading = true;
+                    
                     this.currentAudioPlayer = new Audio(src);
                     this.currentAudioPlayer.preload = 'auto'; 
+                    
+                    this.currentAudioPlayer.addEventListener('waiting', () => { 
+                        this.isBgmLoading = true; this.isBgmPlaying = false; 
+                    });
+                    this.currentAudioPlayer.addEventListener('playing', () => { 
+                        this.isBgmLoading = false; this.isBgmPlaying = true; 
+                    });
+                    this.currentAudioPlayer.addEventListener('pause', () => { 
+                        this.isBgmPlaying = false; 
+                    });
                     
                     this.currentAudioPlayer.addEventListener('loadedmetadata', () => {
                         this.audioDuration = this.currentAudioPlayer.duration;
@@ -697,6 +733,7 @@
                         this.currentAudioPlayer.volume = this.bgmVolume;
                         
                         this.currentAudioPlayer.play().catch(e => {
+                            this.isBgmLoading = false;
                             console.log("Browser memblokir auto-play");
                         });
                         
@@ -749,6 +786,9 @@
                     if(this.currentAudioPlayer) { this.currentAudioPlayer.pause(); this.currentAudioPlayer.currentTime = 0; }
                     if(this.narrationPlayer) { this.narrationPlayer.pause(); this.narrationPlayer.currentTime = 0; }
                     this.playingMusicPath = null;
+                    
+                    this.isBgmLoading = false;
+                    this.isBgmPlaying = false;
                 },
 
                 openModal() {
