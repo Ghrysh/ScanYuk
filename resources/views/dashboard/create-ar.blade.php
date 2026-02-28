@@ -287,8 +287,8 @@
                                  <div class="absolute top-1/2 -right-1.5 w-1 h-6 bg-white rounded-full -translate-y-1/2 opacity-90 shadow-md"></div>
                             </div>
 
-                            <input type="range" min="0" :max="Math.max(0, bgmEnd - 1)" step="0.5" x-model.number="bgmStart" @input="updateCrop('start')" class="absolute inset-0 w-full h-full opacity-0 z-10">
-                            <input type="range" :min="Number(bgmStart) + 1" :max="audioDuration" step="0.5" x-model.number="bgmEnd" @input="updateCrop('end')" class="absolute inset-0 w-full h-full opacity-0 z-20">
+                            <input type="range" min="0" :max="audioDuration" step="0.1" x-model.number="bgmStart" @input="updateCrop('start')" class="absolute inset-0 w-full h-full opacity-0 z-10">
+                            <input type="range" min="0" :max="audioDuration" step="0.1" x-model.number="bgmEnd" @input="updateCrop('end')" class="absolute inset-0 w-full h-full opacity-0 z-20">
                         </div>
                         
                         <div class="flex items-center justify-between mt-2">
@@ -751,9 +751,9 @@
                 updateVolume() { if(this.currentAudioPlayer) this.currentAudioPlayer.volume = this.bgmVolume; },
 
                 updateCrop(type) {
-                    if (Number(this.bgmStart) >= Number(this.bgmEnd)) {
-                        if(type === 'start') this.bgmStart = Number(this.bgmEnd) - 1;
-                        if(type === 'end') this.bgmEnd = Number(this.bgmStart) + 1;
+                    if (Number(this.bgmStart) >= Number(this.bgmEnd) - 0.5) {
+                        if (type === 'start') this.bgmStart = Number(this.bgmEnd) - 0.5;
+                        if (type === 'end') this.bgmEnd = Number(this.bgmStart) + 0.5;
                     }
 
                     if (this.currentAudioPlayer && !this.currentAudioPlayer.paused) {
