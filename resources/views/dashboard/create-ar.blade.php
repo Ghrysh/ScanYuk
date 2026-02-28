@@ -405,14 +405,25 @@
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
-                <div class="p-6 w-full flex flex-col items-center">
+                
+                <div x-show="isTemplateLoading" class="p-10 w-full flex flex-col items-center justify-center h-[300px] bg-slate-50">
+                    <div class="relative w-16 h-16 mb-4">
+                        <svg class="w-full h-full text-slate-200" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
+                        <svg class="absolute inset-0 w-full h-full text-indigo-500 transition-all duration-200 ease-out" viewBox="0 0 36 36"><path :stroke-dasharray="templateProgress + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" /></svg>
+                        <div class="absolute inset-0 flex items-center justify-center text-indigo-600 font-bold text-sm" x-text="templateProgress + '%'"></div>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-lg">Mempersiapkan AR...</h4>
+                    <p class="text-xs text-slate-500 mt-1 text-center font-medium">Sedang mengunduh 3D & Audio agar berjalan lancar</p>
+                </div>
+
+                <div x-show="!isTemplateLoading" class="p-6 w-full flex flex-col items-center">
                     <div class="w-full bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-inner border border-slate-200" style="height: 300px;">
                         <template x-if="previewData.type === '2d'"><img :src="previewData.src" class="max-w-full max-h-full object-contain"></template>
                         <template x-if="previewData.type === '3d'"><model-viewer :src="previewData.src" auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer></template>
 
                         <div class="absolute bottom-4 left-4 flex gap-2">
                             <span x-show="previewData.music" class="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg> BGM On</span>
-                            <span x-show="previewData.hasNarration" class="px-3 py-1 bg-teal-500/90 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1 animate-pulse"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg> Suara Narasi</span>
+                            <span x-show="previewData.hasNarration" class="px-3 py-1 bg-teal-500/90 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 animate-pulse" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg> Suara Narasi</span>
                         </div>
                     </div>
                     <template x-if="isFromTemplate">
@@ -473,6 +484,8 @@
                 modelStates: {},
                 downloadQueue: [],
                 isBackgroundDownloading: false,
+
+                isTemplateLoading: false, templateProgress: 0,
 
                 async sortAndStartQueue() {
                     let sizePromises = this.library3dList.map(item => {
@@ -701,12 +714,80 @@
                     xhr.send(formData);
                 },
 
-                previewTemplate(tpl) {
+                async previewTemplate(tpl) {
                     this.isFromTemplate = true;
-                    this.previewData = { title: tpl.title, type: tpl.ar_type, src: tpl.file_path, music: tpl.bgm_path, hasNarration: !!tpl.narration, fullData: tpl };
+                    this.previewData = { title: tpl.title, type: tpl.ar_type, src: '', music: '', hasNarration: !!tpl.narration, fullData: tpl };
                     this.showModal = true;
-                    if(tpl.bgm_path) this.previewBgm('/minio-proxy/bg_sounds/' + tpl.bgm_path);
-                    this.playVoice(tpl.narration, null, null);
+                    this.isTemplateLoading = true;
+                    this.templateProgress = 0;
+                    this.stopAllAudio();
+
+                    let src3d = tpl.file_path;
+                    let bgmSrc = tpl.bgm_path ? '/minio-proxy/bg_sounds/' + tpl.bgm_path : '';
+                    let finalBlobUrl = src3d;
+
+                    try {
+                        if (tpl.ar_type === '3d') {
+                            finalBlobUrl = await new Promise((resolve, reject) => {
+                                let xhr = new XMLHttpRequest();
+                                xhr.open('GET', src3d, true);
+                                xhr.responseType = 'blob';
+                                xhr.onprogress = (e) => {
+                                    if (e.lengthComputable) {
+                                        this.templateProgress = Math.round((e.loaded / e.total) * 80);
+                                    } else {
+                                        this.templateProgress = Math.min(80, this.templateProgress + 5);
+                                    }
+                                };
+                                xhr.onload = () => {
+                                    if (xhr.status >= 200 && xhr.status < 300) {
+                                        resolve(URL.createObjectURL(xhr.response));
+                                    } else {
+                                        reject('Gagal Unduh 3D');
+                                    }
+                                };
+                                xhr.onerror = reject;
+                                xhr.send();
+                            });
+                        } else {
+                            this.templateProgress = 80;
+                        }
+
+                        if (bgmSrc) {
+                            await new Promise((resolve) => {
+                                let audio = new Audio(bgmSrc);
+                                audio.preload = 'auto';
+                                audio.addEventListener('canplaythrough', () => {
+                                    this.currentAudioPlayer = audio;
+                                    resolve();
+                                });
+                                audio.addEventListener('error', () => resolve());
+                                audio.load();
+                            });
+                        }
+                        
+                        this.templateProgress = 100;
+                        
+                        setTimeout(() => {
+                            this.previewData.src = finalBlobUrl;
+                            this.previewData.music = bgmSrc;
+                            this.isTemplateLoading = false;
+
+                            if (this.currentAudioPlayer) {
+                                this.audioDuration = this.currentAudioPlayer.duration || 100;
+                                this.bgmStart = 0;
+                                this.bgmEnd = this.audioDuration;
+                                this.currentAudioPlayer.volume = this.bgmVolume;
+                                this.currentAudioPlayer.play().catch(e => console.log("Auto-play diblokir browser"));
+                            }
+                            
+                            this.playVoice(tpl.narration, null, null);
+                        }, 400);
+
+                    } catch (err) {
+                        alert('Gagal memuat template. Periksa koneksi internet Anda.');
+                        this.closeModal();
+                    }
                 },
                 useTemplate() {
                     let tpl = this.previewData.fullData;
@@ -839,6 +920,10 @@
                 closeModal() {
                     this.showModal = false;
                     this.stopAllAudio();
+                    if (this.isFromTemplate && this.previewData.src && this.previewData.src.startsWith('blob:')) {
+                        URL.revokeObjectURL(this.previewData.src);
+                        this.previewData.src = '';
+                    }
                 },
 
                 loadVoices() {
