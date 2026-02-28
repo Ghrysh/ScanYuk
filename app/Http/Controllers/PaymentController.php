@@ -17,9 +17,9 @@ class PaymentController extends Controller
 {
     public function registerCheckout($refId)
     {
-        $userData = Cache::get($refId);
-        if (!$userData) return redirect()->route('register')->withErrors(['error' => 'Sesi pendaftaran kadaluarsa. Silakan daftar ulang.']);
-
+    if (!$userData) {
+                dd('ERROR CACHE: Data pendaftaran gagal disimpan sementara. Cek CACHE_DRIVER di .env kamu!');
+    }
         $package = PricingPackage::findOrFail($userData['package_id']);
 
         $body = [
@@ -79,6 +79,12 @@ class PaymentController extends Controller
         if ($response->successful() && isset($resData['Status']) && $resData['Status'] == 200) {
             return redirect($resData['Data']['Url']);
         }
+        
+        dd([
+            'PESAN' => 'IPAYMU MENOLAK REQUEST!',
+            'DATA_DARI_IPAYMU' => $resData,
+            'YANG_DIKIRIM_KESANA' => $body
+        ]);
 
         return back()->withErrors(['error' => 'Gagal terhubung ke gateway pembayaran iPaymu.']);
     }
