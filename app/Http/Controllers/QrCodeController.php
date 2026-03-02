@@ -52,6 +52,9 @@ class QrCodeController extends Controller
         })->unique('name')->values();
 
         $templates = ArTemplate::all()->map(function($template) {
+            if (!Str::startsWith($template->file_path, ['http', '/'])) {
+                $template->file_path = '/' . $template->file_path;
+            }
             $template->path = $template->file_path;
             return $template;
         });
@@ -106,7 +109,11 @@ class QrCodeController extends Controller
                 $uploadBgm = Storage::disk('s3')->put('bg_sounds/' . $bgmName, $bgmContent);
                 if (!$uploadBgm) throw new \Exception("Gagal menyimpan BGM ke MinIO.");
                 
-                $bgmPathToSave = $bgmName; 
+                $bgmPathToSave = url('/minio-proxy/bg_sounds/' . $bgmName); 
+            } else if (!empty($bgmPathToSave)) {
+                if (!Str::startsWith($bgmPathToSave, 'http')) {
+                    $bgmPathToSave = url('/minio-proxy/bg_sounds/' . ltrim($bgmPathToSave, '/'));
+                }
             }
 
             if ($bgmPathToSave && $request->filled('bgm_start') && $request->filled('bgm_end')) {

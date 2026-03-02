@@ -300,19 +300,25 @@
                         this.bgmPlayer.volume = 0.3;
                         this.bgmPlayer.src = urlParts[0];
 
+                        let startTime = 0;
+                        let endTime = null;
+                        
                         if (urlParts.length > 1 && urlParts[1]) {
                             let times = urlParts[1].split(',');
-                            this.bgmPlayer.currentTime = parseFloat(times[0]);
+                            startTime = parseFloat(times[0]);
+                            endTime = parseFloat(times[1]);
                             this.bgmPlayer.ontimeupdate = () => {
-                                if(this.bgmPlayer.currentTime >= parseFloat(times[1])) this.bgmPlayer.currentTime = parseFloat(times[0]);
+                                if(endTime && this.bgmPlayer.currentTime >= endTime) this.bgmPlayer.currentTime = startTime;
                             };
                         } else {
                             this.bgmPlayer.loop = true;
                         }
 
                         promises.push(new Promise((resolve) => {
-
-                            this.bgmPlayer.addEventListener('canplaythrough', resolve, { once: true });
+                            this.bgmPlayer.addEventListener('canplaythrough', () => {
+                                this.bgmPlayer.currentTime = startTime; 
+                                resolve();
+                            }, { once: true });
                             this.bgmPlayer.addEventListener('error', resolve, { once: true });
                             this.bgmPlayer.load(); 
                         }));

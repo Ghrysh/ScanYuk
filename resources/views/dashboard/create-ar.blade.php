@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Create AR Experience - ScanYuk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='5' height='5' x='3' y='3' rx='1'%3E%3C/rect%3E%3Crect width='5' height='5' x='16' y='3' rx='1'%3E%3C/rect%3E%3Crect width='5' height='5' x='3' y='16' rx='1'%3E%3C/rect%3E%3Cpath d='M21 16h-3a2 2 0 0 0-2 2v3'%3E%3C/path%3E%3Cpath d='M21 21v.01'%3E%3C/path%3E%3Cpath d='M12 7v3a2 2 0 0 1-2 2H7'%3E%3C/path%3E%3Cpath d='M3 12h.01'%3E%3C/path%3E%3Cpath d='M12 3h.01'%3E%3C/path%3E%3Cpath d='M12 16v.01'%3E%3C/path%3E%3Cpath d='M16 12h1'%3E%3C/path%3E%3Cpath d='M21 12v.01'%3E%3C/path%3E%3Cpath d='M12 21v-1'%3E%3C/path%3E%3C/svg%3E">
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
@@ -59,20 +60,20 @@
                 </div>
                 <h1 class="hidden sm:block text-lg font-bold text-slate-900">Buat AR</h1>
             </div>
-            <div class="flex p-1 bg-slate-100 rounded-lg border border-slate-200">
-                <button @click="mainTab = 'custom'" :class="mainTab === 'custom' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="px-3 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all">Custom AR</button>
-                <button @click="mainTab = 'template'" :class="mainTab === 'template' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="px-3 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all">Template</button>
+            <div class="flex p-1 bg-slate-100 rounded-lg border border-slate-200 w-full sm:w-auto mt-2 sm:mt-0 overflow-x-auto">
+                <button @click="mainTab = 'custom'" :class="mainTab === 'custom' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="flex-1 sm:flex-none px-3 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all whitespace-nowrap">Custom AR</button>
+                <button @click="mainTab = 'template'" :class="mainTab === 'template' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="flex-1 sm:flex-none px-3 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all whitespace-nowrap">Template</button>
             </div>
         </div>
     </header>
 
-    <main class="py-8 px-4 max-w-4xl mx-auto pb-32">
+    <main class="py-6 px-4 w-full max-w-4xl mx-auto pb-32">
         <div x-show="mainTab === 'custom'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-            <form @submit.prevent="submitForm" action="{{ route('user.ar.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8 bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
+            <form @submit.prevent="submitForm" action="{{ route('user.ar.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6 md:space-y-8 bg-white p-5 md:p-8 rounded-2xl shadow-sm border border-slate-200">
                 @csrf
                 <input type="hidden" name="ar_type" :value="arType">
                 <input type="hidden" name="selected_3d_id" :value="selectedLibrary3d">
-                <input type="hidden" name="bgm_path" :value="selectedMusic">
+                <input type="hidden" name="bgm_path" :value="isCustomBgm ? '' : (selectedMusic ? '/minio-proxy/bg_sounds/' + selectedMusic : '')">
 
                 <div x-show="uploadError" style="display: none;" class="p-4 bg-red-50 border border-red-200 rounded-xl" x-transition>
                     <div class="flex items-center gap-2 text-red-600 font-bold mb-2">
@@ -88,94 +89,74 @@
                 </div>
 
                 <div>
-                    <div class="flex gap-4 border-b border-slate-200 mb-6">
-                        <button type="button" @click="arType = '2d'; reset3d();" :class="arType === '2d' ? 'border-teal-500 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-700'" class="pb-3 px-2 border-b-2 font-bold text-sm transition-colors">Gambar 2D (JPG/PNG)</button>
-                        <button type="button" @click="arType = '3d'; reset2d();" :class="arType === '3d' ? 'border-teal-500 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-700'" class="pb-3 px-2 border-b-2 font-bold text-sm transition-colors">Objek 3D (GLB)</button>
+                    <div class="flex flex-wrap gap-2 md:gap-4 border-b border-slate-200 mb-6">
+                        <button type="button" @click="arType = '2d'; reset3d();" :class="arType === '2d' ? 'border-teal-500 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-700'" class="flex-1 md:flex-none pb-3 px-2 border-b-2 font-bold text-sm transition-colors text-center md:text-left">Gambar 2D (JPG/PNG)</button>
+                        <button type="button" @click="arType = '3d'; reset2d();" :class="arType === '3d' ? 'border-teal-500 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-700'" class="flex-1 md:flex-none pb-3 px-2 border-b-2 font-bold text-sm transition-colors text-center md:text-left">Objek 3D (GLB)</button>
                     </div>
 
                     <div x-show="arType === '2d'">
                         <label class="block text-sm font-bold text-slate-900 mb-2">Upload Gambar 2D</label>
                         <input type="file" name="image" id="image-upload" accept=".jpg,.jpeg,.png" class="hidden" @change="handle2dUpload">
-                        <label for="image-upload" class="flex flex-col items-center justify-center w-full h-56 px-4 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors overflow-hidden relative">
+                        <label for="image-upload" class="flex flex-col items-center justify-center w-full h-48 md:h-56 px-4 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors overflow-hidden relative">
                             <div x-show="!imageUrl2d" class="text-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-slate-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                                <span class="text-sm font-medium text-slate-600">Klik untuk upload gambar</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 md:w-10 md:h-10 text-slate-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                <span class="text-xs md:text-sm font-medium text-slate-600">Klik untuk upload gambar</span>
                             </div>
                             <img x-show="imageUrl2d" :src="imageUrl2d" class="max-h-full max-w-full object-contain">
                         </label>
                     </div>
 
                     <div x-show="arType === '3d'" style="display: none;" class="space-y-6">
-                        <div class="p-5 border border-slate-200 rounded-xl bg-slate-50" :class="selectedLibrary3d ? 'opacity-50 grayscale' : ''">
+                        <div class="p-4 md:p-5 border border-slate-200 rounded-xl bg-slate-50" :class="selectedLibrary3d ? 'opacity-50 grayscale' : ''">
                             <label class="block text-sm font-bold text-slate-900 mb-2">Opsi 1: Upload Model 3D Sendiri (.glb)</label>
                             <div class="mb-4">
-                                <input type="text" name="asset_name" x-model="upload3dDisplayName" placeholder="Ketik nama objek (Misal: Mobil BMW 3D)..." class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none" :disabled="selectedLibrary3d !== ''">
+                                <input type="text" name="asset_name" x-model="upload3dDisplayName" placeholder="Ketik nama objek..." class="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none" :disabled="selectedLibrary3d !== ''">
                             </div>
                             <input type="file" name="file_3d" id="glb-upload" accept=".glb" class="hidden" @change="handle3dUpload" :disabled="selectedLibrary3d !== ''">
-                            <label for="glb-upload" class="flex items-center gap-4 w-full p-4 border border-slate-300 border-dashed rounded-lg cursor-pointer bg-white hover:border-teal-500 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                            <label for="glb-upload" class="flex items-center gap-3 w-full p-3 md:p-4 border border-slate-300 border-dashed rounded-lg cursor-pointer bg-white hover:border-teal-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-bold text-slate-700 truncate" x-text="upload3dName ? upload3dName : 'Pilih file .glb dari perangkatmu'"></p>
-                                    <p class="text-xs text-slate-400">Maksimal 50MB</p>
+                                    <p class="text-xs md:text-sm font-bold text-slate-700 truncate" x-text="upload3dName ? upload3dName : 'Pilih file .glb dari perangkatmu'"></p>
+                                    <p class="text-[10px] md:text-xs text-slate-400">Maksimal 50MB</p>
                                 </div>
                             </label>
                         </div>
-                        <div class="text-center text-xs font-bold text-slate-400 uppercase tracking-widest">ATAU</div>
-                        <div class="p-5 border border-slate-200 rounded-xl bg-slate-50" :class="upload3dName ? 'opacity-50 grayscale' : ''">
+                        <div class="text-center text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">ATAU</div>
+                        <div class="p-4 md:p-5 border border-slate-200 rounded-xl bg-slate-50" :class="upload3dName ? 'opacity-50 grayscale' : ''">
                             <label class="block text-sm font-bold text-slate-900 mb-2">Opsi 2: Pilih dari Library ScanYuk</label>
                             <div class="relative mb-4">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                                <input type="text" x-model="search3d" placeholder="Cari objek 3D (misal: mobil, cincin)..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none" :disabled="upload3dName !== ''">
+                                <input type="text" x-model="search3d" placeholder="Cari objek 3D..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none" :disabled="upload3dName !== ''">
                             </div>
-                            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-72 overflow-y-auto p-1">
+                            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3 max-h-72 overflow-y-auto p-1 no-scrollbar">
                                 <template x-for="item in filtered3d()" :key="item.id">
                                     <label class="flex flex-col bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden" :class="selectedLibrary3d === item.id ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : ''">
                                         
-                                        <div class="h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center overflow-hidden">
+                                        <div class="h-20 md:h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center overflow-hidden">
                                             
-                                            <div x-show="modelStates[item.id]?.state === 'idle'" 
+                                            <div x-show="modelStates[item.id]?.state === 'idle' || modelStates[item.id]?.state === 'oversize'" 
                                                 @click.prevent="toggleDownload(item.id)"
                                                 class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-colors pointer-events-auto"
                                                 title="Klik untuk mendownload">
-                                                <svg class="w-8 h-8 text-teal-500 mb-1 drop-shadow-sm hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <svg class="w-6 h-6 md:w-8 md:h-8 text-teal-500 mb-1 drop-shadow-sm hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                 </svg>
-                                                <span class="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Unduh Model</span>
-                                                <span class="text-[8px] font-semibold text-slate-400 mt-0.5 tracking-wider" x-text="formatBytes(modelStates[item.id]?.totalBytes)"></span>
+                                                <span class="text-[8px] md:text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center" x-text="modelStates[item.id]?.state === 'oversize' ? '> 5MB (Klik Unduh)' : 'Unduh Model'"></span>
                                             </div>
 
                                             <div x-show="modelStates[item.id]?.state === 'downloading'" 
                                                 @click.prevent="toggleDownload(item.id)"
                                                 class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-opacity duration-300 pointer-events-auto"
                                                 title="Klik untuk Pause">
-                                                <div class="relative flex items-center justify-center w-10 h-10 mb-0.5">
+                                                <div class="relative flex items-center justify-center w-8 h-8 md:w-10 md:h-10 mb-0.5">
                                                     <svg class="w-full h-full text-slate-300" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
                                                     <svg class="absolute inset-0 w-full h-full text-teal-500 transition-all duration-200 ease-out" viewBox="0 0 36 36">
                                                         <path :stroke-dasharray="(modelStates[item.id]?.progress || 0) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
                                                     </svg>
                                                     <div class="absolute inset-0 flex items-center justify-center">
-                                                        <span class="text-[10px] font-bold text-teal-600" x-text="(modelStates[item.id]?.progress || 0) + '%'"></span>
+                                                        <span class="text-[8px] md:text-[10px] font-bold text-teal-600" x-text="(modelStates[item.id]?.progress || 0) + '%'"></span>
                                                     </div>
                                                 </div>
-                                                <span class="text-[8px] font-bold text-teal-600 uppercase tracking-wider">Loading</span>
-                                                <span class="text-[8px] font-semibold text-teal-600/80 mt-0.5 tracking-widest" x-text="formatBytes(modelStates[item.id]?.downloadedBytes) + ' / ' + formatBytes(modelStates[item.id]?.totalBytes)"></span>
-                                            </div>
-
-                                            <div x-show="modelStates[item.id]?.state === 'paused'" 
-                                                @click.prevent="toggleDownload(item.id)"
-                                                class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-opacity duration-300 pointer-events-auto"
-                                                title="Klik untuk Melanjutkan">
-                                                <div class="relative flex items-center justify-center w-10 h-10 mb-0.5 opacity-60 hover:opacity-100">
-                                                    <svg class="w-full h-full text-slate-300" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
-                                                    <svg class="absolute inset-0 w-full h-full text-amber-500 transition-all duration-200 ease-out" viewBox="0 0 36 36">
-                                                        <path :stroke-dasharray="(modelStates[item.id]?.progress || 0) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
-                                                    </svg>
-                                                    <div class="absolute inset-0 flex items-center justify-center text-amber-600 bg-amber-50 rounded-full w-6 h-6 m-auto">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
-                                                    </div>
-                                                </div>
-                                                <span class="text-[8px] font-bold text-amber-600 uppercase tracking-wider">Pause</span>
-                                                <span class="text-[8px] font-semibold text-amber-600/80 mt-0.5 tracking-widest" x-text="formatBytes(modelStates[item.id]?.downloadedBytes) + ' / ' + formatBytes(modelStates[item.id]?.totalBytes)"></span>
                                             </div>
 
                                             <template x-if="modelStates[item.id]?.state === 'loaded'">
@@ -193,9 +174,9 @@
 
                                         </div>
                                         
-                                        <div class="p-3 border-t border-slate-100 flex items-start gap-2">
+                                        <div class="p-2 border-t border-slate-100 flex items-start gap-1">
                                             <input type="radio" x-model="selectedLibrary3d" :value="item.id" class="mt-0.5 text-teal-500 focus:ring-teal-500" :disabled="upload3dName !== ''">
-                                            <span class="text-xs font-bold text-slate-700 leading-tight line-clamp-2" x-text="item.name"></span>
+                                            <span class="text-[10px] md:text-xs font-bold text-slate-700 leading-tight line-clamp-2" x-text="item.name"></span>
                                         </div>
                                     </label>
                                 </template>
@@ -204,99 +185,97 @@
                     </div>
                 </div>
 
-<div class="pt-4 border-t border-slate-200">
+                <div class="pt-4 border-t border-slate-200">
                     <label class="block text-sm font-bold text-slate-900 mb-4">Background Music / BGM (Opsional)</label>
                     
-                    <div class="mb-4 p-4 border border-slate-200 rounded-xl bg-white shadow-sm" :class="selectedMusic !== '' ? 'opacity-50 grayscale' : ''">
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Upload Musik Sendiri (MP3/WAV)</label>
+                    <div class="mb-4 p-3 md:p-4 border border-slate-200 rounded-xl bg-white shadow-sm" :class="selectedMusic !== '' ? 'opacity-50 grayscale' : ''">
+                        <label class="block text-[11px] md:text-sm font-bold text-slate-700 mb-2">Upload Musik Sendiri (MP3/WAV)</label>
                         <input type="file" name="custom_bgm" id="bgm-upload" accept="audio/*" class="hidden" @change="handleBgmUpload" :disabled="selectedMusic !== ''">
-                        <label for="bgm-upload" class="flex items-center gap-4 w-full p-3 border border-slate-300 border-dashed rounded-lg cursor-pointer hover:border-indigo-500 bg-slate-50 hover:bg-white transition-colors">
-                            <svg class="w-6 h-6 text-indigo-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
+                        <label for="bgm-upload" class="flex items-center gap-3 w-full p-2 md:p-3 border border-slate-300 border-dashed rounded-lg cursor-pointer hover:border-indigo-500 bg-slate-50 hover:bg-white transition-colors">
+                            <svg class="w-5 h-5 md:w-6 md:h-6 text-indigo-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm font-bold text-slate-700 truncate" x-text="customBgmFile ? customBgmFile.name : 'Pilih file audio dari perangkatmu'"></p>
+                                <p class="text-xs md:text-sm font-bold text-slate-700 truncate" x-text="customBgmFile ? customBgmFile.name : 'Pilih file audio dari perangkatmu'"></p>
                             </div>
                         </label>
-                        <button type="button" x-show="customBgmFile" @click="clearCustomBgm()" class="text-xs text-red-500 font-bold mt-2 hover:underline">Batal / Hapus Upload</button>
+                        <button type="button" x-show="customBgmFile" @click="clearCustomBgm()" class="text-[10px] md:text-xs text-red-500 font-bold mt-2 hover:underline">Batal / Hapus Upload</button>
                     </div>
 
-                    <div class="text-center text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">ATAU</div>
+                    <div class="text-center text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">ATAU</div>
                     
                     <div class="relative mb-4" :class="isCustomBgm ? 'opacity-50 grayscale pointer-events-none' : ''">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                        <input type="text" x-model="searchMusic" placeholder="Cari dari Library (misal: ramadhan)..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-indigo-500 outline-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 h-4 w-4 md:h-5 md:w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        <input type="text" x-model="searchMusic" placeholder="Cari dari Library..." class="w-full pl-9 md:pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-xs md:text-sm focus:border-indigo-500 outline-none">
                     </div>
 
-                    <div class="space-y-2 max-h-56 overflow-y-auto pr-2 custom-scrollbar" :class="isCustomBgm ? 'opacity-50 grayscale pointer-events-none' : ''">
-                        <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-500" :class="selectedMusic === '' && !isCustomBgm ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : ''">
+                    <div class="space-y-2 max-h-48 overflow-y-auto pr-1 no-scrollbar" :class="isCustomBgm ? 'opacity-50 grayscale pointer-events-none' : ''">
+                        <label class="flex items-center gap-3 p-2 md:p-3 bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-indigo-500" :class="selectedMusic === '' && !isCustomBgm ? 'border-indigo-500 ring-1 ring-indigo-500 bg-indigo-50' : ''">
                             <input type="radio" x-model="selectedMusic" value="" @change="clearMusic()" class="text-indigo-600 focus:ring-indigo-500">
-                            <span class="text-sm font-bold text-slate-700">Tanpa Musik Latar</span>
+                            <span class="text-xs md:text-sm font-bold text-slate-700">Tanpa Musik Latar</span>
                         </label>
 
                         <template x-for="music in filteredMusic()" :key="music.path">
                             <div @click="selectAndPlayMusic(music)" 
-                                 class="flex items-center justify-between p-3 bg-white border rounded-xl cursor-pointer transition-all group"
+                                 class="flex items-center justify-between p-2 md:p-3 bg-white border rounded-xl cursor-pointer transition-all group"
                                  :class="selectedMusic === music.path ? 'border-teal-500 bg-teal-50/50 ring-1 ring-teal-500 shadow-sm' : 'border-slate-200 hover:border-teal-300 hover:shadow-sm'">
                                 
-                                <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center text-teal-500 group-hover:scale-105 transition-transform">
-                                        <svg x-show="selectedMusic !== music.path || (selectedMusic === music.path && !isBgmPlaying && !isBgmLoading)" class="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
-                                        
-                                        <svg x-show="selectedMusic === music.path && isBgmLoading" class="animate-spin w-5 h-5 text-teal-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-
-                                        <div x-show="selectedMusic === music.path && isBgmPlaying" class="flex items-end gap-0.5 h-4">
+                                <div class="flex items-center gap-2 md:gap-3 min-w-0">
+                                    <div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-white shadow-sm border border-slate-200 flex items-center justify-center text-teal-500 group-hover:scale-105 transition-transform flex-shrink-0">
+                                        <svg x-show="selectedMusic !== music.path || (selectedMusic === music.path && !isBgmPlaying && !isBgmLoading)" class="w-3 h-3 md:w-4 md:h-4 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11v11.78a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                                        <svg x-show="selectedMusic === music.path && isBgmLoading" class="animate-spin w-4 h-4 text-teal-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                        <div x-show="selectedMusic === music.path && isBgmPlaying" class="flex items-end gap-0.5 h-3 md:h-4">
                                             <div class="w-1 bg-teal-500 animate-[bounce_1s_infinite] rounded-t-sm" style="height: 100%"></div>
                                             <div class="w-1 bg-teal-500 animate-[bounce_1s_infinite] rounded-t-sm" style="height: 60%; animation-delay: 0.2s"></div>
                                             <div class="w-1 bg-teal-500 animate-[bounce_1s_infinite] rounded-t-sm" style="height: 80%; animation-delay: 0.4s"></div>
                                         </div>
                                     </div>
-                                    <div class="flex flex-col">
-                                        <span class="text-sm font-bold text-slate-700" x-text="music.name"></span>
-                                        <span class="text-[10px]" :class="selectedMusic === music.path ? 'text-teal-600 font-bold' : 'text-slate-400'">
+                                    <div class="flex flex-col min-w-0">
+                                        <span class="text-xs md:text-sm font-bold text-slate-700 truncate" x-text="music.name"></span>
+                                        <span class="text-[9px] md:text-[10px]" :class="selectedMusic === music.path ? 'text-teal-600 font-bold' : 'text-slate-400'">
                                             <span x-show="selectedMusic !== music.path">Ketuk untuk memutar</span>
                                             <span x-show="selectedMusic === music.path && isBgmLoading">Memuat audio...</span>
-                                            <span x-show="selectedMusic === music.path && isBgmPlaying">Sedang diputar (Klik untuk Pause)</span>
-                                            <span x-show="selectedMusic === music.path && !isBgmPlaying && !isBgmLoading">Di-pause (Klik untuk Lanjutkan)</span>
+                                            <span x-show="selectedMusic === music.path && isBgmPlaying">Sedang diputar</span>
+                                            <span x-show="selectedMusic === music.path && !isBgmPlaying && !isBgmLoading">Di-pause</span>
                                         </span>
                                     </div>
                                 </div>
-                                <input type="radio" x-model="selectedMusic" :value="music.path" class="w-5 h-5 text-teal-500 focus:ring-teal-500 border-slate-300 pointer-events-none hidden">
+                                <input type="radio" x-model="selectedMusic" :value="music.path" class="hidden pointer-events-none">
                             </div>
                         </template>
                     </div>
 
                     <div x-show="bgmDuration > 0 && (selectedMusic !== '' || isCustomBgm)" x-transition.opacity.duration.300ms class="mt-6 border-t border-slate-200 pt-5">
-                        <div class="flex items-center justify-between mb-3">
-                            <label class="flex items-center gap-2 text-sm font-bold text-slate-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-3 gap-2">
+                            <label class="flex items-center gap-2 text-xs md:text-sm font-bold text-slate-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 md:w-5 md:h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                 <span>Potong Bagian Lagu</span>
                             </label>
                             <div class="flex items-center gap-3">
-                                <span class="text-xs font-bold text-slate-500" x-text="formatTime(bgmStart) + ' - ' + formatTime(bgmEnd)"></span>
-                                <span class="text-xs font-bold text-teal-600 bg-teal-50 border border-teal-200 px-2 py-1 rounded-md" x-text="Math.floor(bgmEnd - bgmStart) + ' Detik'"></span>
+                                <span class="text-[10px] md:text-xs font-bold text-slate-500" x-text="formatTime(bgmStart) + ' - ' + formatTime(bgmEnd)"></span>
+                                <span class="text-[10px] md:text-xs font-bold text-teal-600 bg-teal-50 border border-teal-200 px-2 py-1 rounded-md" x-text="Math.floor(bgmEnd - bgmStart) + ' Detik'"></span>
                             </div>
                         </div>
 
-                        <div class="relative w-full h-14 bg-slate-800 rounded-xl overflow-hidden shadow-inner select-none mb-2 dual-range group">
+                        <div class="relative w-full h-12 md:h-14 bg-slate-800 rounded-xl overflow-hidden shadow-inner select-none mb-2 dual-range group">
                             <div class="absolute inset-0 flex items-center justify-between px-1 opacity-40 pointer-events-none">
-                                <template x-for="i in 40">
+                                <template x-for="i in 30">
                                     <div class="w-1 bg-teal-200 rounded-full transition-all duration-200" :style="`height: ${Math.random() * 60 + 20}%`"></div>
                                 </template>
                             </div>
                             
                             <div class="absolute top-0 bottom-0 bg-teal-500/30 border-x-4 border-teal-400 transition-all duration-75 pointer-events-none shadow-[0_0_15px_rgba(20,184,166,0.4)]"
                                  :style="`left: ${(bgmStart / audioDuration) * 100}%; width: ${((bgmEnd - bgmStart) / audioDuration) * 100}%`">
-                                 <div class="absolute top-1/2 -left-1.5 w-1 h-6 bg-white rounded-full -translate-y-1/2 opacity-90 shadow-md"></div>
-                                 <div class="absolute top-1/2 -right-1.5 w-1 h-6 bg-white rounded-full -translate-y-1/2 opacity-90 shadow-md"></div>
+                                 <div class="absolute top-1/2 -left-1.5 w-1 h-5 md:h-6 bg-white rounded-full -translate-y-1/2 opacity-90 shadow-md"></div>
+                                 <div class="absolute top-1/2 -right-1.5 w-1 h-5 md:h-6 bg-white rounded-full -translate-y-1/2 opacity-90 shadow-md"></div>
                             </div>
 
                             <input type="range" min="0" :max="audioDuration" step="0.1" x-model.number="bgmStart" @input="updateCrop('start')" class="absolute inset-0 w-full h-full opacity-0 z-10">
                             <input type="range" min="0" :max="audioDuration" step="0.1" x-model.number="bgmEnd" @input="updateCrop('end')" class="absolute inset-0 w-full h-full opacity-0 z-20">
                         </div>
                         
-                        <div class="flex items-center justify-between mt-2">
-                            <p class="text-[10px] text-slate-400 italic flex-1">*Geser garis ujung kiri dan kanan pada kotak hijau di atas untuk memotong lagu.</p>
-                            <div class="flex items-center gap-1.5 ml-4" title="Atur volume latar">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.536 6.464a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-2 gap-2">
+                            <p class="text-[9px] md:text-[10px] text-slate-400 italic flex-1">*Geser garis kotak hijau di atas untuk memotong lagu.</p>
+                            <div class="flex items-center gap-1.5" title="Atur volume latar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 md:h-4 md:w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M17.536 6.464a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
                                 <input type="range" x-model="bgmVolume" @input="updateVolume()" min="0.05" max="1" step="0.05" class="w-16 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
                             </div>
                         </div>
@@ -305,55 +284,56 @@
                         <input type="hidden" name="bgm_end" :value="bgmEnd">
                         <input type="hidden" name="bgm_volume" :value="bgmVolume"> 
                     </div>
+                </div>
 
                 <div class="pt-4 border-t border-slate-200">
                     <label class="block text-sm font-bold text-slate-900 mb-4">Mode Narasi Suara (Opsional)</label>
                     <input type="hidden" name="narration_mode" :value="narrationMode">
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                         
-                        <div class="p-5 border-2 rounded-xl transition-all relative flex flex-col" :class="narrationMode === 'text' ? 'border-teal-500 bg-white shadow-sm' : 'border-slate-200 bg-slate-50 opacity-60 grayscale'">
+                        <div class="p-4 md:p-5 border-2 rounded-xl transition-all relative flex flex-col" :class="narrationMode === 'text' ? 'border-teal-500 bg-white shadow-sm' : 'border-slate-200 bg-slate-50 opacity-60 grayscale'">
                             <div x-show="narrationMode !== 'text'" @click="narrationMode = 'text'" class="absolute inset-0 z-10 cursor-pointer flex items-center justify-center bg-slate-100/50 backdrop-blur-[1px] rounded-xl opacity-0 hover:opacity-100 transition-opacity">
-                                <span class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Gunakan Fitur Ini</span>
+                                <span class="bg-slate-900 text-white px-4 py-2 rounded-lg text-xs md:text-sm font-bold shadow-lg">Gunakan Fitur Ini</span>
                             </div>
                             
-                            <div class="flex items-start gap-3 mb-4">
+                            <div class="flex items-start gap-2 md:gap-3 mb-4">
                                 <input type="radio" x-model="narrationMode" value="text" class="w-4 h-4 mt-0.5 text-teal-600 focus:ring-teal-500">
-                                <div class="flex flex-col items-start gap-2">
-                                    <label class="font-bold text-slate-900 leading-none mt-0.5">Suara AI (Teks ke Suara)</label>
-                                    <span class="text-[10px] font-extrabold bg-amber-100 text-amber-600 px-2 py-1 rounded-md uppercase tracking-wider border border-amber-200">
+                                <div class="flex flex-col items-start gap-1 md:gap-2">
+                                    <label class="text-xs md:text-sm font-bold text-slate-900 leading-none mt-0.5">Suara AI (Teks ke Suara)</label>
+                                    <span class="text-[9px] md:text-[10px] font-extrabold bg-amber-100 text-amber-600 px-2 py-1 rounded-md uppercase tracking-wider border border-amber-200">
                                         Pilih Suara: Coming Soon
                                     </span>
                                 </div>
                             </div>
 
-                            <textarea x-model="narrationText" name="narration" rows="3" placeholder="Ketik teks yang akan dibacakan oleh suara AI bawaan HP/Laptop pengguna..." class="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 focus:border-teal-500 outline-none resize-none flex-1" :disabled="narrationMode !== 'text'"></textarea>
+                            <textarea x-model="narrationText" name="narration" rows="3" placeholder="Ketik teks yang akan dibacakan oleh suara AI..." class="w-full px-3 py-2 md:px-4 md:py-3 border border-slate-200 rounded-xl text-xs md:text-sm text-slate-900 focus:border-teal-500 outline-none resize-none flex-1" :disabled="narrationMode !== 'text'"></textarea>
                         </div>
 
-                        <div class="p-5 border-2 rounded-xl transition-all relative" :class="narrationMode === 'audio' ? 'border-teal-500 bg-white shadow-sm' : 'border-slate-200 bg-slate-50 opacity-60 grayscale'">
+                        <div class="p-4 md:p-5 border-2 rounded-xl transition-all relative" :class="narrationMode === 'audio' ? 'border-teal-500 bg-white shadow-sm' : 'border-slate-200 bg-slate-50 opacity-60 grayscale'">
                             <div x-show="narrationMode !== 'audio'" @click="narrationMode = 'audio'" class="absolute inset-0 z-10 cursor-pointer flex items-center justify-center bg-slate-100/50 backdrop-blur-[1px] rounded-xl opacity-0 hover:opacity-100 transition-opacity">
-                                <span class="bg-slate-900 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg">Gunakan Fitur Ini</span>
+                                <span class="bg-slate-900 text-white px-4 py-2 rounded-lg text-xs md:text-sm font-bold shadow-lg">Gunakan Fitur Ini</span>
                             </div>
 
                             <div class="flex items-center gap-2 mb-4 text-teal-600">
                                 <input type="radio" x-model="narrationMode" value="audio" class="w-4 h-4 text-teal-600 focus:ring-teal-500">
-                                <label class="font-bold text-slate-900">Rekam Suara Mandiri</label>
+                                <label class="text-xs md:text-sm font-bold text-slate-900">Rekam Suara Mandiri</label>
                             </div>
 
-                            <div class="flex flex-col items-center justify-center h-full gap-3 pb-4">
-                                <p class="text-xs text-slate-500 text-center mb-2" x-show="!recordedAudioUrl">Gunakan mic HP/Laptop Anda. Maksimal 1 Menit.</p>
+                            <div class="flex flex-col items-center justify-center h-full gap-2 md:gap-3 pb-2 md:pb-4">
+                                <p class="text-[10px] md:text-xs text-slate-500 text-center mb-2" x-show="!recordedAudioUrl">Gunakan mic HP/Laptop Anda. Max 1 Menit.</p>
                                 
-                                <button type="button" x-show="!isRecording && !recordedAudioUrl" @click="startRecording()" class="px-5 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-full font-bold flex items-center gap-2 transition-all shadow-md" :disabled="narrationMode !== 'audio'">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd" /></svg> Mulai Merekam
+                                <button type="button" x-show="!isRecording && !recordedAudioUrl" @click="startRecording()" class="px-4 py-2 md:px-5 md:py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-full text-xs md:text-sm font-bold flex items-center gap-2 transition-all shadow-md" :disabled="narrationMode !== 'audio'">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clip-rule="evenodd" /></svg> Mulai Merekam
                                 </button>
                                 
-                                <button type="button" x-show="isRecording" @click="stopRecording()" class="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full font-bold flex items-center gap-2 transition-all animate-pulse shadow-md">
-                                    <div class="w-3 h-3 bg-red-500 rounded-full"></div> Berhenti
+                                <button type="button" x-show="isRecording" @click="stopRecording()" class="px-4 py-2 md:px-5 md:py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-full text-xs md:text-sm font-bold flex items-center gap-2 transition-all animate-pulse shadow-md">
+                                    <div class="w-2 h-2 md:w-3 md:h-3 bg-red-500 rounded-full"></div> Berhenti
                                 </button>
 
                                 <div x-show="recordedAudioUrl" class="w-full flex flex-col items-center gap-2">
-                                    <audio :src="recordedAudioUrl" controls class="w-full h-10"></audio>
-                                    <button type="button" @click="deleteRecording()" class="text-xs text-red-500 font-bold underline hover:text-red-700">Hapus & Rekam Ulang</button>
+                                    <audio :src="recordedAudioUrl" controls class="w-full h-8 md:h-10"></audio>
+                                    <button type="button" @click="deleteRecording()" class="text-[10px] md:text-xs text-red-500 font-bold underline hover:text-red-700">Hapus & Rekam Ulang</button>
                                 </div>
                             </div>
                         </div>
@@ -361,11 +341,11 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-200">
-                    <button type="button" @click="openModal()" class="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl border-2 border-teal-500 text-teal-600 font-bold hover:bg-teal-50 transition-colors">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pt-4 border-t border-slate-200">
+                    <button type="button" @click="openModal()" class="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl border-2 border-teal-500 text-teal-600 text-sm md:text-base font-bold hover:bg-teal-50 transition-colors">
                         Preview AR
                     </button>
-                    <button type="submit" class="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl btn-gradient text-white font-bold shadow-lg shadow-indigo-200">
+                    <button type="submit" class="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl btn-gradient text-white text-sm md:text-base font-bold shadow-lg shadow-indigo-200">
                         Generate QR Code
                     </button>
                 </div>
@@ -374,72 +354,78 @@
 
         <div x-show="mainTab === 'template'" style="display: none;" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
             <div class="relative mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-4 top-3.5 h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                <input type="text" x-model="searchTemplate" placeholder="Cari template siap pakai (misal: ramadhan, undangan)..." class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-slate-900 focus:border-indigo-500 shadow-sm outline-none text-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-4 top-3 h-5 w-5 md:h-6 md:w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input type="text" x-model="searchTemplate" placeholder="Cari template siap pakai..." class="w-full pl-12 pr-4 py-2.5 md:py-3 bg-white border border-slate-200 rounded-xl text-slate-900 focus:border-indigo-500 shadow-sm outline-none text-sm md:text-lg">
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <div x-show="filteredTemplates().length === 0" class="col-span-full text-center py-10 text-slate-400 font-medium text-sm md:text-base">
+                    Belum ada template AR yang tersedia.
+                </div>
+                
                 <template x-for="tpl in filteredTemplates()" :key="tpl.id">
                     <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hover:shadow-lg hover:border-indigo-300 transition-all group cursor-pointer" @click="previewTemplate(tpl)">
-                        <div class="h-40 bg-slate-100 flex items-center justify-center relative overflow-hidden pointer-events-none-children">
-                            <template x-if="tpl.ar_type === '2d'"><img :src="tpl.file_path" class="w-full h-full object-cover"></template>
+                        <div class="h-32 md:h-40 bg-slate-100 flex items-center justify-center relative overflow-hidden pointer-events-none-children">
+                            <template x-if="tpl.ar_type === '2d'"><img :src="getAssetUrl(tpl.file_path)" class="w-full h-full object-cover"></template>
                             <template x-if="tpl.ar_type === '3d'">
-                                <model-viewer :src="tpl.file_path" class="w-full h-full" disable-zoom disable-pan auto-rotate exposure="1.2"></model-viewer>
+                                <model-viewer :src="getAssetUrl(tpl.file_path)" class="w-full h-full" disable-zoom disable-pan auto-rotate exposure="1.2"></model-viewer>
                             </template>
                             <div class="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors"></div>
-                            <span class="absolute top-3 left-3 px-2.5 py-1 rounded-md text-xs font-bold shadow-sm" :class="tpl.ar_type === '3d' ? 'bg-indigo-600 text-white' : 'bg-teal-500 text-white'" x-text="'AR ' + tpl.ar_type.toUpperCase()"></span>
+                            <span class="absolute top-2 left-2 md:top-3 md:left-3 px-2 md:px-2.5 py-0.5 md:py-1 rounded-md text-[10px] md:text-xs font-bold shadow-sm" :class="tpl.ar_type === '3d' ? 'bg-indigo-600 text-white' : 'bg-teal-500 text-white'" x-text="'AR ' + tpl.ar_type.toUpperCase()"></span>
                         </div>
-                        <div class="p-5">
-                            <h3 class="font-bold text-slate-900 text-lg truncate mb-1" x-text="tpl.title"></h3>
-                            <p class="text-sm text-slate-500 line-clamp-2" x-text="tpl.narration"></p>
+                        <div class="p-3 md:p-5">
+                            <h3 class="font-bold text-slate-900 text-sm md:text-lg truncate mb-0.5 md:mb-1" x-text="tpl.title"></h3>
+                            <p class="text-xs md:text-sm text-slate-500 line-clamp-2" x-text="tpl.narration"></p>
                         </div>
                     </div>
                 </template>
             </div>
         </div>
 
-        <div x-show="showModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center">
+        <div x-show="showModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div x-show="showModal" x-transition.opacity class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="closeModal()"></div>
-            <div x-show="showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 overflow-hidden flex flex-col items-center border border-white/20">
-                <div class="w-full p-4 border-b border-slate-100 flex items-center justify-between bg-white">
-                    <h3 class="font-bold text-slate-900" x-text="previewData.title"></h3>
-                    <button @click="closeModal()" type="button" class="text-slate-400 hover:text-red-500 transition-colors p-1 bg-slate-50 rounded-full hover:bg-red-50">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            <div x-show="showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col items-center border border-white/20">
+                <div class="w-full p-3 md:p-4 border-b border-slate-100 flex items-center justify-between bg-white">
+                    <h3 class="font-bold text-slate-900 text-sm md:text-base truncate pr-2" x-text="previewData.title"></h3>
+                    <button @click="closeModal()" type="button" class="text-slate-400 hover:text-red-500 transition-colors p-1 bg-slate-50 rounded-full hover:bg-red-50 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
                 
-                <div x-show="isTemplateLoading" class="p-10 w-full flex flex-col items-center justify-center h-[300px] bg-slate-50">
-                    <div class="relative w-16 h-16 mb-4">
+                <div x-show="isTemplateLoading" class="p-6 md:p-10 w-full flex flex-col items-center justify-center h-[250px] md:h-[300px] bg-slate-50">
+                    <div class="relative w-12 h-12 md:w-16 md:h-16 mb-4">
                         <svg class="w-full h-full text-slate-200" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
                         <svg class="absolute inset-0 w-full h-full text-indigo-500 transition-all duration-200 ease-out" viewBox="0 0 36 36"><path :stroke-dasharray="templateProgress + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" /></svg>
-                        <div class="absolute inset-0 flex items-center justify-center text-indigo-600 font-bold text-sm" x-text="templateProgress + '%'"></div>
+                        <div class="absolute inset-0 flex items-center justify-center text-indigo-600 font-bold text-xs md:text-sm" x-text="templateProgress + '%'"></div>
                     </div>
-                    <h4 class="font-bold text-slate-800 text-lg">Mempersiapkan AR...</h4>
-                    <p class="text-xs text-slate-500 mt-1 text-center font-medium">Sedang mengunduh 3D & Audio agar berjalan lancar</p>
+                    <h4 class="font-bold text-slate-800 text-sm md:text-lg">Mempersiapkan AR...</h4>
+                    <p class="text-[10px] md:text-xs text-slate-500 mt-1 text-center font-medium">Sedang mengunduh 3D & Audio</p>
                 </div>
 
-                <div x-show="!isTemplateLoading" class="p-6 w-full flex flex-col items-center">
-                    <div class="w-full bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-inner border border-slate-200" style="height: 300px;">
+                <div x-show="!isTemplateLoading" class="p-4 md:p-6 w-full flex flex-col items-center">
+                    <div class="w-full bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-inner border border-slate-200 h-[250px] md:h-[300px]">
                         <template x-if="previewData.type === '2d'"><img :src="previewData.src" class="max-w-full max-h-full object-contain"></template>
                         <template x-if="previewData.type === '3d'">
-                            <div class="w-full h-full relative"> <div x-show="isPreviewLoading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/80">
-                                    <div class="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                                    <p class="text-white font-bold text-sm mb-2">Memuat Pratinjau...</p>
-                                    <div class="w-48 bg-slate-700 rounded-full h-2">
-                                        <div class="bg-teal-500 h-2 rounded-full" :style="`width: ${previewProgress}%`"></div>
+                            <div class="w-full h-full relative"> 
+                                <div x-show="isPreviewLoading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/80">
+                                    <div class="w-10 h-10 md:w-12 md:h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+                                    <p class="text-white font-bold text-xs md:text-sm mb-2">Memuat Pratinjau...</p>
+                                    <div class="w-32 md:w-48 bg-slate-700 rounded-full h-1.5 md:h-2">
+                                        <div class="bg-teal-500 h-1.5 md:h-2 rounded-full" :style="`width: ${previewProgress}%`"></div>
                                     </div>
-                                </div>    
+                                </div>   
                                 <model-viewer :src="previewData.src" auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer>
                             </div>
                         </template>
 
-                        <div class="absolute bottom-4 left-4 flex gap-2">
-                            <span x-show="previewData.music" class="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg> BGM On</span>
-                            <span x-show="previewData.hasNarration" class="px-3 py-1 bg-teal-500/90 backdrop-blur-md rounded-full text-white text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 animate-pulse" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg> Suara Narasi</span>
+                        <div class="absolute bottom-3 left-3 flex gap-1 md:gap-2">
+                            <span x-show="previewData.music" class="px-2 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-[9px] md:text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg> BGM</span>
+                            <span x-show="previewData.hasNarration" class="px-2 py-1 bg-teal-500/90 backdrop-blur-md rounded-full text-white text-[9px] md:text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 animate-pulse" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg> Suara</span>
                         </div>
                     </div>
                     <template x-if="isFromTemplate">
-                        <button @click="useTemplate()" class="mt-6 w-full py-3.5 px-6 rounded-xl btn-gradient text-white font-bold shadow-lg flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Gunakan Template Ini
+                        <button @click="useTemplate()" class="mt-4 md:mt-6 w-full py-3 px-6 rounded-xl btn-gradient text-white text-sm md:text-base font-bold shadow-lg flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Gunakan Template Ini
                         </button>
                     </template>
                 </div>
@@ -497,9 +483,14 @@
                 isBackgroundDownloading: false,
 
                 isTemplateLoading: false, templateProgress: 0,
+                isPreviewLoading: false, previewProgress: 0,
 
-                isPreviewLoading: false,
-                previewProgress: 0,
+                // Fungsi bantu perbaikan URL
+                getAssetUrl(path) {
+                    if (!path) return '';
+                    if (path.startsWith('http') || path.startsWith('/')) return path;
+                    return '/' + path;
+                },
 
                 async sortAndStartQueue() {
                     let sizePromises = this.library3dList.map(item => {
@@ -514,7 +505,13 @@
                     });
                     let results = await Promise.all(sizePromises);
                     results.sort((a, b) => a.size - b.size);
-                    this.downloadQueue = results.map(r => r.id);
+
+                    this.downloadQueue = results.filter(r => r.size < 5242880).map(r => r.id);
+                    
+                    results.filter(r => r.size >= 5242880).forEach(r => {
+                        if(this.modelStates[r.id]) this.modelStates[r.id].state = 'oversize';
+                    });
+
                     this.processQueue();
                 },
 
@@ -525,7 +522,7 @@
                     this.isBackgroundDownloading = true;
                     let nextId = this.downloadQueue.shift();
 
-                    if (this.modelStates[nextId] && this.modelStates[nextId].state === 'idle') {
+                    if (this.modelStates[nextId] && (this.modelStates[nextId].state === 'idle' || this.modelStates[nextId].state === 'oversize')) {
                         await this.downloadModel(nextId);
                     }
 
@@ -552,9 +549,11 @@
                     let state = this.modelStates[id];
                     if (state.state === 'downloading') {
                         if (state.abortController) state.abortController.abort();
-                    } else if (state.state === 'idle' || state.state === 'paused') {
-                        this.downloadQueue = this.downloadQueue.filter(i => i !== id);
-                        this.downloadModel(id);
+                    } else if (state.state === 'idle' || state.state === 'paused' || state.state === 'oversize') {
+                        if(!this.downloadQueue.includes(id)) {
+                            this.downloadQueue.unshift(id); 
+                        }
+                        this.processQueue();
                     }
                 },
 
@@ -688,6 +687,9 @@
                             if (this.isBgmPlaying || this.isBgmLoading) {
                                 this.currentAudioPlayer.pause();
                             } else {
+                                if (this.currentAudioPlayer.currentTime < Number(this.bgmStart) || this.currentAudioPlayer.currentTime >= Number(this.bgmEnd)) {
+                                    this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                                }
                                 this.currentAudioPlayer.play();
                             }
                         }
@@ -749,8 +751,8 @@
                     this.templateProgress = 0;
                     this.stopAllAudio();
 
-                    let src3d = tpl.file_path;
-                    let bgmSrc = tpl.bgm_path ? '/minio-proxy/bg_sounds/' + tpl.bgm_path : '';
+                    let src3d = this.getAssetUrl(tpl.file_path);
+                    let bgmSrc = tpl.bgm_path ? this.getAssetUrl(tpl.bgm_path) : '';
                     let finalBlobUrl = src3d;
 
                     try {
@@ -820,7 +822,7 @@
                     let tpl = this.previewData.fullData;
                     this.title = tpl.title; this.arType = tpl.ar_type; this.narrationText = tpl.narration; this.selectedMusic = tpl.bgm_path;
                     this.narrationMode = 'text';
-                    if(tpl.ar_type === '2d') this.imageUrl2d = tpl.file_path;
+                    if(tpl.ar_type === '2d') this.imageUrl2d = this.getAssetUrl(tpl.file_path);
                     else { let matched3d = this.library3dList.find(item => item.path === tpl.file_path); if(matched3d) this.selectedLibrary3d = matched3d.id; }
                     this.closeModal(); this.mainTab = 'custom'; window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
@@ -877,6 +879,7 @@
                         if (type === 'end') this.bgmEnd = Number(this.bgmStart) + 0.5;
                     }
 
+                    // PERBAIKAN CROP: Tetapkan currentTime ke bgmStart
                     if (this.currentAudioPlayer && !this.currentAudioPlayer.paused) {
                         this.currentAudioPlayer.currentTime = Number(this.bgmStart);
                     } else if (this.currentAudioPlayer) {
