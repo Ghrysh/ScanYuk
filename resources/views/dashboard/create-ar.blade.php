@@ -135,7 +135,7 @@
                                         <div class="h-20 md:h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center overflow-hidden">
                                             
                                             <div x-show="modelStates[item.id]?.state === 'idle' || modelStates[item.id]?.state === 'oversize'" 
-                                                @click.prevent="toggleDownload(item.id)"
+                                                @click.prevent.stop="toggleDownload(item.id)"
                                                 class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-colors pointer-events-auto"
                                                 title="Klik untuk mendownload">
                                                 <svg class="w-6 h-6 md:w-8 md:h-8 text-teal-500 mb-1 drop-shadow-sm hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -145,7 +145,7 @@
                                             </div>
 
                                             <div x-show="modelStates[item.id]?.state === 'downloading'" 
-                                                @click.prevent="toggleDownload(item.id)"
+                                                @click.prevent.stop="toggleDownload(item.id)"
                                                 class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-opacity duration-300 pointer-events-auto"
                                                 title="Klik untuk Pause">
                                                 <div class="relative flex items-center justify-center w-8 h-8 md:w-10 md:h-10 mb-0.5">
@@ -796,7 +796,12 @@
                     this.stopAllAudio();
 
                     let src3d = this.getAssetUrl(tpl.file_path);
-                    let rawBgm = tpl.bgm_path ? this.getAssetUrl(tpl.bgm_path) : '';
+                    let rawBgm = tpl.bgm_path ? tpl.bgm_path : '';
+                    if (rawBgm && !rawBgm.startsWith('http') && !rawBgm.startsWith('/minio-proxy')) {
+                        rawBgm = '/minio-proxy/bg_sounds/' + rawBgm.split('/').pop();
+                    } else if (rawBgm) {
+                        rawBgm = this.getAssetUrl(rawBgm);
+                    }
                     let tStart = 0; let tEnd = null;
 
                     if (rawBgm.includes('#t=')) {
@@ -926,14 +931,13 @@
                     if (this.modalBgmPlayer) playPromises.push(this.modalBgmPlayer.play());
                     if (this.modalVoicePlayer) playPromises.push(this.modalVoicePlayer.play());
 
+                    this.playTTS();
+                    
                     if (playPromises.length > 0) {
-                        Promise.all(playPromises).then(() => {
-                            this.playTTS();
-                        }).catch(e => {
+                        Promise.all(playPromises).catch(e => {
                             this.audioBlocked = true;
+                            window.speechSynthesis.cancel();
                         });
-                    } else {
-                        this.playTTS();
                     }
                 },
 
@@ -991,9 +995,9 @@
                     });
 
                     this.currentAudioPlayer.addEventListener('timeupdate', () => {
-                        if (this.bgmEnd && this.currentAudioPlayer.currentTime >= Number(this.bgmEnd)) {
+                        if (this.bgmEnd && this.currentAudioPlayer.currentTime >= (Number(this.bgmEnd) - 0.2)) {
                             this.currentAudioPlayer.currentTime = Number(this.bgmStart);
-                            this.currentAudioPlayer.play(); 
+                            this.currentAudioPlayer.play().catch(e=>{}); 
                         }
                     });
                 },
@@ -1008,10 +1012,17 @@
                 },
                 seekCrop() {
                     if (this.currentAudioPlayer) {
-                        this.currentAudioPlayer.currentTime = Number(this.bgmStart);
-                        if (this.currentAudioPlayer.paused) {
-                            this.currentAudioPlayer.play().catch(e=>{});
-                        }
+                        let target = Number(this.bgmStart);
+                        this.currentAudioPlayer.currentTime = target;
+
+                        setTimeout(() => {
+                            if (this.currentAudioPlayer.currentTime < target - 0.5) {
+                                this.currentAudioPlayer.currentTime = target;
+                            }
+                            if (this.currentAudioPlayer.paused) {
+                                this.currentAudioPlayer.play().catch(e=>{});
+                            }
+                        }, 100);
                     }
                 },
                 
