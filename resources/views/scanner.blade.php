@@ -232,6 +232,8 @@
                             const type = result.data.ar_type;
                             const src = type === '3d' ? result.data.file_3d_url : result.data.image_url;
                             
+                            this.arData = { type: type, src: src };
+                            
                             this.arCache[url] = { 
                                 narration: result.data.narration, 
                                 ai_voice: result.data.ai_voice,
@@ -241,14 +243,11 @@
                             };
                             
                             this.isFetching = false;
-                            this.arActive = true;
-                            
+
                             this.isLoading = true;
                             this.loadingProgress = 0;
-                            this.loadingStatusText = 'Menyiapkan 3D & Audio...';
-                            
-                            this.arData = { type: type, src: src };
-                            
+                            this.loadingStatusText = 'Menyiapkan AR, Musik, dan Narasi...';
+
                             this.playAllMediaSynchronized(url, type);
 
                         } else {
@@ -283,7 +282,11 @@
                                     }
                                 };
                                 viewer.addEventListener('progress', onProgress);
-                                setTimeout(resolve, 25000);
+                                
+                                setTimeout(() => {
+                                    viewer.removeEventListener('progress', onProgress);
+                                    resolve();
+                                }, 25000); 
                             });
                         }));
                     } else {
@@ -292,9 +295,10 @@
 
                     if (cache.bgm_url) {
                         let urlParts = cache.bgm_url.split('#t=');
-                        this.bgmPlayer = new Audio(urlParts[0]);
+                        this.bgmPlayer = new Audio();
                         this.bgmPlayer.preload = 'auto';
                         this.bgmPlayer.volume = 0.3;
+                        this.bgmPlayer.src = urlParts[0];
 
                         if (urlParts.length > 1 && urlParts[1]) {
                             let times = urlParts[1].split(',');
@@ -307,6 +311,7 @@
                         }
 
                         promises.push(new Promise((resolve) => {
+
                             this.bgmPlayer.addEventListener('canplaythrough', resolve, { once: true });
                             this.bgmPlayer.addEventListener('error', resolve, { once: true });
                             this.bgmPlayer.load(); 
@@ -316,9 +321,10 @@
                     let usingRecordedAudio = false;
                     if (cache.custom_audio_url) {
                         usingRecordedAudio = true;
-                        this.narrationPlayer = new Audio(cache.custom_audio_url);
+                        this.narrationPlayer = new Audio();
                         this.narrationPlayer.preload = 'auto';
                         this.narrationPlayer.volume = 1.0;
+                        this.narrationPlayer.src = cache.custom_audio_url;
                         
                         promises.push(new Promise((resolve) => {
                             this.narrationPlayer.addEventListener('canplaythrough', resolve, { once: true });
@@ -328,11 +334,13 @@
                     }
 
                     Promise.all(promises).then(() => {
-                        this.isLoading = false;
+                        this.isLoading = false; 
                         this.loadingProgress = 100;
+                        
+                        this.arActive = true; 
 
-                        if(this.bgmPlayer) this.bgmPlayer.play().catch(e => console.log('BGM Play Error:', e));
-                        if(this.narrationPlayer) this.narrationPlayer.play().catch(e => console.log('Voice Play Error:', e));
+                        if(this.bgmPlayer) this.bgmPlayer.play().catch(e => console.log('BGM Error:', e));
+                        if(this.narrationPlayer) this.narrationPlayer.play().catch(e => console.log('Voice Error:', e));
 
                         if(!usingRecordedAudio && cache.narration) {
                             let utterance = new SpeechSynthesisUtterance(cache.narration);
@@ -348,8 +356,30 @@
                 },
 
                 replayVoice() {
-                    if (this.currentQrUrl) {
-                        this.playAllMediaSynchronized(this.currentQrUrl, this.arData.type);
+
+                    if (!this.currentQrUrl || !this.arActive) return;
+
+                    const cache = this.arCache[this.currentQrUrl];
+                    if(!cache) return;
+
+                    window.speechSynthesis.cancel();
+                    if (this.narrationPlayer) {
+                        this.narrationPlayer.pause();
+                        this.narrationPlayer.currentTime = 0;
+                    }
+
+                    if (cache.custom_audio_url && this.narrationPlayer) {
+                        this.narrationPlayer.play().catch(e => console.log('Replay Error:', e));
+                    } 
+                    else if (cache.narration) {
+                        let utterance = new SpeechSynthesisUtterance(cache.narration);
+                        utterance.lang = 'id-ID';
+                        if(cache.ai_voice) {
+                            let voices = window.speechSynthesis.getVoices();
+                            let selectedVoice = voices.find(v => v.voiceURI === cache.ai_voice);
+                            if(selectedVoice) utterance.voice = selectedVoice;
+                        }
+                        window.speechSynthesis.speak(utterance);
                     }
                 },
 
