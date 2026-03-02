@@ -330,7 +330,7 @@
             </div>
 
             <div class="z-10 bg-white p-6 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                <img id="flyer-qr-image" src="" alt="QR" class="w-[450px] h-[450px] object-contain rounded-xl">
+                <div id="flyer-qr-container" class="w-[450px] h-[450px] bg-white rounded-xl flex items-center justify-center p-2"></div>
             </div>
 
             <div class="z-10 w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 mb-6 shadow-xl">
@@ -354,67 +354,71 @@
         </div>
     </div>
 <script>
-    function generateAutomatedFlyer(qrId, alpineData) {
+    async function generateAutomatedFlyer(qrId, alpineData) {
         alpineData.isGeneratingFlyer = true;
         alpineData.flyerProgress = 10;
-        
-        const qrImg = document.getElementById('flyer-qr-image');
 
-        qrImg.removeAttribute('crossorigin');
-        qrImg.removeAttribute('crossOrigin');
+        try {
 
-        qrImg.src = `/dashboard/ar/${qrId}/download?type=png&t=` + new Date().getTime();
+            const response = await fetch(`/dashboard/ar/${qrId}/download?type=svg`);
+            
+            if (!response.ok) {
+                throw new Error("Gagal mengambil respon dari server");
+            }
+            
+            alpineData.flyerProgress = 30;
 
-        alpineData.flyerProgress = 30;
+            const svgText = await response.text();
 
-        qrImg.onload = () => {
+            const qrContainer = document.getElementById('flyer-qr-container');
+            qrContainer.innerHTML = svgText;
+
+            const svgElement = qrContainer.querySelector('svg');
+            if (svgElement) {
+                svgElement.setAttribute('width', '100%');
+                svgElement.setAttribute('height', '100%');
+            }
+
             alpineData.flyerProgress = 50;
             const flyerNode = document.getElementById('flyer-template');
 
             let progressInterval = setInterval(() => {
                 if(alpineData.flyerProgress < 90) alpineData.flyerProgress += 5;
             }, 250);
-            
+
             html2canvas(flyerNode, { 
                 scale: 2,
                 useCORS: true,
-                allowTaint: true,
                 backgroundColor: "#0f172a" 
             }).then(canvas => {
                 clearInterval(progressInterval);
                 alpineData.flyerProgress = 100;
 
-                try {
-
-                    const link = document.createElement('a');
-                    link.download = `ScanYuk-Poster-Instruksi-${qrId}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                } catch (e) {
-
-                    console.error("Canvas Export Error:", e);
-                    alert("Gagal mengekspor poster karena diblokir oleh sistem keamanan server (CORS).");
-                }
+                const link = document.createElement('a');
+                link.download = `ScanYuk-Poster-Instruksi-${qrId}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
 
                 setTimeout(() => {
                     alpineData.isGeneratingFlyer = false;
                     alpineData.flyerProgress = 0;
+                    qrContainer.innerHTML = ''; 
                 }, 800);
 
             }).catch(err => {
                 clearInterval(progressInterval);
                 console.error("html2canvas error:", err);
-                alert('Sistem gagal merender poster. Silakan coba lagi.');
+                alert('Gagal merender poster. Silakan coba lagi.');
                 alpineData.isGeneratingFlyer = false;
+                qrContainer.innerHTML = '';
             });
-        };
 
-        qrImg.onerror = () => {
-            console.error("Gambar gagal dimuat ke dalam elemen img.");
-            alert('Gagal memuat QR Code. Coba muat ulang (refresh) halaman Anda.');
+        } catch (error) {
+            console.error("Proses pembuatan poster gagal:", error);
+            alert('Gagal mengambil data QR Code SVG. Pastikan QR code tersebut valid.');
             alpineData.isGeneratingFlyer = false;
             alpineData.flyerProgress = 0;
-        };
+        }
     }
 </script>
 </div>
