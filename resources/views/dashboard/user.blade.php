@@ -316,60 +316,56 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <div style="position: absolute; left: -9999px; top: -9999px;">
-        <div id="flyer-template" class="w-[800px] h-[1130px] flex flex-col items-center justify-between p-12 bg-gradient-to-br from-slate-900 to-slate-800 text-white relative overflow-hidden" style="font-family: 'Inter', sans-serif;">
+        <div id="flyer-template" class="w-[800px] h-[1130px] flex flex-col items-center justify-between p-12 bg-slate-900 text-white relative overflow-hidden" style="font-family: 'Inter', sans-serif;">
             
-            <div class="absolute top-0 left-0 w-[500px] h-[500px] bg-teal-500 rounded-full mix-blend-screen filter blur-[100px] opacity-40 transform -translate-x-1/4 -translate-y-1/4"></div>
-            <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-indigo-500 rounded-full mix-blend-screen filter blur-[100px] opacity-40 transform translate-x-1/4 translate-y-1/4"></div>
+            <div class="absolute inset-0 z-0 pointer-events-none" style="background: radial-gradient(circle at 10% 10%, rgba(20, 184, 166, 0.4) 0%, transparent 40%), radial-gradient(circle at 90% 90%, rgba(99, 102, 241, 0.4) 0%, transparent 40%);"></div>
 
-            <div class="z-10 text-center mt-10 w-full">
-                <div class="inline-block bg-teal-500/20 border border-teal-400 text-teal-400 font-bold px-6 py-2 rounded-full text-xl mb-6 tracking-widest uppercase">
+            <div class="z-10 text-center mt-8 w-full">
+                <div class="inline-block bg-teal-500/20 border border-teal-400 text-teal-400 font-bold px-8 py-2.5 rounded-full text-xl mb-8 tracking-widest uppercase">
                     AR Experience
                 </div>
-                <h1 class="text-6xl font-black mb-4 leading-tight">SCAN UNTUK<br>MEMULAI KEAJAIBAN</h1>
-                <p class="text-2xl text-slate-300 font-medium">Arahkan kamera HP Anda ke QR Code di bawah ini</p>
+                <h1 class="text-5xl font-black mb-4 leading-tight tracking-tight">SCAN UNTUK<br>MEMULAI KEAJAIBAN</h1>
+                <p class="text-xl text-slate-300 font-medium">Arahkan kamera HP Anda ke QR Code di bawah ini</p>
             </div>
 
-            <div class="z-10 bg-white p-6 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-                <div id="flyer-qr-container" class="w-[450px] h-[450px] bg-white rounded-xl flex items-center justify-center p-2"></div>
+            <div class="z-10 bg-white p-6 rounded-[2rem] shadow-2xl mt-4 mb-4">
+                <div id="flyer-qr-container" class="w-[400px] h-[400px] bg-white flex items-center justify-center"></div>
             </div>
 
-            <div class="z-10 w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 mb-6 shadow-xl">
-                <h3 class="text-2xl font-bold mb-6 text-teal-400">Cara Penggunaan:</h3>
-                <div class="space-y-4 text-xl font-medium text-slate-200">
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0">1</div>
-                        <p>Buka aplikasi <span class="text-white font-bold">Kamera Bawaan</span> atau <span class="text-white font-bold">Google Lens</span>.</p>
+            <div class="z-10 w-full bg-slate-800/80 border border-slate-700 rounded-3xl p-8 mb-4 shadow-xl">
+                <h3 class="text-2xl font-bold mb-6 text-teal-400 border-b border-slate-700 pb-4">Cara Penggunaan:</h3>
+                <div class="space-y-6 text-xl font-medium text-slate-200">
+                    <div class="flex items-start gap-5">
+                        <div class="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-2xl" style="line-height: 1;">1</div>
+                        <p class="mt-2 leading-relaxed">Buka aplikasi <span class="text-white font-bold">Kamera Bawaan</span> atau <span class="text-white font-bold">Google Lens</span>.</p>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0">2</div>
-                        <p>Arahkan lensa ke QR Code dan klik <span class="text-white font-bold">Link Tautan</span> yang muncul.</p>
+                    <div class="flex items-start gap-5">
+                        <div class="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-2xl" style="line-height: 1;">2</div>
+                        <p class="mt-2 leading-relaxed">Arahkan lensa ke QR Code dan klik <span class="text-white font-bold">Link Tautan</span> yang muncul.</p>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <div class="w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0">3</div>
-                        <p>Izinkan akses kamera dan lihat dunia dalam AR 3D!</p>
+                    <div class="flex items-start gap-5">
+                        <div class="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-2xl" style="line-height: 1;">3</div>
+                        <p class="mt-2 leading-relaxed">Izinkan akses kamera dan lihat dunia dalam AR 3D!</p>
                     </div>
                 </div>
             </div>
-            <p class="z-10 text-slate-400 font-bold tracking-widest uppercase text-sm mb-4">Powered by ScanYuk</p>
+            
+            <p class="z-10 text-slate-500 font-bold tracking-widest uppercase text-sm mb-2">Powered by ScanYuk</p>
         </div>
     </div>
+
 <script>
     async function generateAutomatedFlyer(qrId, alpineData) {
         alpineData.isGeneratingFlyer = true;
         alpineData.flyerProgress = 10;
 
         try {
-
             const response = await fetch(`/dashboard/ar/${qrId}/download?type=svg`);
-            
-            if (!response.ok) {
-                throw new Error("Gagal mengambil respon dari server");
-            }
+            if (!response.ok) throw new Error("Gagal mengambil respon dari server");
             
             alpineData.flyerProgress = 30;
 
             const svgText = await response.text();
-
             const qrContainer = document.getElementById('flyer-qr-container');
             qrContainer.innerHTML = svgText;
 
@@ -377,7 +373,10 @@
             if (svgElement) {
                 svgElement.setAttribute('width', '100%');
                 svgElement.setAttribute('height', '100%');
+                svgElement.style.display = 'block';
             }
+
+            await document.fonts.ready;
 
             alpineData.flyerProgress = 50;
             const flyerNode = document.getElementById('flyer-template');
@@ -387,16 +386,23 @@
             }, 250);
 
             html2canvas(flyerNode, { 
-                scale: 2,
+                scale: 3,
                 useCORS: true,
-                backgroundColor: "#0f172a" 
+                allowTaint: true,
+                backgroundColor: "#0f172a",
+                onclone: function(clonedDoc) {
+                    const clonedNode = clonedDoc.getElementById('flyer-template');
+                    clonedNode.style.position = 'relative';
+                    clonedNode.style.left = '0';
+                    clonedNode.style.top = '0';
+                }
             }).then(canvas => {
                 clearInterval(progressInterval);
                 alpineData.flyerProgress = 100;
 
                 const link = document.createElement('a');
                 link.download = `ScanYuk-Poster-Instruksi-${qrId}.png`;
-                link.href = canvas.toDataURL('image/png');
+                link.href = canvas.toDataURL('image/png', 1.0);
                 link.click();
 
                 setTimeout(() => {
