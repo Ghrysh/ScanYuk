@@ -353,58 +353,73 @@
             <p class="z-10 text-slate-400 font-bold tracking-widest uppercase text-sm mb-4">Powered by ScanYuk</p>
         </div>
     </div>
-    <script>
-    function generateAutomatedFlyer(qrId, alpineData) {
+<script>
+    async function generateAutomatedFlyer(qrId, alpineData) {
+
         alpineData.isGeneratingFlyer = true;
         alpineData.flyerProgress = 10;
-        
-        const qrImg = document.getElementById('flyer-qr-image');
-        qrImg.crossOrigin = "Anonymous";
 
-        qrImg.src = `/dashboard/ar/${qrId}/download?type=png&t=` + new Date().getTime();
+        try {
 
-        alpineData.flyerProgress = 30;
-
-        qrImg.onload = () => {
-            alpineData.flyerProgress = 50;
-            const flyerNode = document.getElementById('flyer-template');
-
-            let progressInterval = setInterval(() => {
-                if(alpineData.flyerProgress < 90) alpineData.flyerProgress += 5;
-            }, 250);
+            const response = await fetch(`/dashboard/ar/${qrId}/download?type=png`);
             
-            html2canvas(flyerNode, { 
-                scale: 2,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: "#0f172a" 
-            }).then(canvas => {
-                clearInterval(progressInterval);
-                alpineData.flyerProgress = 100;
+            if (!response.ok) {
+                throw new Error("Gagal merespons dari server");
+            }
+            alpineData.flyerProgress = 30;
 
-                const link = document.createElement('a');
-                link.download = `ScanYuk-Poster-Instruksi-${qrId}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
 
-                setTimeout(() => {
+            const qrImg = document.getElementById('flyer-qr-image');
+
+            qrImg.removeAttribute('crossorigin');
+
+            qrImg.onload = () => {
+                alpineData.flyerProgress = 50;
+                const flyerNode = document.getElementById('flyer-template');
+
+                let progressInterval = setInterval(() => {
+                    if(alpineData.flyerProgress < 90) alpineData.flyerProgress += 5;
+                }, 250);
+
+                html2canvas(flyerNode, { 
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: "#0f172a" 
+                }).then(canvas => {
+                    clearInterval(progressInterval);
+                    alpineData.flyerProgress = 100;
+
+                    const link = document.createElement('a');
+                    link.download = `ScanYuk-Poster-Instruksi-${qrId}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+
+                    URL.revokeObjectURL(objectUrl);
+
+                    setTimeout(() => {
+                        alpineData.isGeneratingFlyer = false;
+                        alpineData.flyerProgress = 0;
+                    }, 800);
+
+                }).catch(err => {
+                    clearInterval(progressInterval);
+                    console.error("Error html2canvas:", err);
+                    alert('Gagal merender desain poster. Silakan coba lagi.');
                     alpineData.isGeneratingFlyer = false;
-                    alpineData.flyerProgress = 0;
-                }, 800);
+                    URL.revokeObjectURL(objectUrl);
+                });
+            };
 
-            }).catch(err => {
-                clearInterval(progressInterval);
-                console.error("Error html2canvas:", err);
-                alert('Gagal merender poster. Silakan coba lagi.');
-                alpineData.isGeneratingFlyer = false;
-            });
-        };
+            qrImg.src = objectUrl;
 
-        qrImg.onerror = () => {
-            console.error("Gagal memuat gambar QR code");
-            alert('Gagal mengunduh QR Code sumber. Pastikan internet stabil.');
+        } catch (error) {
+            console.error("Fetch error:", error);
+            alert('Koneksi internet terputus saat mengunduh QR Code. Silakan periksa jaringan Anda dan coba lagi.');
             alpineData.isGeneratingFlyer = false;
-        };
+            alpineData.flyerProgress = 0;
+        }
     }
 </script>
 </div>
