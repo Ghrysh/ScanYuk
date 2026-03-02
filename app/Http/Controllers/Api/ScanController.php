@@ -42,6 +42,24 @@ class ScanController extends Controller
         DB::table('users')->where('id', $user->id)->increment('scan');
         DB::table('qr_codes')->where('id', $qr->id)->increment('scan_count');
 
+        $bgmUrl = null;
+        if (!empty($qr->bgm_path)) {
+            $path = $qr->bgm_path;
+            
+            if (str_starts_with($path, 'http')) {
+                $bgmUrl = $path;
+            } 
+            elseif (str_starts_with($path, '/minio-proxy')) {
+                $bgmUrl = url($path);
+            } 
+            else {
+                $parts = explode('#t=', $path);
+                $filename = basename($parts[0]);
+                $crop = isset($parts[1]) ? '#t=' . $parts[1] : '';
+                $bgmUrl = url('/minio-proxy/bg_sounds/' . $filename) . $crop;
+            }
+        }
+
         $arData = [
             'title' => $qr->title,
             'ar_type' => $qr->ar_type ?? '2d',
@@ -50,7 +68,7 @@ class ScanController extends Controller
             'custom_audio_url' => $qr->custom_audio_path,
             'image_url' => $qr->image_path ? asset('storage/' . $qr->image_path) : null,
             'file_3d_url' => null,
-            'bgm_url' => $qr->bgm_path ? url('/bg_sounds/' . ltrim($qr->bgm_path, '/')) : null,
+            'bgm_url' => $bgmUrl,
         ];
 
         if ($arData['ar_type'] === '3d' && !empty($qr->ar_asset_id)) {
