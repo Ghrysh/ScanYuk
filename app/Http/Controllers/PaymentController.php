@@ -20,7 +20,7 @@ class PaymentController extends Controller
         return $this->checkout($request);
     }
 
-    public function checkout(Request $request)
+public function checkout(Request $request)
     {
         $request->validate(['package_id' => 'required|exists:pricing_packages,id']);
         
@@ -29,18 +29,21 @@ class PaymentController extends Controller
         
         $transactionId = 'TRX-' . date('Ymd') . '-' . strtoupper(Str::random(4));
 
+        $ppn = $package->price * 0.11;
+        $totalAmount = $package->price + $ppn;
+
         Transaction::create([
             'id' => $transactionId,
             'user_id' => $user->id,
             'pricing_package_id' => $package->id,
-            'amount' => $package->price,
+            'amount' => $totalAmount,
             'status' => 'Pending' 
         ]);
 
         $body = [
-            'product' => ['Paket ' . $package->name . ' - ScanYuk AR'],
-            'qty' => ['1'],
-            'price' => [$package->price],
+            'product' => ['Paket ' . $package->name . ' - ScanYuk AR', 'PPN (11%)'],
+            'qty' => ['1', '1'],
+            'price' => [$package->price, $ppn],
             'returnUrl' => route('user.dashboard', ['payment' => 'success']), 
             'cancelUrl' => route('payment.cancel', ['id' => $transactionId]),
             'notifyUrl' => url('/api/ipaymu/callback'),
