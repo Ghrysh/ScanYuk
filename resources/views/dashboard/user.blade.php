@@ -354,72 +354,67 @@
         </div>
     </div>
 <script>
-    async function generateAutomatedFlyer(qrId, alpineData) {
-
+    function generateAutomatedFlyer(qrId, alpineData) {
         alpineData.isGeneratingFlyer = true;
         alpineData.flyerProgress = 10;
+        
+        const qrImg = document.getElementById('flyer-qr-image');
 
-        try {
+        qrImg.removeAttribute('crossorigin');
+        qrImg.removeAttribute('crossOrigin');
 
-            const response = await fetch(`/dashboard/ar/${qrId}/download?type=png`);
+        qrImg.src = `/dashboard/ar/${qrId}/download?type=png&t=` + new Date().getTime();
+
+        alpineData.flyerProgress = 30;
+
+        qrImg.onload = () => {
+            alpineData.flyerProgress = 50;
+            const flyerNode = document.getElementById('flyer-template');
+
+            let progressInterval = setInterval(() => {
+                if(alpineData.flyerProgress < 90) alpineData.flyerProgress += 5;
+            }, 250);
             
-            if (!response.ok) {
-                throw new Error("Gagal merespons dari server");
-            }
-            alpineData.flyerProgress = 30;
+            html2canvas(flyerNode, { 
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: "#0f172a" 
+            }).then(canvas => {
+                clearInterval(progressInterval);
+                alpineData.flyerProgress = 100;
 
-            const blob = await response.blob();
-            const objectUrl = URL.createObjectURL(blob);
-
-            const qrImg = document.getElementById('flyer-qr-image');
-
-            qrImg.removeAttribute('crossorigin');
-
-            qrImg.onload = () => {
-                alpineData.flyerProgress = 50;
-                const flyerNode = document.getElementById('flyer-template');
-
-                let progressInterval = setInterval(() => {
-                    if(alpineData.flyerProgress < 90) alpineData.flyerProgress += 5;
-                }, 250);
-
-                html2canvas(flyerNode, { 
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: "#0f172a" 
-                }).then(canvas => {
-                    clearInterval(progressInterval);
-                    alpineData.flyerProgress = 100;
+                try {
 
                     const link = document.createElement('a');
                     link.download = `ScanYuk-Poster-Instruksi-${qrId}.png`;
                     link.href = canvas.toDataURL('image/png');
                     link.click();
+                } catch (e) {
 
-                    URL.revokeObjectURL(objectUrl);
+                    console.error("Canvas Export Error:", e);
+                    alert("Gagal mengekspor poster karena diblokir oleh sistem keamanan server (CORS).");
+                }
 
-                    setTimeout(() => {
-                        alpineData.isGeneratingFlyer = false;
-                        alpineData.flyerProgress = 0;
-                    }, 800);
-
-                }).catch(err => {
-                    clearInterval(progressInterval);
-                    console.error("Error html2canvas:", err);
-                    alert('Gagal merender desain poster. Silakan coba lagi.');
+                setTimeout(() => {
                     alpineData.isGeneratingFlyer = false;
-                    URL.revokeObjectURL(objectUrl);
-                });
-            };
+                    alpineData.flyerProgress = 0;
+                }, 800);
 
-            qrImg.src = objectUrl;
+            }).catch(err => {
+                clearInterval(progressInterval);
+                console.error("html2canvas error:", err);
+                alert('Sistem gagal merender poster. Silakan coba lagi.');
+                alpineData.isGeneratingFlyer = false;
+            });
+        };
 
-        } catch (error) {
-            console.error("Fetch error:", error);
-            alert('Koneksi internet terputus saat mengunduh QR Code. Silakan periksa jaringan Anda dan coba lagi.');
+        qrImg.onerror = () => {
+            console.error("Gambar gagal dimuat ke dalam elemen img.");
+            alert('Gagal memuat QR Code. Coba muat ulang (refresh) halaman Anda.');
             alpineData.isGeneratingFlyer = false;
             alpineData.flyerProgress = 0;
-        }
+        };
     }
 </script>
 </div>
