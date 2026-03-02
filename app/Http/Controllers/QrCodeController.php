@@ -210,14 +210,20 @@ class QrCodeController extends Controller
         return back()->with('success', 'Status QR diubah.');
     }
 
-    public function download(QrCodeModel $qrCode)
+    public function download(Request $request, QrCodeModel $qrCode)
     {
         if ($qrCode->user_id !== Auth::id()) abort(403);
         
         $apiUrl = url('/scan-ar?id=' . $qrCode->uuid);
-        
-        $imageContent = QrCode::size(500)->margin(2)->generate($apiUrl);
-        $fileName = 'ScanYuk-AR-' . Str::slug($qrCode->title) . '.svg';
+        $type = $request->query('type', 'svg');
+
+        if ($type === 'png') {
+            $imageContent = QrCode::format('png')->size(600)->margin(2)->generate($apiUrl);
+            return response($imageContent)->header('Content-Type', 'image/png');
+        }
+
+        $imageContent = QrCode::format('svg')->size(500)->margin(2)->generate($apiUrl);
+        $fileName = 'ScanYuk-QR-' . Str::slug($qrCode->title) . '.svg';
 
         return response($imageContent)
             ->header('Content-Type', 'image/svg+xml')

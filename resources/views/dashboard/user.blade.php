@@ -14,7 +14,7 @@
     $scanPercent = $scanLimit > 0 ? min(($user->scan / $scanLimit) * 100, 100) : 0;
 @endphp
 
-<div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-10" x-data="{ showPackages: false, showLimitModal: false, showWarningModal: false, selectedPkg: null }">
+<div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-10" x-data="{ showPackages: false, showLimitModal: false, showWarningModal: false, selectedPkg: null, showDownloadModal: false, selectedQrId: null }">
     
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div>
@@ -190,7 +190,7 @@
                         {{ $qr->status }}
                     </span>
                     
-                    <button type="button" class="text-slate-400 hover:text-indigo-600 transition-colors" title="Lihat/Download QR" onclick="window.open('{{ route('user.ar.download', $qr->id) }}', '_self')">
+                    <button type="button" class="text-slate-400 hover:text-indigo-600 transition-colors" title="Lihat/Download QR" @click="selectedQrId = {{ $qr->id }}; showDownloadModal = true;">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                     </button>
 
@@ -266,5 +266,99 @@
             </form>
         </div>
     </div>
+
+    <div x-show="showDownloadModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center">
+        <div x-show="showDownloadModal" x-transition.opacity class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="showDownloadModal = false"></div>
+        <div x-show="showDownloadModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg mx-4 overflow-hidden flex flex-col items-center p-8 text-center">
+            
+            <h3 class="font-extrabold text-slate-900 text-xl mb-6">Pilih Format Download</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <button type="button" @click="window.open(`/dashboard/ar/${selectedQrId}/download?type=svg`, '_self'); showDownloadModal = false;" class="flex flex-col items-center p-6 border-2 border-slate-200 rounded-2xl hover:border-teal-500 hover:bg-teal-50 transition-all group">
+                    <div class="w-16 h-16 bg-slate-100 rounded-xl mb-4 flex items-center justify-center text-slate-400 group-hover:text-teal-500 group-hover:bg-white shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg>
+                    </div>
+                    <span class="font-bold text-slate-900 mb-1">QR Code Saja</span>
+                    <span class="text-xs text-slate-500">File SVG Mentah</span>
+                </button>
+
+                <button type="button" @click="generateAutomatedFlyer(selectedQrId); showDownloadModal = false;" class="flex flex-col items-center p-6 border-2 border-slate-200 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 transition-all group relative overflow-hidden">
+                    <div class="absolute -right-6 -top-6 w-16 h-16 bg-indigo-100 rounded-full blur-xl group-hover:bg-indigo-200 transition-all"></div>
+                    <div class="w-16 h-16 bg-slate-100 rounded-xl mb-4 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 group-hover:bg-white shadow-sm z-10">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M12 18v-6"></path><path d="M9 15h6"></path></svg>
+                    </div>
+                    <span class="font-bold text-slate-900 mb-1 z-10">Poster Instruksi</span>
+                    <span class="text-xs text-slate-500 z-10">Siap Cetak (PNG)</span>
+                </button>
+            </div>
+            
+            <button @click="showDownloadModal = false" class="mt-6 text-sm text-slate-400 hover:text-slate-600 font-bold underline">Batal</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <div style="position: absolute; left: -9999px; top: -9999px;">
+        <div id="flyer-template" class="w-[800px] h-[1130px] flex flex-col items-center justify-between p-12 bg-gradient-to-br from-slate-900 to-slate-800 text-white relative overflow-hidden" style="font-family: 'Inter', sans-serif;">
+            
+            <div class="absolute top-0 left-0 w-[500px] h-[500px] bg-teal-500 rounded-full mix-blend-screen filter blur-[100px] opacity-40 transform -translate-x-1/4 -translate-y-1/4"></div>
+            <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-indigo-500 rounded-full mix-blend-screen filter blur-[100px] opacity-40 transform translate-x-1/4 translate-y-1/4"></div>
+
+            <div class="z-10 text-center mt-10 w-full">
+                <div class="inline-block bg-teal-500/20 border border-teal-400 text-teal-400 font-bold px-6 py-2 rounded-full text-xl mb-6 tracking-widest uppercase">
+                    AR Experience
+                </div>
+                <h1 class="text-6xl font-black mb-4 leading-tight">SCAN UNTUK<br>MEMULAI KEAJAIBAN</h1>
+                <p class="text-2xl text-slate-300 font-medium">Arahkan kamera HP Anda ke QR Code di bawah ini</p>
+            </div>
+
+            <div class="z-10 bg-white p-6 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                <img id="flyer-qr-image" src="" alt="QR" class="w-[450px] h-[450px] object-contain rounded-xl">
+            </div>
+
+            <div class="z-10 w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-8 mb-6 shadow-xl">
+                <h3 class="text-2xl font-bold mb-6 text-teal-400">Cara Penggunaan:</h3>
+                <div class="space-y-4 text-xl font-medium text-slate-200">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0">1</div>
+                        <p>Buka aplikasi <span class="text-white font-bold">Kamera Bawaan</span> atau <span class="text-white font-bold">Google Lens</span>.</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0">2</div>
+                        <p>Arahkan lensa ke QR Code dan klik <span class="text-white font-bold">Link Tautan</span> yang muncul.</p>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0">3</div>
+                        <p>Izinkan akses kamera dan lihat dunia dalam AR 3D!</p>
+                    </div>
+                </div>
+            </div>
+            <p class="z-10 text-slate-400 font-bold tracking-widest uppercase text-sm mb-4">Powered by ScanYuk</p>
+        </div>
+    </div>
+    <script>
+        function generateAutomatedFlyer(qrId) {
+            alert('Sedang menyiapkan desain poster... Mohon tunggu sebentar.');
+            
+            const qrImg = document.getElementById('flyer-qr-image');
+            qrImg.crossOrigin = "Anonymous";
+            qrImg.src = `/dashboard/ar/${qrId}/download?type=png`;
+
+            qrImg.onload = () => {
+                const flyerNode = document.getElementById('flyer-template');
+                
+                html2canvas(flyerNode, { 
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: "#0f172a" 
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = `ScanYuk-Poster-Instruksi-${qrId}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            };
+        }
+    </script>
 </div>
 @endsection
