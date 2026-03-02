@@ -321,7 +321,7 @@
             <div class="absolute inset-0 z-0 pointer-events-none" style="background: radial-gradient(circle at 10% 10%, rgba(20, 184, 166, 0.4) 0%, transparent 40%), radial-gradient(circle at 90% 90%, rgba(99, 102, 241, 0.4) 0%, transparent 40%);"></div>
 
             <div class="z-10 text-center mt-8 w-full">
-                <div class="inline-flex items-center justify-center bg-teal-500/20 border border-teal-400 text-teal-400 font-bold px-8 pt-2.5 pb-4 rounded-full text-xl mb-8 tracking-widest uppercase leading-none">
+                <div class="inline-flex items-center justify-center bg-teal-500/20 border border-teal-400 text-teal-400 font-bold px-8 pt-2.5 pb-6 rounded-full text-xl mb-8 tracking-widest uppercase leading-none">
                     AR Experience
                 </div>
                 <h1 class="text-5xl font-black mb-4 leading-tight tracking-tight">SCAN UNTUK<br>MEMULAI KEAJAIBAN</h1>
@@ -336,15 +336,15 @@
                 <h3 class="text-2xl font-bold mb-6 text-teal-400 border-b border-slate-700 pb-4">Cara Penggunaan:</h3>
                 <div class="space-y-6 text-xl font-medium text-slate-200">
                     <div class="flex items-start gap-5">
-                        <div class="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-2xl pb-2" style="line-height: 1;">1</div>
+                        <div class="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-2xl pb-4" style="line-height: 1;">1</div>
                         <p class="mt-2 leading-relaxed">Buka aplikasi <span class="text-white font-bold">Kamera Bawaan</span> atau <span class="text-white font-bold">Google Lens</span>.</p>
                     </div>
                     <div class="flex items-start gap-5">
-                        <div class="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-2xl pb-2" style="line-height: 1;">2</div>
+                        <div class="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-2xl pb-4" style="line-height: 1;">2</div>
                         <p class="mt-2 leading-relaxed">Arahkan lensa ke QR Code dan klik <span class="text-white font-bold">Link Tautan</span> yang muncul.</p>
                     </div>
                     <div class="flex items-start gap-5">
-                        <div class="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-2xl pb-2" style="line-height: 1;">3</div>
+                        <div class="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-2xl pb-4" style="line-height: 1;">3</div>
                         <p class="mt-2 leading-relaxed">Izinkan akses kamera dan lihat dunia dalam AR 3D!</p>
                     </div>
                 </div>
