@@ -141,7 +141,7 @@
                                                 <svg class="w-6 h-6 md:w-8 md:h-8 text-teal-500 mb-1 drop-shadow-sm hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                 </svg>
-                                                <span class="text-[8px] md:text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center" x-text="modelStates[item.id]?.state === 'oversize' ? 'Unduh' : 'Unduh Model'"></span>
+                                                <span class="text-[8px] md:text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center" x-text="modelStates[item.id]?.state === 'oversize' ? '> 5MB (Klik Unduh)' : 'Unduh Model'"></span>
                                             </div>
 
                                             <div x-show="modelStates[item.id]?.state === 'downloading'" 
