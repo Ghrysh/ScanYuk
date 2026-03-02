@@ -343,12 +343,46 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pt-4 border-t border-slate-200">
-                    <button type="button" @click="openModal()" class="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl border-2 border-teal-500 text-teal-600 text-sm md:text-base font-bold hover:bg-teal-50 transition-colors">
+                <div class="pt-6 border-t border-slate-200 mt-6 bg-slate-50 p-5 rounded-2xl border border-slate-100 shadow-inner">
+                    <label class="block text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-teal-600"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                        Opsi Hasil Generate
+                    </label>
+                    
+                    <input type="hidden" name="generation_mode" :value="generationMode">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label @click="generationMode = 'qr_only'" class="flex flex-col bg-white border-2 p-4 rounded-xl cursor-pointer hover:border-teal-300 transition-all gap-2"
+                               :class="generationMode === 'qr_only' ? 'border-teal-500 ring-2 ring-teal-100 shadow-md' : 'border-slate-200'">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" x-model="generationMode" value="qr_only" class="text-teal-600 focus:ring-teal-500">
+                                <span class="text-sm font-bold text-slate-900 leading-tight">Hanya File QR Code</span>
+                            </div>
+                            <span class="text-xs text-slate-500 ml-7">Cocok jika Anda ingin menempelkan QR ini di desain poster buatan Anda sendiri.</span>
+                        </label>
+                        
+                        <label @click="generationMode = 'flyer'" class="flex flex-col bg-white border-2 p-4 rounded-xl cursor-pointer hover:border-indigo-300 transition-all gap-2"
+                               :class="generationMode === 'flyer' ? 'border-indigo-500 ring-2 ring-indigo-100 shadow-md' : 'border-slate-200'">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" x-model="generationMode" value="flyer" class="text-indigo-600 focus:ring-indigo-500">
+                                <span class="text-sm font-bold text-indigo-900 leading-tight flex items-center gap-1.5">
+                                    File Flyer Instruksi
+                                    <span class="text-[9px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-md font-extrabold border border-indigo-200 uppercase tracking-wider">Instant</span>
+                                </span>
+                            </div>
+                            <span class="text-xs text-indigo-500 ml-7">Sistem akan otomatis membuat poster flyer (seperti gambar contoh) yang siap dicetak.</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pt-6 mt-6 border-t border-slate-200">
+                    <button type="button" @click="openModal()" class="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl border-2 border-slate-300 text-slate-700 text-sm md:text-base font-bold hover:bg-slate-100 hover:border-slate-400 transition-all shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.644M12 18.752a10.006 10.006 0 01-12-6.73M12 18.752a10.006 10.006 0 0012-6.73M12 18.752c4.306 0 8.028-2.533 9.707-6.23M12 5.252c4.306 0 8.028 2.533 9.707 6.23M12 5.252a10.005 10.005 0 00-12 6.73M12 5.252a10.005 10.005 0 0112 6.73M12 11.252a1.125 1.125 0 110 2.25 1.125 1.125 0 010-2.25z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11.252a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                         Preview AR
                     </button>
-                    <button type="submit" class="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl btn-gradient text-white text-sm md:text-base font-bold shadow-lg shadow-indigo-200">
-                        Generate QR Code
+                    <button type="submit" class="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-xl btn-gradient text-white text-sm md:text-base font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:scale-[1.01] transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75A11.956 11.956 0 0112 2.714z" /></svg>
+                        Generate QR
                     </button>
                 </div>
             </form>
@@ -480,6 +514,7 @@
                 selectedLibrary3d: '', local3dUrl: null, 
                 
                 selectedMusic: '', bgmVolume: 0.3,
+                generationMode: 'qr_only',
                 audioDuration: 100, bgmStart: 0, bgmEnd: 30, bgmDuration: 0, isBgmLoading: false, isBgmPlaying: false,
                 customBgmFile: null, customBgmUrl: null, isCustomBgm: false,
                 
