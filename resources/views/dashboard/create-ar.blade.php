@@ -141,22 +141,24 @@
                                                 <svg class="w-6 h-6 md:w-8 md:h-8 text-teal-500 mb-1 drop-shadow-sm hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                 </svg>
-                                                <span class="text-[8px] md:text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center" x-text="modelStates[item.id]?.state === 'oversize' ? '> 5MB (Klik Unduh)' : 'Unduh Model'"></span>
+                                                <span class="text-[8px] md:text-[10px] font-bold text-slate-700 text-center" x-text="formatBytes(modelStates[item.id]?.totalBytes)"></span>
+                                                <span class="text-[7px] md:text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Klik Unduh</span>
                                             </div>
 
                                             <div x-show="modelStates[item.id]?.state === 'downloading'" 
                                                 @click.prevent.stop="toggleDownload(item.id)"
                                                 class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-opacity duration-300 pointer-events-auto"
                                                 title="Klik untuk Pause">
-                                                <div class="relative flex items-center justify-center w-8 h-8 md:w-10 md:h-10 mb-0.5">
+                                                <div class="relative flex items-center justify-center w-6 h-6 md:w-8 md:h-8 mb-1">
                                                     <svg class="w-full h-full text-slate-300" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
                                                     <svg class="absolute inset-0 w-full h-full text-teal-500 transition-all duration-200 ease-out" viewBox="0 0 36 36">
                                                         <path :stroke-dasharray="(modelStates[item.id]?.progress || 0) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
                                                     </svg>
                                                     <div class="absolute inset-0 flex items-center justify-center">
-                                                        <span class="text-[8px] md:text-[10px] font-bold text-teal-600" x-text="(modelStates[item.id]?.progress || 0) + '%'"></span>
+                                                        <span class="text-[7px] md:text-[8px] font-bold text-teal-700" x-text="(modelStates[item.id]?.progress || 0) + '%'"></span>
                                                     </div>
                                                 </div>
+                                                <span class="text-[6px] md:text-[7px] font-bold text-teal-600 tracking-widest text-center px-1" x-text="formatBytes(modelStates[item.id]?.downloadedBytes) + ' / ' + formatBytes(modelStates[item.id]?.totalBytes)"></span>
                                             </div>
 
                                             <template x-if="modelStates[item.id]?.state === 'loaded'">
@@ -972,34 +974,49 @@
                     this.closeModal(); this.mainTab = 'custom'; window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
 
-                previewBgm(src) {
+                async previewBgm(src) {
                     this.stopAllAudio();
                     this.isBgmLoading = true;
-                    this.currentAudioPlayer = new Audio(src);
-                    this.currentAudioPlayer.preload = 'auto'; 
                     
-                    this.currentAudioPlayer.addEventListener('waiting', () => { this.isBgmLoading = true; this.isBgmPlaying = false; });
-                    this.currentAudioPlayer.addEventListener('playing', () => { this.isBgmLoading = false; this.isBgmPlaying = true; });
-                    this.currentAudioPlayer.addEventListener('pause', () => { this.isBgmPlaying = false; });
-                    
-                    this.currentAudioPlayer.addEventListener('loadedmetadata', () => {
-                        this.audioDuration = this.currentAudioPlayer.duration;
-                        this.bgmDuration = this.audioDuration;
-                        this.bgmStart = 0;
-                        this.bgmEnd = this.audioDuration;
-                        this.currentAudioPlayer.currentTime = Number(this.bgmStart);
-                        this.currentAudioPlayer.volume = this.bgmVolume;
+                    try {
+                        let finalSrc = src;
                         
-                        this.currentAudioPlayer.play().catch(e => { this.isBgmLoading = false; });
-                        this.playingMusicPath = src;
-                    });
-
-                    this.currentAudioPlayer.addEventListener('timeupdate', () => {
-                        if (this.bgmEnd && this.currentAudioPlayer.currentTime >= (Number(this.bgmEnd) - 0.2)) {
-                            this.currentAudioPlayer.currentTime = Number(this.bgmStart);
-                            this.currentAudioPlayer.play().catch(e=>{}); 
+                        if (!src.startsWith('blob:')) {
+                            let response = await fetch(src);
+                            let blob = await response.blob();
+                            finalSrc = URL.createObjectURL(blob);
                         }
-                    });
+
+                        this.currentAudioPlayer = new Audio(finalSrc);
+                        this.currentAudioPlayer.preload = 'auto'; 
+                        
+                        this.currentAudioPlayer.addEventListener('waiting', () => { this.isBgmLoading = true; this.isBgmPlaying = false; });
+                        this.currentAudioPlayer.addEventListener('playing', () => { this.isBgmLoading = false; this.isBgmPlaying = true; });
+                        this.currentAudioPlayer.addEventListener('pause', () => { this.isBgmPlaying = false; });
+                        
+                        this.currentAudioPlayer.addEventListener('loadedmetadata', () => {
+                            this.audioDuration = this.currentAudioPlayer.duration;
+                            this.bgmDuration = this.audioDuration;
+                            this.bgmStart = 0;
+                            this.bgmEnd = this.audioDuration;
+                            this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                            this.currentAudioPlayer.volume = this.bgmVolume;
+                            
+                            this.currentAudioPlayer.play().catch(e => { this.isBgmLoading = false; });
+                            this.playingMusicPath = src;
+                        });
+
+                        this.currentAudioPlayer.addEventListener('timeupdate', () => {
+                            if (this.bgmEnd && this.currentAudioPlayer.currentTime >= (Number(this.bgmEnd) - 0.2)) {
+                                this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                                this.currentAudioPlayer.play().catch(e=>{}); 
+                            }
+                        });
+                    } catch (error) {
+                        console.error("Gagal memuat audio:", error);
+                        this.isBgmLoading = false;
+                        alert("Gagal mengunduh audio. Periksa koneksi internet Anda.");
+                    }
                 },
                 
                 updateVolume() { if(this.currentAudioPlayer) this.currentAudioPlayer.volume = this.bgmVolume; },
