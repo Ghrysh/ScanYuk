@@ -79,15 +79,19 @@
         </button>
     </div>
 
-    <div x-show="errorMessage" style="display: none;" class="fixed top-10 left-1/2 transform -translate-x-1/2 z-[60] bg-red-500/90 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl font-semibold flex items-center gap-3 w-fit whitespace-nowrap border border-white/20">
-        <span x-text="errorMessage" class="text-sm"></span>
+    <div x-show="audioBlocked" style="display: none;" @click="resumeAudio()" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/80 backdrop-blur-sm cursor-pointer pointer-events-auto">
+        <div class="w-16 h-16 bg-teal-500 rounded-full flex items-center justify-center text-white mb-4 shadow-[0_0_30px_rgba(20,184,166,0.6)] animate-pulse">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 ml-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+        </div>
+        <span class="text-white font-bold text-lg tracking-wide">Ketuk untuk Memutar Suara</span>
+        <span class="text-slate-300 text-sm mt-2">Browser memblokir pemutaran otomatis</span>
     </div>
 
 <script>
         function arTracker() {
             return {
                 video: null, canvasElement: null, canvas: null, arOverlayContainer: null,
-                isFetching: false, arActive: false, errorMessage: '', arCache: {}, currentQrUrl: null, lastFoundTime: 0,
+                isFetching: false, arActive: false, errorMessage: '', arCache: {}, currentQrUrl: null, lastFoundTime: 0, audioBlocked: false,
                 
                 arData: { type: '2d', src: '' },
                 bgmPlayer: null,
@@ -295,10 +299,13 @@
 
                     if (cache.bgm_url) {
                         let urlParts = cache.bgm_url.split('#t=');
+                        let audioSrc = urlParts[0];
+                        if (!audioSrc.startsWith('http') && !audioSrc.startsWith('/')) { audioSrc = '/' + audioSrc; }
+
                         this.bgmPlayer = new Audio();
                         this.bgmPlayer.preload = 'auto';
                         this.bgmPlayer.volume = 0.3;
-                        this.bgmPlayer.src = urlParts[0];
+                        this.bgmPlayer.src = audioSrc;
 
                         let startTime = 0;
                         let endTime = null;
@@ -342,21 +349,34 @@
                     Promise.all(promises).then(() => {
                         this.isLoading = false; 
                         this.loadingProgress = 100;
-                        
                         this.arActive = true; 
 
-                        if(this.bgmPlayer) this.bgmPlayer.play().catch(e => console.log('BGM Error:', e));
-                        if(this.narrationPlayer) this.narrationPlayer.play().catch(e => console.log('Voice Error:', e));
+                        let playPromises = [];
+                        if (this.bgmPlayer) playPromises.push(this.bgmPlayer.play());
+                        if (this.narrationPlayer) playPromises.push(this.narrationPlayer.play());
 
-                        if(!usingRecordedAudio && cache.narration) {
-                            let utterance = new SpeechSynthesisUtterance(cache.narration);
-                            utterance.lang = 'id-ID';
-                            if(cache.ai_voice) {
-                                let voices = window.speechSynthesis.getVoices();
-                                let selectedVoice = voices.find(v => v.voiceURI === cache.ai_voice);
-                                if(selectedVoice) utterance.voice = selectedVoice;
+                        const playTTS = () => {
+                            if(!usingRecordedAudio && cache.narration) {
+                                let utterance = new SpeechSynthesisUtterance(cache.narration);
+                                utterance.lang = 'id-ID';
+                                if(cache.ai_voice) {
+                                    let voices = window.speechSynthesis.getVoices();
+                                    let selectedVoice = voices.find(v => v.voiceURI === cache.ai_voice);
+                                    if(selectedVoice) utterance.voice = selectedVoice;
+                                }
+                                window.speechSynthesis.speak(utterance);
                             }
-                            window.speechSynthesis.speak(utterance);
+                        };
+
+                        if (playPromises.length > 0) {
+                            Promise.all(playPromises).then(() => {
+                                playTTS();
+                            }).catch(e => {
+                                console.log('Autoplay diblokir browser:', e);
+                                this.audioBlocked = true; 
+                            });
+                        } else {
+                            playTTS();
                         }
                     });
                 },
@@ -389,8 +409,27 @@
                     }
                 },
 
+                resumeAudio() {
+                    this.audioBlocked = false;
+                    if (this.bgmPlayer) this.bgmPlayer.play().catch(e=>{});
+                    if (this.narrationPlayer) this.narrationPlayer.play().catch(e=>{});
+                    
+                    const cache = this.arCache[this.currentQrUrl];
+                    if (cache && !cache.custom_audio_url && cache.narration) {
+                        let utterance = new SpeechSynthesisUtterance(cache.narration);
+                        utterance.lang = 'id-ID';
+                        if(cache.ai_voice) {
+                            let voices = window.speechSynthesis.getVoices();
+                            let selectedVoice = voices.find(v => v.voiceURI === cache.ai_voice);
+                            if(selectedVoice) utterance.voice = selectedVoice;
+                        }
+                        window.speechSynthesis.speak(utterance);
+                    }
+                },
+
                 stopAllAudio() {
                     window.speechSynthesis.cancel();
+                    this.audioBlocked = false;
                     
                     if(this.bgmPlayer) {
                         this.bgmPlayer.pause();
