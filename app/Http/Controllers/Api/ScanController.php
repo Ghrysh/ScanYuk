@@ -46,6 +46,8 @@ class ScanController extends Controller
         if (!empty($qr->bgm_path)) {
             $path = $qr->bgm_path;
             
+            $path = str_replace('/minio-proxy/bg_sounds/minio-proxy/bg_sounds/', '/minio-proxy/bg_sounds/', $path);
+            
             if (str_starts_with($path, 'http')) {
                 $bgmUrl = $path;
             } 

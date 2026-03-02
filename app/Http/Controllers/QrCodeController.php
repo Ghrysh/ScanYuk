@@ -112,7 +112,7 @@ class QrCodeController extends Controller
                 $bgmPathToSave = url('/minio-proxy/bg_sounds/' . $bgmName); 
             } else if (!empty($bgmPathToSave)) {
                 if (!Str::startsWith($bgmPathToSave, 'http')) {
-                    $bgmPathToSave = url('/minio-proxy/bg_sounds/' . ltrim($bgmPathToSave, '/'));
+                    $bgmPathToSave = url($bgmPathToSave);
                 }
             }
 
