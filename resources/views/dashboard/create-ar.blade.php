@@ -69,7 +69,7 @@
 
     <main class="py-6 px-4 w-full max-w-4xl mx-auto pb-32">
         <div x-show="mainTab === 'custom'" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4" x-transition:enter-end="opacity-100 translate-y-0">
-            <form @submit.prevent="submitForm" action="{{ route('user.ar.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6 md:space-y-8 bg-white p-5 md:p-8 rounded-2xl shadow-sm border border-slate-200">
+            <form id="ar-form" @submit.prevent="submitForm" action="{{ route('user.ar.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6 md:space-y-8 bg-white p-5 md:p-8 rounded-2xl shadow-sm border border-slate-200">
                 @csrf
                 <input type="hidden" name="ar_type" :value="arType">
                 <input type="hidden" name="selected_3d_id" :value="selectedLibrary3d">
@@ -141,7 +141,7 @@
                                                 <svg class="w-6 h-6 md:w-8 md:h-8 text-teal-500 mb-1 drop-shadow-sm hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                                                 </svg>
-                                                <span class="text-[8px] md:text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center" x-text="modelStates[item.id]?.state === 'oversize' ? '> 5MB (Klik Unduh)' : 'Unduh Model'"></span>
+                                                <span class="text-[8px] md:text-[9px] font-bold text-slate-500 uppercase tracking-wider text-center" x-text="modelStates[item.id]?.state === 'oversize' ? 'Unduh' : 'Unduh Model'"></span>
                                             </div>
 
                                             <div x-show="modelStates[item.id]?.state === 'downloading'" 
@@ -268,8 +268,8 @@
                                  <div class="absolute top-1/2 -right-1.5 w-1 h-5 md:h-6 bg-white rounded-full -translate-y-1/2 opacity-90 shadow-md"></div>
                             </div>
 
-                            <input type="range" min="0" :max="audioDuration" step="0.1" x-model.number="bgmStart" @input="updateCrop('start')" class="absolute inset-0 w-full h-full opacity-0 z-10">
-                            <input type="range" min="0" :max="audioDuration" step="0.1" x-model.number="bgmEnd" @input="updateCrop('end')" class="absolute inset-0 w-full h-full opacity-0 z-20">
+                            <input type="range" min="0" :max="audioDuration" step="0.1" x-model.number="bgmStart" @input="limitCrop('start')" @change="seekCrop()" class="absolute inset-0 w-full h-full opacity-0 z-10">
+                            <input type="range" min="0" :max="audioDuration" step="0.1" x-model.number="bgmEnd" @input="limitCrop('end')" @change="seekCrop()" class="absolute inset-0 w-full h-full opacity-0 z-20">
                         </div>
                         
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-2 gap-2">
@@ -404,17 +404,25 @@
 
                 <div x-show="!isTemplateLoading" class="p-4 md:p-6 w-full flex flex-col items-center">
                     <div class="w-full bg-slate-100 rounded-2xl overflow-hidden flex items-center justify-center relative shadow-inner border border-slate-200 h-[250px] md:h-[300px]">
+                        
+                        <div x-show="audioBlocked" @click="resumeAudio()" class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-900/70 backdrop-blur-sm cursor-pointer">
+                            <div class="w-12 h-12 bg-teal-500 rounded-full flex items-center justify-center text-white mb-3 shadow-lg animate-pulse">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ml-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                            </div>
+                            <span class="text-white font-bold text-xs md:text-sm">Ketuk untuk Memutar AR & Suara</span>
+                        </div>
+
                         <template x-if="previewData.type === '2d'"><img :src="previewData.src" class="max-w-full max-h-full object-contain"></template>
                         <template x-if="previewData.type === '3d'">
                             <div class="w-full h-full relative"> 
                                 <div x-show="isPreviewLoading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/80">
                                     <div class="w-10 h-10 md:w-12 md:h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                                    <p class="text-white font-bold text-xs md:text-sm mb-2">Memuat Pratinjau...</p>
+                                    <p class="text-white font-bold text-xs md:text-sm mb-2">Mensinkronisasi Media...</p>
                                     <div class="w-32 md:w-48 bg-slate-700 rounded-full h-1.5 md:h-2">
                                         <div class="bg-teal-500 h-1.5 md:h-2 rounded-full" :style="`width: ${previewProgress}%`"></div>
                                     </div>
                                 </div>   
-                                <model-viewer :src="previewData.src" auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer>
+                                <model-viewer id="preview-model-viewer" :src="previewData.src" auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer>
                             </div>
                         </template>
 
@@ -423,11 +431,19 @@
                             <span x-show="previewData.hasNarration" class="px-2 py-1 bg-teal-500/90 backdrop-blur-md rounded-full text-white text-[9px] md:text-xs font-medium flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 animate-pulse" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg> Suara</span>
                         </div>
                     </div>
-                    <template x-if="isFromTemplate">
-                        <button @click="useTemplate()" class="mt-4 md:mt-6 w-full py-3 px-6 rounded-xl btn-gradient text-white text-sm md:text-base font-bold shadow-lg flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Gunakan Template Ini
-                        </button>
-                    </template>
+                    
+                    <div class="mt-4 md:mt-6 w-full flex flex-col gap-3">
+                        <template x-if="isFromTemplate">
+                            <button @click="useTemplate()" class="w-full py-3 px-6 rounded-xl btn-gradient text-white text-sm md:text-base font-bold shadow-lg flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Gunakan Template Ini
+                            </button>
+                        </template>
+                        <template x-if="!isFromTemplate">
+                            <button @click="triggerSubmit()" class="w-full py-3 px-6 rounded-xl btn-gradient text-white text-sm md:text-base font-bold shadow-lg flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> Generate QR Code Sekarang
+                            </button>
+                        </template>
+                    </div>
                 </div>
             </div>
         </div>
@@ -471,8 +487,10 @@
                 isGenerating: false, progress: 0, estimatedTime: 'Menghitung...', uploadError: null,
                 search3d: '', searchMusic: '', searchTemplate: '',
                 showModal: false, isFromTemplate: false,
-                previewData: { title: '', type: '', src: '', music: '', hasNarration: false, fullData: null },
+                previewData: { title: '', type: '', src: '', music: '', hasNarration: false, fullData: null, musicStart: 0, musicEnd: 0 },
+
                 currentAudioPlayer: null, narrationPlayer: null, playingMusicPath: null,
+                modalBgmPlayer: null, modalVoicePlayer: null, audioBlocked: false,
 
                 library3dList: @json($library3dList),
                 musicList: @json($musicList),
@@ -485,7 +503,6 @@
                 isTemplateLoading: false, templateProgress: 0,
                 isPreviewLoading: false, previewProgress: 0,
 
-                // Fungsi bantu perbaikan URL
                 getAssetUrl(path) {
                     if (!path) return '';
                     if (path.startsWith('http') || path.startsWith('/')) return path;
@@ -624,24 +641,12 @@
                     }
                 },
 
-                filtered3d() { 
-                    return this.library3dList.filter(i => (i.name || '').toLowerCase().includes(this.search3d.toLowerCase())); 
-                },
-                filteredMusic() { 
-                    return this.musicList.filter(i => (i.name || '').toLowerCase().includes(this.searchMusic.toLowerCase())); 
-                },
-                filteredTemplates() { 
-                    return this.templates.filter(i => 
-                        (i.title || '').toLowerCase().includes(this.searchTemplate.toLowerCase()) || 
-                        (i.narration || '').toLowerCase().includes(this.searchTemplate.toLowerCase())
-                    ); 
-                },
+                filtered3d() { return this.library3dList.filter(i => (i.name || '').toLowerCase().includes(this.search3d.toLowerCase())); },
+                filteredMusic() { return this.musicList.filter(i => (i.name || '').toLowerCase().includes(this.searchMusic.toLowerCase())); },
+                filteredTemplates() { return this.templates.filter(i => (i.title || '').toLowerCase().includes(this.searchTemplate.toLowerCase()) || (i.narration || '').toLowerCase().includes(this.searchTemplate.toLowerCase())); },
 
                 reset2d() { this.imageUrl2d = null; document.getElementById('image-upload').value = ''; },
-                reset3d() { 
-                    this.upload3dName = ''; this.upload3dDisplayName = ''; document.getElementById('glb-upload').value = ''; this.selectedLibrary3d = ''; 
-                    if (this.local3dUrl) { URL.revokeObjectURL(this.local3dUrl); this.local3dUrl = null; } 
-                },
+                reset3d() { this.upload3dName = ''; this.upload3dDisplayName = ''; document.getElementById('glb-upload').value = ''; this.selectedLibrary3d = ''; if (this.local3dUrl) { URL.revokeObjectURL(this.local3dUrl); this.local3dUrl = null; } },
                 handle2dUpload(e) {
                     let file = e.target.files[0];
                     if(!file) return;
@@ -703,6 +708,12 @@
                     this.previewBgm(src);
                 },
 
+                triggerSubmit() {
+                    this.closeModal();
+                    let form = document.getElementById('ar-form');
+                    if(form) form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                },
+
                 submitForm(e) {
                     this.isGenerating = true; this.progress = 0; this.uploadError = null;
                     let formData = new FormData(e.target);
@@ -743,178 +754,6 @@
                     xhr.send(formData);
                 },
 
-                async previewTemplate(tpl) {
-                    this.isFromTemplate = true;
-                    this.previewData = { title: tpl.title, type: tpl.ar_type, src: '', music: '', hasNarration: !!tpl.narration, fullData: tpl };
-                    this.showModal = true;
-                    this.isTemplateLoading = true;
-                    this.templateProgress = 0;
-                    this.stopAllAudio();
-
-                    let src3d = this.getAssetUrl(tpl.file_path);
-                    let bgmSrc = tpl.bgm_path ? this.getAssetUrl(tpl.bgm_path) : '';
-                    let finalBlobUrl = src3d;
-
-                    try {
-                        if (tpl.ar_type === '3d') {
-                            finalBlobUrl = await new Promise((resolve, reject) => {
-                                let xhr = new XMLHttpRequest();
-                                xhr.open('GET', src3d, true);
-                                xhr.responseType = 'blob';
-                                xhr.onprogress = (e) => {
-                                    if (e.lengthComputable) {
-                                        this.templateProgress = Math.round((e.loaded / e.total) * 80);
-                                    } else {
-                                        this.templateProgress = Math.min(80, this.templateProgress + 5);
-                                    }
-                                };
-                                xhr.onload = () => {
-                                    if (xhr.status >= 200 && xhr.status < 300) {
-                                        resolve(URL.createObjectURL(xhr.response));
-                                    } else {
-                                        reject('Gagal Unduh 3D');
-                                    }
-                                };
-                                xhr.onerror = reject;
-                                xhr.send();
-                            });
-                        } else {
-                            this.templateProgress = 80;
-                        }
-
-                        if (bgmSrc) {
-                            await new Promise((resolve) => {
-                                let audio = new Audio(bgmSrc);
-                                audio.preload = 'auto';
-                                audio.addEventListener('canplaythrough', () => {
-                                    this.currentAudioPlayer = audio;
-                                    resolve();
-                                });
-                                audio.addEventListener('error', () => resolve());
-                                audio.load();
-                            });
-                        }
-                        
-                        this.templateProgress = 100;
-                        
-                        setTimeout(() => {
-                            this.previewData.src = finalBlobUrl;
-                            this.previewData.music = bgmSrc;
-                            this.isTemplateLoading = false;
-
-                            if (this.currentAudioPlayer) {
-                                this.audioDuration = this.currentAudioPlayer.duration || 100;
-                                this.bgmStart = 0;
-                                this.bgmEnd = this.audioDuration;
-                                this.currentAudioPlayer.volume = this.bgmVolume;
-                                this.currentAudioPlayer.play().catch(e => console.log("Auto-play diblokir browser"));
-                            }
-                            
-                            this.playVoice(tpl.narration, null, null);
-                        }, 400);
-
-                    } catch (err) {
-                        alert('Gagal memuat template. Periksa koneksi internet Anda.');
-                        this.closeModal();
-                    }
-                },
-                useTemplate() {
-                    let tpl = this.previewData.fullData;
-                    this.title = tpl.title; this.arType = tpl.ar_type; this.narrationText = tpl.narration; this.selectedMusic = tpl.bgm_path;
-                    this.narrationMode = 'text';
-                    if(tpl.ar_type === '2d') this.imageUrl2d = this.getAssetUrl(tpl.file_path);
-                    else { let matched3d = this.library3dList.find(item => item.path === tpl.file_path); if(matched3d) this.selectedLibrary3d = matched3d.id; }
-                    this.closeModal(); this.mainTab = 'custom'; window.scrollTo({ top: 0, behavior: 'smooth' });
-                },
-
-                previewBgm(src) {
-                    this.stopAllAudio();
-                    
-                    this.isBgmLoading = true;
-                    
-                    this.currentAudioPlayer = new Audio(src);
-                    this.currentAudioPlayer.preload = 'auto'; 
-                    
-                    this.currentAudioPlayer.addEventListener('waiting', () => { 
-                        this.isBgmLoading = true; this.isBgmPlaying = false; 
-                    });
-                    this.currentAudioPlayer.addEventListener('playing', () => { 
-                        this.isBgmLoading = false; this.isBgmPlaying = true; 
-                    });
-                    this.currentAudioPlayer.addEventListener('pause', () => { 
-                        this.isBgmPlaying = false; 
-                    });
-                    
-                    this.currentAudioPlayer.addEventListener('loadedmetadata', () => {
-                        this.audioDuration = this.currentAudioPlayer.duration;
-                        this.bgmDuration = this.audioDuration;
-                        
-                        this.bgmStart = 0;
-                        this.bgmEnd = this.audioDuration;
-
-                        this.currentAudioPlayer.currentTime = Number(this.bgmStart);
-                        this.currentAudioPlayer.volume = this.bgmVolume;
-                        
-                        this.currentAudioPlayer.play().catch(e => {
-                            this.isBgmLoading = false;
-                            console.log("Browser memblokir auto-play");
-                        });
-                        
-                        this.playingMusicPath = src;
-                    });
-
-                    this.currentAudioPlayer.addEventListener('timeupdate', () => {
-                        if (this.bgmEnd && this.currentAudioPlayer.currentTime >= Number(this.bgmEnd)) {
-                            this.currentAudioPlayer.currentTime = Number(this.bgmStart);
-                            this.currentAudioPlayer.play(); 
-                        }
-                    });
-                },
-                
-                updateVolume() { if(this.currentAudioPlayer) this.currentAudioPlayer.volume = this.bgmVolume; },
-
-                updateCrop(type) {
-                    if (Number(this.bgmStart) >= Number(this.bgmEnd) - 0.5) {
-                        if (type === 'start') this.bgmStart = Number(this.bgmEnd) - 0.5;
-                        if (type === 'end') this.bgmEnd = Number(this.bgmStart) + 0.5;
-                    }
-
-                    // PERBAIKAN CROP: Tetapkan currentTime ke bgmStart
-                    if (this.currentAudioPlayer && !this.currentAudioPlayer.paused) {
-                        this.currentAudioPlayer.currentTime = Number(this.bgmStart);
-                    } else if (this.currentAudioPlayer) {
-                        this.currentAudioPlayer.currentTime = Number(this.bgmStart);
-                        this.currentAudioPlayer.play().catch(e => {});
-                    }
-                },
-                
-                playVoice(text, voiceUri, audioUrl) {
-                    window.speechSynthesis.cancel();
-                    if (this.narrationPlayer) { this.narrationPlayer.pause(); this.narrationPlayer.currentTime = 0; }
-                    if (audioUrl) {
-                        this.narrationPlayer = new Audio(audioUrl);
-                        this.narrationPlayer.play().catch(e=>{});
-                    } else if (text) {
-                        let utterance = new SpeechSynthesisUtterance(text);
-                        utterance.lang = 'id-ID';
-                        if(voiceUri) {
-                            let voice = this.availableVoices.find(v => v.voiceURI === voiceUri);
-                            if(voice) utterance.voice = voice;
-                        }
-                        window.speechSynthesis.speak(utterance);
-                    }
-                },
-                
-                stopAllAudio() {
-                    window.speechSynthesis.cancel();
-                    if(this.currentAudioPlayer) { this.currentAudioPlayer.pause(); this.currentAudioPlayer.currentTime = 0; }
-                    if(this.narrationPlayer) { this.narrationPlayer.pause(); this.narrationPlayer.currentTime = 0; }
-                    this.playingMusicPath = null;
-                    
-                    this.isBgmLoading = false;
-                    this.isBgmPlaying = false;
-                },
-
                 openModal() {
                     if(this.arType === '2d' && !this.imageUrl2d) return alert('Upload gambar 2D dulu!');
                     if(this.arType === '3d' && !this.upload3dName && !this.selectedLibrary3d) return alert('Pilih atau upload objek 3D dulu!');
@@ -931,46 +770,261 @@
                     let hasNarr = (this.narrationMode === 'text' && this.narrationText) || (this.narrationMode === 'audio' && this.recordedAudioUrl);
                     let previewMusicSrc = this.isCustomBgm ? this.customBgmUrl : (this.selectedMusic ? '/minio-proxy/bg_sounds/' + this.selectedMusic : '');
 
+                    this.isFromTemplate = false;
                     this.previewData = {
                         title: this.title || 'Preview Custom AR', type: this.arType,
                         src: this.arType === '2d' ? this.imageUrl2d : src3d,
-                        music: previewMusicSrc, hasNarration: hasNarr
+                        music: previewMusicSrc, 
+                        musicStart: this.bgmStart, musicEnd: this.bgmEnd,
+                        hasNarration: hasNarr
                     };
                     
                     this.showModal = true;
+                    this.isTemplateLoading = false;
                     this.isPreviewLoading = true;
                     this.previewProgress = 0;
                     this.stopAllAudio();
 
-                    this.$nextTick(() => {
-                        if (this.arType === '3d') {
-                            const viewer = document.querySelector('.relative.bg-white model-viewer');
-                            if(viewer) {
+                    this.syncAndPlayModal();
+                },
+
+                async previewTemplate(tpl) {
+                    this.isFromTemplate = true;
+                    this.showModal = true;
+                    this.isTemplateLoading = true;
+                    this.templateProgress = 0;
+                    this.stopAllAudio();
+
+                    let src3d = this.getAssetUrl(tpl.file_path);
+                    let rawBgm = tpl.bgm_path ? this.getAssetUrl(tpl.bgm_path) : '';
+                    let tStart = 0; let tEnd = null;
+
+                    if (rawBgm.includes('#t=')) {
+                        let parts = rawBgm.split('#t=');
+                        rawBgm = parts[0];
+                        let times = parts[1].split(',');
+                        tStart = parseFloat(times[0]);
+                        tEnd = parseFloat(times[1]);
+                    }
+
+                    this.previewData = {
+                        title: tpl.title,
+                        type: tpl.ar_type,
+                        src: '', 
+                        music: rawBgm,
+                        musicStart: tStart,
+                        musicEnd: tEnd,
+                        hasNarration: !!tpl.narration,
+                        fullData: tpl
+                    };
+
+                    let finalBlobUrl = src3d;
+                    try {
+                        if (tpl.ar_type === '3d') {
+                            finalBlobUrl = await new Promise((resolve, reject) => {
+                                let xhr = new XMLHttpRequest();
+                                xhr.open('GET', src3d, true);
+                                xhr.responseType = 'blob';
+                                xhr.onprogress = (e) => {
+                                    if (e.lengthComputable) this.templateProgress = Math.round((e.loaded / e.total) * 90);
+                                };
+                                xhr.onload = () => {
+                                    if (xhr.status >= 200 && xhr.status < 300) resolve(URL.createObjectURL(xhr.response));
+                                    else reject('Gagal Unduh 3D');
+                                };
+                                xhr.onerror = reject;
+                                xhr.send();
+                            });
+                        } else {
+                            this.templateProgress = 90;
+                        }
+
+                        this.templateProgress = 100;
+                        this.previewData.src = finalBlobUrl;
+                        this.isTemplateLoading = false;
+                        
+                        this.isPreviewLoading = true;
+                        this.syncAndPlayModal();
+
+                    } catch (err) {
+                        alert('Gagal memuat template. Periksa koneksi internet Anda.');
+                        this.closeModal();
+                    }
+                },
+
+                async syncAndPlayModal() {
+                    let promises = [];
+
+                    if (this.previewData.type === '3d') {
+                        promises.push(new Promise(resolve => {
+                            this.$nextTick(() => {
+                                const viewer = document.getElementById('preview-model-viewer');
+                                if(!viewer) return resolve();
+
                                 const onProgress = (e) => {
                                     this.previewProgress = Math.round(e.detail.totalProgress * 100);
                                     if (e.detail.totalProgress === 1) {
                                         viewer.removeEventListener('progress', onProgress);
-                                        this.isPreviewLoading = false;
-                                        this.playPreviewMedia(previewMusicSrc);
+                                        resolve();
                                     }
                                 };
                                 viewer.addEventListener('progress', onProgress);
+
+                                setTimeout(() => {
+                                    viewer.removeEventListener('progress', onProgress);
+                                    resolve();
+                                }, 3000); 
+                            });
+                        }));
+                    } else {
+                        this.previewProgress = 100;
+                    }
+
+                    if (this.previewData.music) {
+                        this.modalBgmPlayer = new Audio(this.previewData.music);
+                        this.modalBgmPlayer.preload = 'auto';
+                        this.modalBgmPlayer.volume = this.bgmVolume || 0.3;
+                        let mStart = this.previewData.musicStart || 0;
+                        let mEnd = this.previewData.musicEnd || null;
+
+                        promises.push(new Promise(resolve => {
+                            this.modalBgmPlayer.addEventListener('canplaythrough', () => {
+                                this.modalBgmPlayer.currentTime = mStart;
+                                resolve();
+                            }, {once: true});
+                            this.modalBgmPlayer.addEventListener('error', resolve, {once: true});
+                            this.modalBgmPlayer.load();
+                        }));
+
+                        this.modalBgmPlayer.ontimeupdate = () => {
+                            if (mEnd && this.modalBgmPlayer.currentTime >= mEnd) {
+                                this.modalBgmPlayer.currentTime = mStart;
                             }
-                        } else {
-                            this.isPreviewLoading = false;
-                            this.playPreviewMedia(previewMusicSrc);
+                        };
+                    }
+
+                    let voiceSrc = null;
+                    if (!this.isFromTemplate && this.narrationMode === 'audio' && this.recordedAudioUrl) {
+                        voiceSrc = this.recordedAudioUrl;
+                    }
+
+                    if (voiceSrc) {
+                        this.modalVoicePlayer = new Audio(voiceSrc);
+                        this.modalVoicePlayer.preload = 'auto';
+                        promises.push(new Promise(resolve => {
+                            this.modalVoicePlayer.addEventListener('canplaythrough', resolve, {once: true});
+                            this.modalVoicePlayer.addEventListener('error', resolve, {once: true});
+                            this.modalVoicePlayer.load();
+                        }));
+                    }
+
+                    await Promise.all(promises);
+
+                    this.isPreviewLoading = false;
+                    
+                    let playPromises = [];
+                    if (this.modalBgmPlayer) playPromises.push(this.modalBgmPlayer.play());
+                    if (this.modalVoicePlayer) playPromises.push(this.modalVoicePlayer.play());
+
+                    if (playPromises.length > 0) {
+                        Promise.all(playPromises).then(() => {
+                            this.playTTS();
+                        }).catch(e => {
+                            this.audioBlocked = true;
+                        });
+                    } else {
+                        this.playTTS();
+                    }
+                },
+
+                playTTS() {
+                    if (this.previewData.hasNarration) {
+                        let text = this.isFromTemplate ? this.previewData.fullData.narration : (this.narrationMode === 'text' ? this.narrationText : null);
+                        if (text && (!this.isFromTemplate && this.narrationMode === 'text' || this.isFromTemplate)) {
+                            let utterance = new SpeechSynthesisUtterance(text);
+                            utterance.lang = 'id-ID';
+                            if(this.selectedVoice) {
+                                let voice = this.availableVoices.find(v => v.voiceURI === this.selectedVoice);
+                                if(voice) utterance.voice = voice;
+                            }
+                            window.speechSynthesis.speak(utterance);
+                        }
+                    }
+                },
+
+                resumeAudio() {
+                    this.audioBlocked = false;
+                    if(this.modalBgmPlayer) this.modalBgmPlayer.play().catch(e=>{});
+                    if(this.modalVoicePlayer) this.modalVoicePlayer.play().catch(e=>{});
+                    this.playTTS();
+                },
+
+                useTemplate() {
+                    let tpl = this.previewData.fullData;
+                    this.title = tpl.title; this.arType = tpl.ar_type; this.narrationText = tpl.narration; this.selectedMusic = tpl.bgm_path;
+                    this.narrationMode = 'text';
+                    if(tpl.ar_type === '2d') this.imageUrl2d = this.getAssetUrl(tpl.file_path);
+                    else { let matched3d = this.library3dList.find(item => item.path === tpl.file_path); if(matched3d) this.selectedLibrary3d = matched3d.id; }
+                    this.closeModal(); this.mainTab = 'custom'; window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+
+                previewBgm(src) {
+                    this.stopAllAudio();
+                    this.isBgmLoading = true;
+                    this.currentAudioPlayer = new Audio(src);
+                    this.currentAudioPlayer.preload = 'auto'; 
+                    
+                    this.currentAudioPlayer.addEventListener('waiting', () => { this.isBgmLoading = true; this.isBgmPlaying = false; });
+                    this.currentAudioPlayer.addEventListener('playing', () => { this.isBgmLoading = false; this.isBgmPlaying = true; });
+                    this.currentAudioPlayer.addEventListener('pause', () => { this.isBgmPlaying = false; });
+                    
+                    this.currentAudioPlayer.addEventListener('loadedmetadata', () => {
+                        this.audioDuration = this.currentAudioPlayer.duration;
+                        this.bgmDuration = this.audioDuration;
+                        this.bgmStart = 0;
+                        this.bgmEnd = this.audioDuration;
+                        this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                        this.currentAudioPlayer.volume = this.bgmVolume;
+                        
+                        this.currentAudioPlayer.play().catch(e => { this.isBgmLoading = false; });
+                        this.playingMusicPath = src;
+                    });
+
+                    this.currentAudioPlayer.addEventListener('timeupdate', () => {
+                        if (this.bgmEnd && this.currentAudioPlayer.currentTime >= Number(this.bgmEnd)) {
+                            this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                            this.currentAudioPlayer.play(); 
                         }
                     });
                 },
+                
+                updateVolume() { if(this.currentAudioPlayer) this.currentAudioPlayer.volume = this.bgmVolume; },
 
-                playPreviewMedia(musicSrc) {
-                    if(musicSrc) this.previewBgm(musicSrc);
-                    
-                    if (this.narrationMode === 'audio') {
-                        this.playVoice(null, null, this.recordedAudioUrl);
-                    } else {
-                        this.playVoice(this.narrationText, this.selectedVoice, null);
+                limitCrop(type) {
+                    if (Number(this.bgmStart) >= Number(this.bgmEnd) - 0.5) {
+                        if (type === 'start') this.bgmStart = Number(this.bgmEnd) - 0.5;
+                        if (type === 'end') this.bgmEnd = Number(this.bgmStart) + 0.5;
                     }
+                },
+                seekCrop() {
+                    if (this.currentAudioPlayer) {
+                        this.currentAudioPlayer.currentTime = Number(this.bgmStart);
+                        if (this.currentAudioPlayer.paused) {
+                            this.currentAudioPlayer.play().catch(e=>{});
+                        }
+                    }
+                },
+                
+                stopAllAudio() {
+                    window.speechSynthesis.cancel();
+                    if(this.currentAudioPlayer) { this.currentAudioPlayer.pause(); }
+                    if(this.narrationPlayer) { this.narrationPlayer.pause(); this.narrationPlayer.currentTime = 0; }
+                    if(this.modalBgmPlayer) { this.modalBgmPlayer.pause(); this.modalBgmPlayer = null; }
+                    if(this.modalVoicePlayer) { this.modalVoicePlayer.pause(); this.modalVoicePlayer = null; }
+                    this.playingMusicPath = null;
+                    this.isBgmLoading = false;
+                    this.isBgmPlaying = false;
+                    this.audioBlocked = false;
                 },
 
                 closeModal() {
