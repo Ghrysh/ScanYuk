@@ -14,7 +14,7 @@
     $scanPercent = $scanLimit > 0 ? min(($user->scan / $scanLimit) * 100, 100) : 0;
 @endphp
 
-<div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-10" x-data="{ showPackages: false, showLimitModal: false, showWarningModal: false, selectedPkg: null, showDownloadModal: false, selectedQrId: null }">
+<div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-10" x-data="{ showPackages: false, showLimitModal: false, showWarningModal: false, selectedPkg: null, showDownloadModal: false, selectedQrId: null, isGeneratingFlyer: false, flyerProgress: 0 }">
     
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div>
@@ -282,7 +282,7 @@
                     <span class="text-xs text-slate-500">File SVG Mentah</span>
                 </button>
 
-                <button type="button" @click="generateAutomatedFlyer(selectedQrId); showDownloadModal = false;" class="flex flex-col items-center p-6 border-2 border-slate-200 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 transition-all group relative overflow-hidden">
+                <button type="button" @click="showDownloadModal = false; generateAutomatedFlyer(selectedQrId, $data);" class="flex flex-col items-center p-6 border-2 border-slate-200 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 transition-all group relative overflow-hidden">
                     <div class="absolute -right-6 -top-6 w-16 h-16 bg-indigo-100 rounded-full blur-xl group-hover:bg-indigo-200 transition-all"></div>
                     <div class="w-16 h-16 bg-slate-100 rounded-xl mb-4 flex items-center justify-center text-slate-400 group-hover:text-indigo-600 group-hover:bg-white shadow-sm z-10">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M12 18v-6"></path><path d="M9 15h6"></path></svg>
@@ -293,6 +293,23 @@
             </div>
             
             <button @click="showDownloadModal = false" class="mt-6 text-sm text-slate-400 hover:text-slate-600 font-bold underline">Batal</button>
+        </div>
+    </div>
+
+    <div x-show="isGeneratingFlyer" style="display: none;" class="fixed inset-0 z-[200] flex items-center justify-center">
+        <div x-show="isGeneratingFlyer" x-transition.opacity class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
+        <div x-show="isGeneratingFlyer" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm mx-4 overflow-hidden flex flex-col items-center p-8 text-center border border-white/20">
+            
+            <div class="w-16 h-16 border-4 border-slate-100 border-t-indigo-500 rounded-full animate-spin mb-6"></div>
+            
+            <h3 class="font-extrabold text-slate-900 text-xl mb-2">Menyiapkan Poster...</h3>
+            <div class="w-full bg-slate-100 rounded-full h-3 mb-3 overflow-hidden">
+                <div class="bg-gradient-to-r from-teal-400 to-indigo-500 h-3 rounded-full transition-all duration-300" :style="'width: ' + flyerProgress + '%'"></div>
+            </div>
+            <div class="flex justify-between w-full text-sm">
+                <span class="font-bold text-indigo-600" x-text="flyerProgress + '%'"></span>
+                <span class="text-slate-500 font-medium">Mohon tunggu</span>
+            </div>
         </div>
     </div>
 
@@ -337,28 +354,58 @@
         </div>
     </div>
     <script>
-        function generateAutomatedFlyer(qrId) {
-            alert('Sedang menyiapkan desain poster... Mohon tunggu sebentar.');
-            
-            const qrImg = document.getElementById('flyer-qr-image');
-            qrImg.crossOrigin = "Anonymous";
-            qrImg.src = `/dashboard/ar/${qrId}/download?type=png`;
+    function generateAutomatedFlyer(qrId, alpineData) {
+        alpineData.isGeneratingFlyer = true;
+        alpineData.flyerProgress = 10;
+        
+        const qrImg = document.getElementById('flyer-qr-image');
+        qrImg.crossOrigin = "Anonymous";
 
-            qrImg.onload = () => {
-                const flyerNode = document.getElementById('flyer-template');
-                
-                html2canvas(flyerNode, { 
-                    scale: 2,
-                    useCORS: true,
-                    backgroundColor: "#0f172a" 
-                }).then(canvas => {
-                    const link = document.createElement('a');
-                    link.download = `ScanYuk-Poster-Instruksi-${qrId}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                });
-            };
-        }
-    </script>
+        qrImg.src = `/dashboard/ar/${qrId}/download?type=png&t=` + new Date().getTime();
+
+        alpineData.flyerProgress = 30;
+
+        qrImg.onload = () => {
+            alpineData.flyerProgress = 50;
+            const flyerNode = document.getElementById('flyer-template');
+
+            let progressInterval = setInterval(() => {
+                if(alpineData.flyerProgress < 90) alpineData.flyerProgress += 5;
+            }, 250);
+            
+            html2canvas(flyerNode, { 
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: "#0f172a" 
+            }).then(canvas => {
+                clearInterval(progressInterval);
+                alpineData.flyerProgress = 100;
+
+                const link = document.createElement('a');
+                link.download = `ScanYuk-Poster-Instruksi-${qrId}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+
+                setTimeout(() => {
+                    alpineData.isGeneratingFlyer = false;
+                    alpineData.flyerProgress = 0;
+                }, 800);
+
+            }).catch(err => {
+                clearInterval(progressInterval);
+                console.error("Error html2canvas:", err);
+                alert('Gagal merender poster. Silakan coba lagi.');
+                alpineData.isGeneratingFlyer = false;
+            });
+        };
+
+        qrImg.onerror = () => {
+            console.error("Gagal memuat gambar QR code");
+            alert('Gagal mengunduh QR Code sumber. Pastikan internet stabil.');
+            alpineData.isGeneratingFlyer = false;
+        };
+    }
+</script>
 </div>
 @endsection
