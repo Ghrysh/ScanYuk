@@ -316,41 +316,42 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <div style="position: absolute; left: -9999px; top: -9999px;">
-        <div id="flyer-template" class="w-[800px] h-[1130px] flex flex-col items-center justify-between p-12 bg-slate-900 text-white relative overflow-hidden" style="font-family: 'Inter', sans-serif;">
+        <div id="flyer-template" class="w-[800px] h-[1130px] flex flex-col items-center justify-between p-8 bg-slate-900 text-white relative overflow-hidden" style="font-family: 'Inter', sans-serif;">
             
             <div class="absolute inset-0 z-0 pointer-events-none" style="background: radial-gradient(circle at 10% 10%, rgba(20, 184, 166, 0.4) 0%, transparent 40%), radial-gradient(circle at 90% 90%, rgba(99, 102, 241, 0.4) 0%, transparent 40%);"></div>
 
-            <div class="z-10 text-center mt-8 w-full">
-                <div class="inline-flex items-center justify-center bg-teal-500/20 border border-teal-400 text-teal-400 font-bold px-8 pt-2.5 pb-6 rounded-full text-xl mb-8 tracking-widest uppercase leading-none">
+            <div class="z-10 text-center mt-2 w-full">
+                <div class="inline-flex items-center justify-center bg-teal-500/20 border border-teal-400 text-teal-400 font-bold px-8 pt-2.5 pb-6 rounded-full text-xl mb-4 tracking-widest uppercase leading-none">
                     AR Experience
                 </div>
-                <h1 class="text-5xl font-black mb-4 leading-tight tracking-tight">SCAN UNTUK<br>MEMULAI KEAJAIBAN</h1>
+                <h1 class="text-5xl font-black mb-2 leading-tight tracking-tight">SCAN UNTUK<br>MEMULAI KEAJAIBAN</h1>
                 <p class="text-xl text-slate-300 font-medium">Arahkan kamera HP Anda ke QR Code di bawah ini</p>
             </div>
 
-            <div class="z-10 bg-white p-6 rounded-[2rem] shadow-2xl mt-4 mb-4">
-                <div id="flyer-qr-container" class="w-[400px] h-[400px] bg-white flex items-center justify-center"></div>
+            <div class="z-10 bg-white p-5 rounded-[2rem] shadow-2xl my-2">
+                <div id="flyer-qr-container" class="w-[370px] h-[370px] bg-white flex items-center justify-center"></div>
             </div>
 
-            <div class="z-10 w-full bg-slate-800/80 border border-slate-700 rounded-3xl p-8 mb-4 shadow-xl">
-                <h3 class="text-2xl font-bold mb-6 text-teal-400 border-b border-slate-700 pb-4">Cara Penggunaan:</h3>
-                <div class="space-y-6 text-xl font-medium text-slate-200">
+            <div class="z-10 w-full bg-slate-800/80 border border-slate-700 rounded-3xl p-6 mb-2 shadow-xl">
+                <h3 class="text-2xl font-bold mb-4 text-teal-400 border-b border-slate-700 pb-3">Cara Penggunaan:</h3>
+                
+                <div class="space-y-4 text-xl font-medium text-slate-200">
                     <div class="flex items-start gap-5">
                         <div class="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-2xl pb-4" style="line-height: 1;">1</div>
-                        <p class="mt-2 leading-relaxed">Buka aplikasi <span class="text-white font-bold">Kamera Bawaan</span> atau <span class="text-white font-bold">Google Lens</span>.</p>
+                        <p class="mt-1 leading-relaxed">Buka aplikasi <span class="text-white font-bold">Kamera Bawaan</span> atau <span class="text-white font-bold">Google Lens</span>.</p>
                     </div>
                     <div class="flex items-start gap-5">
                         <div class="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-2xl pb-4" style="line-height: 1;">2</div>
-                        <p class="mt-2 leading-relaxed">Arahkan lensa ke QR Code dan klik <span class="text-white font-bold">Link Tautan</span> yang muncul.</p>
+                        <p class="mt-1 leading-relaxed">Arahkan lensa ke QR Code dan klik <span class="text-white font-bold">Link Tautan</span> yang muncul.</p>
                     </div>
                     <div class="flex items-start gap-5">
                         <div class="w-12 h-12 rounded-full bg-teal-500 text-white flex items-center justify-center font-bold flex-shrink-0 text-2xl pb-4" style="line-height: 1;">3</div>
-                        <p class="mt-2 leading-relaxed">Izinkan akses kamera dan lihat dunia dalam AR 3D!</p>
+                        <p class="mt-1 leading-relaxed">Izinkan akses kamera dan lihat dunia dalam AR 3D!</p>
                     </div>
                 </div>
             </div>
             
-            <p class="z-10 text-slate-500 font-bold tracking-widest uppercase text-sm mb-2">Powered by ScanYuk</p>
+            <p class="z-10 text-slate-500 font-bold tracking-widest uppercase text-sm mb-1">Powered by ScanYuk</p>
         </div>
     </div>
 
