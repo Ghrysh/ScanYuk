@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Transaction extends Model
 {
-    protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
 

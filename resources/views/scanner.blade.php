@@ -35,7 +35,7 @@
 </head>
 <body x-data="arTracker()" x-init="startCamera()">
 
-    <video id="qr-video" playsinline autoplay muted></video>
+    <video id="qr-video" playsinline webkit-playsinline muted autoplay></video>
     <canvas id="qr-canvas" style="display: none;"></canvas>
     
     <div id="ar-overlay-container">
