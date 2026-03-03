@@ -78,7 +78,7 @@
     </div>
 
     <div class="flex justify-center pt-16 pb-8">
-        <a href="#" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-teal-500 to-indigo-500 text-white text-sm font-bold shadow-[0_10px_25px_-5px_rgba(79,70,229,0.3)] hover:opacity-90 transition-all hover:-translate-y-0.5">
+        <a href="https://wa.me/628152022225?text=Halo%20Tim%20ScanYuk,%20saya%20tertarik%20untuk%20menjadi%20mitra." target="_blank" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-xl bg-gradient-to-r from-teal-500 to-indigo-500 text-white text-sm font-bold shadow-[0_10px_25px_-5px_rgba(79,70,229,0.3)] hover:opacity-90 transition-all hover:-translate-y-0.5">
             Jadi Mitra
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
