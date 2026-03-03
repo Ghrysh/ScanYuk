@@ -35,7 +35,7 @@
 <body class="bg-slate-50 min-h-screen" x-data="arCreator()">
 
     <div x-show="isGenerating" style="display: none;" class="fixed inset-0 z-[200] flex items-center justify-center">
-        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm"></div>
+        <div class="absolute inset-0 bg-slate-900/95"></div>
         <div class="relative bg-white rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center text-center border border-slate-100">
             <div class="w-16 h-16 border-4 border-slate-100 border-t-teal-500 rounded-full animate-spin mb-6"></div>
             <h3 class="text-xl font-bold text-slate-900 mb-2" x-text="progress === 100 ? 'Menyelesaikan...' : 'Mengunggah & Merender...'"></h3>
@@ -385,7 +385,7 @@
         </div>
 
         <div x-show="showModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <div x-show="showModal" x-transition.opacity class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="closeModal()"></div>
+            <div x-show="showModal" x-transition.opacity class="absolute inset-0 bg-slate-900/95" @click="closeModal()"></div>
             <div x-show="showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col items-center border border-white/20">
                 <div class="w-full p-3 md:p-4 border-b border-slate-100 flex items-center justify-between bg-white">
                     <h3 class="font-bold text-slate-900 text-sm md:text-base truncate pr-2" x-text="previewData.title"></h3>
@@ -652,9 +652,10 @@
                 handle2dUpload(e) {
                     let file = e.target.files[0];
                     if(!file) return;
-                    let reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = e => this.imageUrl2d = e.target.result;
+                    if (this.imageUrl2d && this.imageUrl2d.startsWith('blob:')) {
+                        URL.revokeObjectURL(this.imageUrl2d);
+                    }
+                    this.imageUrl2d = URL.createObjectURL(file);
                 },
                 handle3dUpload(e) {
                     let file = e.target.files[0];
