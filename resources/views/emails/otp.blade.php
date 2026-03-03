@@ -7,8 +7,7 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
         .container { max-width: 500px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
         .header { background-color: #0f172a; padding: 25px 20px; text-align: center; border-bottom: 4px solid #0d9488; }
-        .header img { width: 45px; height: 45px; margin-bottom: 10px; }
-        .header h2 { margin: 0; color: #ffffff; font-size: 24px; letter-spacing: 1px; }
+        .header h2 { margin: 0; color: #0d9488; font-size: 28px; font-weight: bold; letter-spacing: 1px; }
         .content { padding: 40px 30px; text-align: center; color: #334155; }
         .content h3 { margin-top: 0; color: #0f172a; font-size: 20px; }
         .content p { line-height: 1.6; font-size: 15px; }
@@ -32,13 +31,12 @@
             </div>
             
             <div class="warning">
-                <strong>Penting:</strong> Kode ini hanya berlaku selama 5 menit. Jangan pernah memberikan kode OTP ini kepada siapapun, termasuk tim dari ScanYuk.
+                <strong>Penting:</strong> Kode ini hanya berlaku selama 5 menit. Jangan berikan kode OTP ini kepada siapapun.
             </div>
         </div>
         
         <div class="footer">
             <p>&copy; {{ date('Y') }} ScanYuk AR. Semua Hak Dilindungi.</p>
-            <p>Email ini dihasilkan secara otomatis oleh sistem. Mohon untuk tidak membalas email ini.</p>
         </div>
     </div>
 </body>
