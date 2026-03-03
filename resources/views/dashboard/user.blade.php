@@ -359,36 +359,53 @@
     async function generateAutomatedFlyer(qrId, alpineData) {
         alpineData.isGeneratingFlyer = true;
         alpineData.flyerProgress = 10;
+        
+        const qrContainer = document.getElementById('flyer-qr-container');
 
         try {
             const response = await fetch(`/dashboard/ar/${qrId}/download?type=svg`);
-            if (!response.ok) throw new Error("Gagal mengambil respon dari server");
+            if (!response.ok) throw new Error("Gagal server");
             
             alpineData.flyerProgress = 30;
-
             const svgText = await response.text();
-            const qrContainer = document.getElementById('flyer-qr-container');
-            qrContainer.innerHTML = svgText;
 
-            const svgElement = qrContainer.querySelector('svg');
-            if (svgElement) {
-                svgElement.setAttribute('width', '100%');
-                svgElement.setAttribute('height', '100%');
-                svgElement.style.display = 'block';
-            }
+            qrContainer.innerHTML = ''; 
+            const qrImg = document.createElement('img');
+            qrImg.style.width = '100%';
+            qrImg.style.height = '100%';
+            qrImg.style.objectFit = 'contain';
+            qrImg.style.display = 'block';
 
+            const encodedSvg = window.btoa(unescape(encodeURIComponent(svgText)));
+            const dataUrl = 'data:image/svg+xml;base64,' + encodedSvg;
+            
+            const waitForImageLoad = new Promise((resolve, reject) => {
+                qrImg.onload = () => {
+                    requestAnimationFrame(() => {
+                        requestAnimationFrame(() => {
+                            resolve();
+                        });
+                    });
+                };
+                qrImg.onerror = reject;
+                qrImg.src = dataUrl;
+            });
+
+            qrContainer.appendChild(qrImg);
+
+            alpineData.loadingStatusText = 'Menunggu perenderan grafis Safari...';
+
+            await waitForImageLoad; 
+            
+            alpineData.loadingStatusText = 'Mengekspor poster HD...';
             await document.fonts.ready;
-
-            alpineData.flyerProgress = 50;
+            
+            alpineData.flyerProgress = 60;
             const flyerNode = document.getElementById('flyer-template');
 
-            let progressInterval = setInterval(() => {
-                if(alpineData.flyerProgress < 90) alpineData.flyerProgress += 5;
-            }, 250);
-
             html2canvas(flyerNode, { 
-                scale: 3,
-                useCORS: true,
+                scale: 3, 
+                useCORS: true, 
                 allowTaint: true,
                 backgroundColor: "#0f172a",
                 onclone: function(clonedDoc) {
@@ -398,9 +415,7 @@
                     clonedNode.style.top = '0';
                 }
             }).then(canvas => {
-                clearInterval(progressInterval);
-                alpineData.flyerProgress = 100;
-
+                // Download hasil poster
                 const link = document.createElement('a');
                 link.download = `ScanYuk-Poster-Instruksi-${qrId}.png`;
                 link.href = canvas.toDataURL('image/png', 1.0);
@@ -414,15 +429,15 @@
 
             }).catch(err => {
                 clearInterval(progressInterval);
-                console.error("html2canvas error:", err);
-                alert('Gagal merender poster. Silakan coba lagi.');
+                console.error("Canvas error:", err);
+                alert('Gagal merender desain. Coba lagi.');
                 alpineData.isGeneratingFlyer = false;
                 qrContainer.innerHTML = '';
             });
 
         } catch (error) {
-            console.error("Proses pembuatan poster gagal:", error);
-            alert('Gagal mengambil data QR Code SVG. Pastikan QR code tersebut valid.');
+            console.error("Fetch error:", error);
+            alert('Gagal mengambil data QR Code SVG.');
             alpineData.isGeneratingFlyer = false;
             alpineData.flyerProgress = 0;
         }
