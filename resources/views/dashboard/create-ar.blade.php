@@ -132,64 +132,72 @@
                                 <template x-for="item in filtered3d()" :key="item.id">
                                     <label class="flex flex-col bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden" :class="selectedLibrary3d === item.id ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : ''">
                                         
-                                    <div class="h-20 md:h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center overflow-hidden">
-                                    
-                                    <div x-show="modelStates[item.id]?.state === 'idle' || modelStates[item.id]?.state === 'oversize'" 
-                                        @click.prevent="toggleDownload(item.id)" @touchend.prevent="toggleDownload(item.id)"
-                                        class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-colors pointer-events-auto"
-                                        title="Klik untuk mendownload">
-                                        <svg class="w-6 h-6 md:w-8 md:h-8 text-teal-500 mb-1 drop-shadow-sm hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                        </svg>
-                                        <span class="text-[8px] md:text-[10px] font-bold text-slate-700 text-center" x-text="formatBytes(modelStates[item.id]?.totalBytes)"></span>
-                                        <span class="text-[7px] md:text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Klik Unduh</span>
-                                    </div>
-
-                                    <div x-show="modelStates[item.id]?.state === 'downloading'" 
-                                        @click.prevent="toggleDownload(item.id)" @touchend.prevent="toggleDownload(item.id)"
-                                        class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-opacity duration-300 pointer-events-auto"
-                                        title="Klik untuk Pause">
-                                        <div class="relative flex items-center justify-center w-6 h-6 md:w-8 md:h-8 mb-1">
-                                            <svg class="w-full h-full text-slate-300" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
-                                            <svg class="absolute inset-0 w-full h-full text-teal-500 transition-all duration-200 ease-out" viewBox="0 0 36 36">
-                                                <path :stroke-dasharray="(modelStates[item.id]?.progress || 0) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
-                                            </svg>
-                                            <div class="absolute inset-0 flex items-center justify-center">
-                                                <span class="text-[7px] md:text-[8px] font-bold text-teal-700" x-text="(modelStates[item.id]?.progress || 0) + '%'"></span>
+                                        <div class="h-20 md:h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center overflow-hidden">
+                                            
+                                            <div x-show="modelStates[item.id]?.state === 'idle' || modelStates[item.id]?.state === 'oversize'" 
+                                                @click.prevent.stop="toggleDownload(item.id)" @touchend.prevent.stop="toggleDownload(item.id)"
+                                                class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-colors pointer-events-auto"
+                                                title="Klik untuk mendownload">
+                                                <svg class="w-6 h-6 md:w-8 md:h-8 text-teal-500 mb-1 drop-shadow-sm hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                </svg>
+                                                <span class="text-[8px] md:text-[10px] font-bold text-slate-700 text-center" x-text="formatBytes(modelStates[item.id]?.totalBytes)"></span>
+                                                <span class="text-[7px] md:text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Klik Unduh</span>
                                             </div>
-                                        </div>
-                                        <span class="text-[6px] md:text-[7px] font-bold text-teal-600 tracking-widest text-center px-1" x-text="formatBytes(modelStates[item.id]?.downloadedBytes) + ' / ' + formatBytes(modelStates[item.id]?.totalBytes)"></span>
-                                    </div>
 
-                                    <div x-show="modelStates[item.id]?.state === 'paused'" 
-                                        @click.prevent="toggleDownload(item.id)" @touchend.prevent="toggleDownload(item.id)"
-                                        class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-opacity duration-300 pointer-events-auto"
-                                        title="Klik untuk Lanjutkan">
-                                        <div class="relative flex items-center justify-center w-6 h-6 md:w-8 md:h-8 mb-1 opacity-60">
-                                            <svg class="w-full h-full text-slate-300" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
-                                            <svg class="absolute inset-0 w-full h-full text-amber-500 transition-all duration-200 ease-out" viewBox="0 0 36 36">
-                                                <path :stroke-dasharray="(modelStates[item.id]?.progress || 0) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
-                                            </svg>
-                                            <div class="absolute inset-0 flex items-center justify-center text-amber-600 bg-amber-50 rounded-full w-4 h-4 md:w-5 md:h-5 m-auto">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                                            <div x-show="modelStates[item.id]?.state === 'downloading'" 
+                                                @click.prevent.stop="toggleDownload(item.id)" @touchend.prevent.stop="toggleDownload(item.id)"
+                                                class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-opacity duration-300 pointer-events-auto"
+                                                title="Klik untuk Pause">
+                                                <div class="relative flex items-center justify-center w-6 h-6 md:w-8 md:h-8 mb-1">
+                                                    <svg class="w-full h-full text-slate-300" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
+                                                    <svg class="absolute inset-0 w-full h-full text-teal-500 transition-all duration-200 ease-out" viewBox="0 0 36 36">
+                                                        <path :stroke-dasharray="(modelStates[item.id]?.progress || 0) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+                                                    </svg>
+                                                    <div class="absolute inset-0 flex items-center justify-center">
+                                                        <span class="text-[7px] md:text-[8px] font-bold text-teal-700" x-text="(modelStates[item.id]?.progress || 0) + '%'"></span>
+                                                    </div>
+                                                </div>
+                                                <span class="text-[6px] md:text-[7px] font-bold text-teal-600 tracking-widest text-center px-1" x-text="formatBytes(modelStates[item.id]?.downloadedBytes) + ' / ' + formatBytes(modelStates[item.id]?.totalBytes)"></span>
                                             </div>
-                                        </div>
-                                        <span class="text-[6px] md:text-[7px] font-bold text-amber-600 uppercase tracking-wider text-center px-1">Di-pause</span>
-                                    </div>
 
-                                    <template x-if="modelStates[item.id]?.state === 'loaded'">
-                                        <model-viewer 
-                                            :src="modelStates[item.id].url" 
-                                            class="w-full h-full" 
-                                            disable-zoom 
-                                            disable-pan 
-                                            shadow-intensity="0" 
-                                            exposure="1"
-                                            environment-image="neutral" 
-                                            loading="eager">
-                                        </model-viewer>
-                                    </template>
-                                </div>
+                                            <div x-show="modelStates[item.id]?.state === 'paused'" 
+                                                @click.prevent.stop="toggleDownload(item.id)" @touchend.prevent.stop="toggleDownload(item.id)"
+                                                class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-opacity duration-300 pointer-events-auto"
+                                                title="Klik untuk Lanjutkan">
+                                                <div class="relative flex items-center justify-center w-6 h-6 md:w-8 md:h-8 mb-1 opacity-60">
+                                                    <svg class="w-full h-full text-slate-300" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
+                                                    <svg class="absolute inset-0 w-full h-full text-amber-500 transition-all duration-200 ease-out" viewBox="0 0 36 36">
+                                                        <path :stroke-dasharray="(modelStates[item.id]?.progress || 0) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+                                                    </svg>
+                                                    <div class="absolute inset-0 flex items-center justify-center text-amber-600 bg-amber-50 rounded-full w-4 h-4 md:w-5 md:h-5 m-auto">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                                                    </div>
+                                                </div>
+                                                <span class="text-[6px] md:text-[7px] font-bold text-amber-600 uppercase tracking-wider text-center px-1">Di-pause</span>
+                                            </div>
+
+                                            <template x-if="modelStates[item.id]?.state === 'loaded'">
+                                                <model-viewer 
+                                                    :src="modelStates[item.id].url" 
+                                                    class="w-full h-full" 
+                                                    disable-zoom 
+                                                    disable-pan 
+                                                    shadow-intensity="0" 
+                                                    exposure="1"
+                                                    environment-image="neutral" 
+                                                    loading="eager">
+                                                </model-viewer>
+                                            </template>
+                                        </div>
+                                        
+                                        <div class="p-2 border-t border-slate-100 flex items-start gap-1">
+                                            <input type="radio" x-model="selectedLibrary3d" :value="item.id" class="mt-0.5 text-teal-500 focus:ring-teal-500" :disabled="upload3dName !== ''">
+                                            <span class="text-[10px] md:text-xs font-bold text-slate-700 leading-tight line-clamp-2" x-text="item.name"></span>
+                                        </div>
+                                    </label>
+                                </template>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -350,12 +358,46 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pt-4 border-t border-slate-200">
-                    <button type="button" @click="openModal()" class="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl border-2 border-teal-500 text-teal-600 text-sm md:text-base font-bold hover:bg-teal-50 transition-colors">
-                        Preview AR
+                <div class="pt-6 border-t border-slate-200 mt-6 bg-slate-50 p-4 md:p-5 rounded-2xl border border-slate-100 shadow-inner">
+                    <label class="block text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-teal-600"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                        Opsi Hasil Generate
+                    </label>
+                    
+                    <input type="hidden" name="generation_mode" :value="generationMode">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label @click="generationMode = 'qr_only'" class="flex flex-col bg-white border-2 p-4 rounded-xl cursor-pointer hover:border-teal-300 transition-all gap-2"
+                               :class="generationMode === 'qr_only' ? 'border-teal-500 ring-2 ring-teal-100 shadow-md' : 'border-slate-200'">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" x-model="generationMode" value="qr_only" class="text-teal-600 focus:ring-teal-500 pointer-events-none">
+                                <span class="text-sm font-bold text-slate-900 leading-tight">Hanya File QR Code (Format SVG)</span>
+                            </div>
+                            <span class="text-xs text-slate-500 ml-7">Cocok jika Anda ingin menempelkan QR ini di desain poster buatan Anda sendiri.</span>
+                        </label>
+                        
+                        <label @click="generationMode = 'flyer'" class="flex flex-col bg-white border-2 p-4 rounded-xl cursor-pointer hover:border-indigo-300 transition-all gap-2"
+                               :class="generationMode === 'flyer' ? 'border-indigo-500 ring-2 ring-indigo-100 shadow-md' : 'border-slate-200'">
+                            <div class="flex items-center gap-3">
+                                <input type="radio" x-model="generationMode" value="flyer" class="text-indigo-600 focus:ring-indigo-500 pointer-events-none">
+                                <span class="text-sm font-bold text-indigo-900 leading-tight flex items-center gap-1.5">
+                                    File Flyer Instruksi (Format PNG)
+                                    <span class="text-[9px] bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded-md font-extrabold border border-indigo-200 uppercase tracking-wider">Instant</span>
+                                </span>
+                            </div>
+                            <span class="text-xs text-indigo-500 ml-7">Sistem akan otomatis membuat poster flyer yang siap dicetak.</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pt-6 mt-6 border-t border-slate-200">
+                    <button type="button" @click="openModal()" class="w-full flex items-center justify-center gap-2 py-3.5 px-6 rounded-xl border-2 border-slate-300 text-slate-700 text-sm md:text-base font-bold hover:bg-slate-100 hover:border-slate-400 transition-all shadow-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.644M12 18.752a10.006 10.006 0 01-12-6.73M12 18.752a10.006 10.006 0 0012-6.73M12 18.752c4.306 0 8.028-2.533 9.707-6.23M12 5.252c4.306 0 8.028 2.533 9.707 6.23M12 5.252a10.005 10.005 0 00-12 6.73M12 5.252a10.005 10.005 0 0112 6.73M12 11.252a1.125 1.125 0 110 2.25 1.125 1.125 0 010-2.25z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 11.252a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                        Preview AR & Suara
                     </button>
-                    <button type="submit" class="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-xl btn-gradient text-white text-sm md:text-base font-bold shadow-lg shadow-indigo-200">
-                        Generate QR Code
+                    <button type="submit" class="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-xl btn-gradient text-white text-sm md:text-base font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:scale-[1.01] transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75A11.956 11.956 0 0112 2.714z" /></svg>
+                        Buat & Download File AR
                     </button>
                 </div>
             </form>
@@ -500,6 +542,7 @@
 
                 currentAudioPlayer: null, narrationPlayer: null, playingMusicPath: null,
                 modalBgmPlayer: null, modalVoicePlayer: null, audioBlocked: false,
+                generationMode: 'qr_only',
 
                 library3dList: @json($library3dList),
                 musicList: @json($musicList),
