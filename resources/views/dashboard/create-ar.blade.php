@@ -397,7 +397,7 @@
                     </button>
                     <button type="submit" class="w-full flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-xl btn-gradient text-white text-sm md:text-base font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-300 hover:scale-[1.01] transition-all">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75A11.956 11.956 0 0112 2.714z" /></svg>
-                        Generate AR
+                        Generate QR Code
                     </button>
                 </div>
             </form>
@@ -591,12 +591,18 @@
                     this.isBackgroundDownloading = true;
                     let nextId = this.downloadQueue.shift();
 
-                    if (this.modelStates[nextId] && (this.modelStates[nextId].state === 'idle' || this.modelStates[nextId].state === 'oversize' || this.modelStates[nextId].state === 'paused')) {
-                        await this.downloadModel(nextId);
+                    if (this.modelStates[nextId]) {
+                        let currentState = this.modelStates[nextId].state;
+                        if (currentState === 'idle' || currentState === 'oversize' || currentState === 'paused') {
+                            await this.downloadModel(nextId);
+                        }
                     }
 
                     this.isBackgroundDownloading = false;
-                    this.processQueue();
+
+                    if(this.downloadQueue.length > 0) {
+                        this.processQueue();
+                    }
                 },
 
                 formatBytes(bytes) {
