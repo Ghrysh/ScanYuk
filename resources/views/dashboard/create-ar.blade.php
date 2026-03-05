@@ -50,19 +50,19 @@
     </div>
 
     <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
-        <div class="max-w-[100rem] mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-2 sm:gap-4">
+        <div class="max-w-[100rem] mx-auto px-4 py-3 flex flex-col sm:flex-row sm:h-16 items-center justify-between gap-3 sm:gap-0">
+            <div class="flex items-center justify-between w-full sm:w-auto gap-2 sm:gap-4">
                 <a href="{{ route('user.dashboard') }}" class="p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
                 </a>
                 <div class="w-8 h-8 rounded bg-teal-50 text-teal-600 flex items-center justify-center flex-shrink-0">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-qr-code w-5 h-5"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg>
                 </div>
-                <h1 class="hidden sm:block text-lg font-bold text-slate-900">Buat AR</h1>
+                <h1 class="text-base sm:text-lg font-bold text-slate-900 mr-auto sm:mr-0">Buat AR</h1>
             </div>
-            <div class="flex p-1 bg-slate-100 rounded-lg border border-slate-200 w-full sm:w-auto mt-2 sm:mt-0 overflow-x-auto">
-                <button @click="mainTab = 'custom'" :class="mainTab === 'custom' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="flex-1 sm:flex-none px-3 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all whitespace-nowrap">Custom AR</button>
-                <button @click="mainTab = 'template'" :class="mainTab === 'template' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="flex-1 sm:flex-none px-3 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all whitespace-nowrap">Template</button>
+            <div class="flex p-1 bg-slate-100 rounded-lg border border-slate-200 w-full sm:w-auto overflow-x-auto justify-center">
+                <button @click="mainTab = 'custom'" :class="mainTab === 'custom' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="flex-1 sm:flex-none px-4 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all whitespace-nowrap">Custom AR</button>
+                <button @click="mainTab = 'template'" :class="mainTab === 'template' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="flex-1 sm:flex-none px-4 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all whitespace-nowrap">Template</button>
             </div>
         </div>
     </header>
@@ -132,57 +132,64 @@
                                 <template x-for="item in filtered3d()" :key="item.id">
                                     <label class="flex flex-col bg-white border border-slate-200 rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden" :class="selectedLibrary3d === item.id ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : ''">
                                         
-                                        <div class="h-20 md:h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center overflow-hidden">
-                                            
-                                            <div x-show="modelStates[item.id]?.state === 'idle' || modelStates[item.id]?.state === 'oversize'" 
-                                                @click.prevent.stop="toggleDownload(item.id)"
-                                                class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-colors pointer-events-auto"
-                                                title="Klik untuk mendownload">
-                                                <svg class="w-6 h-6 md:w-8 md:h-8 text-teal-500 mb-1 drop-shadow-sm hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                </svg>
-                                                <span class="text-[8px] md:text-[10px] font-bold text-slate-700 text-center" x-text="formatBytes(modelStates[item.id]?.totalBytes)"></span>
-                                                <span class="text-[7px] md:text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Klik Unduh</span>
+                                    <div class="h-20 md:h-24 bg-slate-100 relative pointer-events-none-children flex items-center justify-center overflow-hidden">
+                                    
+                                    <div x-show="modelStates[item.id]?.state === 'idle' || modelStates[item.id]?.state === 'oversize'" 
+                                        @click.prevent="toggleDownload(item.id)" @touchend.prevent="toggleDownload(item.id)"
+                                        class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-colors pointer-events-auto"
+                                        title="Klik untuk mendownload">
+                                        <svg class="w-6 h-6 md:w-8 md:h-8 text-teal-500 mb-1 drop-shadow-sm hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                        </svg>
+                                        <span class="text-[8px] md:text-[10px] font-bold text-slate-700 text-center" x-text="formatBytes(modelStates[item.id]?.totalBytes)"></span>
+                                        <span class="text-[7px] md:text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Klik Unduh</span>
+                                    </div>
+
+                                    <div x-show="modelStates[item.id]?.state === 'downloading'" 
+                                        @click.prevent="toggleDownload(item.id)" @touchend.prevent="toggleDownload(item.id)"
+                                        class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-opacity duration-300 pointer-events-auto"
+                                        title="Klik untuk Pause">
+                                        <div class="relative flex items-center justify-center w-6 h-6 md:w-8 md:h-8 mb-1">
+                                            <svg class="w-full h-full text-slate-300" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
+                                            <svg class="absolute inset-0 w-full h-full text-teal-500 transition-all duration-200 ease-out" viewBox="0 0 36 36">
+                                                <path :stroke-dasharray="(modelStates[item.id]?.progress || 0) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+                                            </svg>
+                                            <div class="absolute inset-0 flex items-center justify-center">
+                                                <span class="text-[7px] md:text-[8px] font-bold text-teal-700" x-text="(modelStates[item.id]?.progress || 0) + '%'"></span>
                                             </div>
+                                        </div>
+                                        <span class="text-[6px] md:text-[7px] font-bold text-teal-600 tracking-widest text-center px-1" x-text="formatBytes(modelStates[item.id]?.downloadedBytes) + ' / ' + formatBytes(modelStates[item.id]?.totalBytes)"></span>
+                                    </div>
 
-                                            <div x-show="modelStates[item.id]?.state === 'downloading'" 
-                                                @click.prevent.stop="toggleDownload(item.id)"
-                                                class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-opacity duration-300 pointer-events-auto"
-                                                title="Klik untuk Pause">
-                                                <div class="relative flex items-center justify-center w-6 h-6 md:w-8 md:h-8 mb-1">
-                                                    <svg class="w-full h-full text-slate-300" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
-                                                    <svg class="absolute inset-0 w-full h-full text-teal-500 transition-all duration-200 ease-out" viewBox="0 0 36 36">
-                                                        <path :stroke-dasharray="(modelStates[item.id]?.progress || 0) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
-                                                    </svg>
-                                                    <div class="absolute inset-0 flex items-center justify-center">
-                                                        <span class="text-[7px] md:text-[8px] font-bold text-teal-700" x-text="(modelStates[item.id]?.progress || 0) + '%'"></span>
-                                                    </div>
-                                                </div>
-                                                <span class="text-[6px] md:text-[7px] font-bold text-teal-600 tracking-widest text-center px-1" x-text="formatBytes(modelStates[item.id]?.downloadedBytes) + ' / ' + formatBytes(modelStates[item.id]?.totalBytes)"></span>
+                                    <div x-show="modelStates[item.id]?.state === 'paused'" 
+                                        @click.prevent="toggleDownload(item.id)" @touchend.prevent="toggleDownload(item.id)"
+                                        class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-opacity duration-300 pointer-events-auto"
+                                        title="Klik untuk Lanjutkan">
+                                        <div class="relative flex items-center justify-center w-6 h-6 md:w-8 md:h-8 mb-1 opacity-60">
+                                            <svg class="w-full h-full text-slate-300" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
+                                            <svg class="absolute inset-0 w-full h-full text-amber-500 transition-all duration-200 ease-out" viewBox="0 0 36 36">
+                                                <path :stroke-dasharray="(modelStates[item.id]?.progress || 0) + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+                                            </svg>
+                                            <div class="absolute inset-0 flex items-center justify-center text-amber-600 bg-amber-50 rounded-full w-4 h-4 md:w-5 md:h-5 m-auto">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-2.5 h-2.5 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
                                             </div>
-
-                                            <template x-if="modelStates[item.id]?.state === 'loaded'">
-                                                <model-viewer 
-                                                    :src="modelStates[item.id].url" 
-                                                    class="w-full h-full" 
-                                                    disable-zoom 
-                                                    disable-pan 
-                                                    shadow-intensity="0" 
-                                                    exposure="1"
-                                                    environment-image="neutral" 
-                                                    loading="eager">
-                                                </model-viewer>
-                                            </template>
-
                                         </div>
-                                        
-                                        <div class="p-2 border-t border-slate-100 flex items-start gap-1">
-                                            <input type="radio" x-model="selectedLibrary3d" :value="item.id" class="mt-0.5 text-teal-500 focus:ring-teal-500" :disabled="upload3dName !== ''">
-                                            <span class="text-[10px] md:text-xs font-bold text-slate-700 leading-tight line-clamp-2" x-text="item.name"></span>
-                                        </div>
-                                    </label>
-                                </template>
-                            </div>
+                                        <span class="text-[6px] md:text-[7px] font-bold text-amber-600 uppercase tracking-wider text-center px-1">Di-pause</span>
+                                    </div>
+
+                                    <template x-if="modelStates[item.id]?.state === 'loaded'">
+                                        <model-viewer 
+                                            :src="modelStates[item.id].url" 
+                                            class="w-full h-full" 
+                                            disable-zoom 
+                                            disable-pan 
+                                            shadow-intensity="0" 
+                                            exposure="1"
+                                            environment-image="neutral" 
+                                            loading="eager">
+                                        </model-viewer>
+                                    </template>
+                                </div>
                         </div>
                     </div>
                 </div>
@@ -568,11 +575,14 @@
                     let state = this.modelStates[id];
                     if (state.state === 'downloading') {
                         if (state.abortController) state.abortController.abort();
-                    } else if (state.state === 'idle' || state.state === 'paused' || state.state === 'oversize') {
+                    } 
+                    else if (state.state === 'idle' || state.state === 'paused' || state.state === 'oversize') {
                         if(!this.downloadQueue.includes(id)) {
                             this.downloadQueue.unshift(id); 
                         }
-                        this.processQueue();
+                        if(!this.isBackgroundDownloading) {
+                            this.processQueue();
+                        }
                     }
                 },
 
