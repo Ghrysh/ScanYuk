@@ -13,18 +13,22 @@ class ContactController extends Controller
         return view('contact');
     }
 
-    public function submit(Request $request)
+    public function send(Request $request)
     {
-        $validated = $request->validate([
+        $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'company' => 'nullable|string|max:255',
-            'interest' => 'required|string',
+            'company' => 'required|string|max:255',
+            'email' => 'required|email:rfc,dns', 
+            'industry' => 'required|string|max:255',
+            'volume' => 'required|string|max:255',
             'message' => 'required|string',
+        ], [
+            'email.email' => 'Format email tidak valid.',
+            'email.dns' => 'Domain email ini tidak dapat menerima pesan (tidak valid).',
         ]);
 
-        Mail::to('ptbtt01@gmail.com')->send(new ContactSalesMail($validated));
+        Mail::to('ptbtt01@gmail.com')->send(new ContactSalesMail($request->all()));
 
-        return back()->with('success', 'Pesan Anda telah berhasil dikirim! Tim sales kami akan segera menghubungi Anda.');
+        return back()->with('success', 'Pesan Anda telah terkirim! Tim kami akan segera menghubungi Anda.');
     }
 }
