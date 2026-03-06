@@ -44,12 +44,12 @@
     <div class="w-full max-w-[400px] bg-white rounded-2xl shadow-xl border border-slate-100 p-8 relative z-10">
         
         <div class="text-center mb-8">
-            <div class="inline-flex items-center justify-center gap-2 mb-6">
+            <a href="{{ route('home') }}" class="inline-flex items-center justify-center gap-2 mb-6 hover:opacity-80 transition-opacity">
                 <div class="w-8 h-8 rounded bg-teal-50 text-teal-600 flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-qr-code w-7 h-7"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg>
                 </div>
                 <span class="text-xl font-bold tracking-tight text-slate-900">ScanYuk</span>
-            </div>
+            </a>
             <h2 class="text-2xl font-bold text-slate-900">Welcome Back</h2>
             <p class="mt-2 text-sm text-slate-500">Sign in to your account</p>
         </div>
@@ -61,6 +61,12 @@
                 <div class="mb-4 p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center gap-3">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <p class="text-sm font-bold">Pembayaran berhasil diproses! Akun Anda telah dibuat. Silakan login untuk memulai.</p>
+                </div>
+            @endif
+
+            @if(session('success'))
+                <div class="mb-4 p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 text-sm font-bold text-center">
+                    {{ session('success') }}
                 </div>
             @endif
 
@@ -79,6 +85,8 @@
                         Lupa Password?
                     </a>
                 </div>
+                
+                <div class="relative">
                     <input :type="showPassword ? 'text' : 'password'" id="password" name="password" required 
                         class="appearance-none block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm" 
                         placeholder="••••••••">
