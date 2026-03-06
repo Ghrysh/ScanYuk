@@ -157,7 +157,10 @@
                                 this.fetchArData(this.currentQrUrl);
                             } 
                             else if (this.arCache[this.currentQrUrl] && this.arCache[this.currentQrUrl].ready) {
-                                this.arActive = true;
+                                if (!this.arActive) {
+                                    this.arActive = true;
+                                    this.restartAudioFromPause(this.currentQrUrl);
+                                }
                                 this.calculateTarget(code.location);
                             }
                         } else {
@@ -467,14 +470,58 @@
                     
                     if(this.bgmPlayer) {
                         this.bgmPlayer.pause();
-                        this.bgmPlayer.currentTime = 0;
-                        this.bgmPlayer = null;
                     }
                     
                     if(this.narrationPlayer) {
                         this.narrationPlayer.pause();
+                    }
+                },
+
+                restartAudioFromPause(url) {
+                    const cache = this.arCache[url];
+                    if(!cache) return;
+
+                    let playPromises = [];
+
+                    if (this.bgmPlayer) {
+                        let startTime = 0;
+                        if (cache.bgm_url && cache.bgm_url.includes('#t=')) {
+                            let times = cache.bgm_url.split('#t=')[1].split(',');
+                            startTime = parseFloat(times[0]);
+                        }
+                        this.bgmPlayer.currentTime = startTime;
+                        playPromises.push(this.bgmPlayer.play());
+                    }
+
+                    let usingRecordedAudio = false;
+                    if (this.narrationPlayer && cache.custom_audio_url) {
+                        usingRecordedAudio = true;
                         this.narrationPlayer.currentTime = 0;
-                        this.narrationPlayer = null;
+                        playPromises.push(this.narrationPlayer.play());
+                    }
+
+                    const playTTS = () => {
+                        if(!usingRecordedAudio && cache.narration) {
+                            let utterance = new SpeechSynthesisUtterance(cache.narration);
+                            utterance.lang = 'id-ID';
+                            if(cache.ai_voice) {
+                                let voices = window.speechSynthesis.getVoices();
+                                let selectedVoice = voices.find(v => v.voiceURI === cache.ai_voice);
+                                if(selectedVoice) utterance.voice = selectedVoice;
+                            }
+                            window.speechSynthesis.speak(utterance);
+                        }
+                    };
+
+                    if (playPromises.length > 0) {
+                        Promise.all(playPromises).then(() => {
+                            playTTS();
+                        }).catch(e => {
+                            console.log('Autoplay diblokir browser:', e);
+                            this.audioBlocked = true; 
+                        });
+                    } else {
+                        playTTS();
                     }
                 },
 

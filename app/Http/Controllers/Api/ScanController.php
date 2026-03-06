@@ -15,7 +15,7 @@ class ScanController extends Controller
                 'data' => [
                     'title' => 'Demo Augmented Reality ScanYuk',
                     'ar_type' => '3d',
-                    'narration' => 'Selamat datang di scanyuk, ciptakan kreasi Augmented Reality mu sendiri',
+                    'narration' => 'Selamat datang, ciptakan kreasi AR mu sendiri',
                     'ai_voice' => null,
                     'custom_audio_url' => null,
                     'image_url' => null,
