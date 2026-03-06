@@ -1,7 +1,37 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8" x-data="{ activeTab: '{{ request('active_tab', session('active_tab', 'overview')) }}' }">
+
+@php
+    $features = $currentPackage ? $currentPackage->features : [];
+    
+    $imgLimit = (int) filter_var($features[0] ?? 0, FILTER_SANITIZE_NUMBER_INT);
+    $voiceLimit = (int) filter_var($features[1] ?? 0, FILTER_SANITIZE_NUMBER_INT);
+    $scanLimit = (int) filter_var($features[2] ?? 0, FILTER_SANITIZE_NUMBER_INT);
+
+    $imgPercent = $imgLimit > 0 ? min(($user->image / $imgLimit) * 100, 100) : 0;
+    $voicePercent = $voiceLimit > 0 ? min(($user->voice / $voiceLimit) * 100, 100) : 0;
+    $scanPercent = $scanLimit > 0 ? min(($user->scan / $scanLimit) * 100, 100) : 0;
+
+    $initialTab = request('active_tab', session('active_tab', 'overview'));
+@endphp
+
+<div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8" 
+     x-data="{ 
+        activeTab: '{{ $initialTab }}',
+        init() {
+            // Cek apakah ada tab tersimpan di memory browser. Jika url tidak memaksa tab tertentu, pakai yang tersimpan.
+            let savedTab = localStorage.getItem('adminActiveTab');
+            if (savedTab && !window.location.search.includes('active_tab')) {
+                this.activeTab = savedTab;
+            }
+            
+            // Simpan setiap kali tab berubah
+            this.$watch('activeTab', value => {
+                localStorage.setItem('adminActiveTab', value);
+            });
+        }
+     }">
 
     @if(session('success'))
     <div x-data="{ show: true }" 
@@ -35,7 +65,7 @@
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-slate-900 mb-6">Admin Dashboard</h1>
         
-        <div class="flex space-x-2 border-b border-slate-200 pb-2 overflow-x-auto">
+        <div class="flex space-x-2 border-b border-slate-200 pb-2 overflow-x-auto no-scrollbar">
             <button @click="activeTab = 'overview'" 
                 :class="activeTab === 'overview' ? 'bg-teal-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'"
                 class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap">
@@ -59,10 +89,10 @@
         </div>
     </div>
 
-    <div x-show="activeTab === 'overview'" x-transition.opacity.duration.300ms>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div x-show="activeTab === 'overview'" x-transition.opacity.duration.300ms style="display: none;">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             
-            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
                 <div class="flex items-center gap-2 text-slate-500 mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
                     <span class="text-sm font-medium">Total Users</span>
@@ -70,7 +100,7 @@
                 <h3 class="text-4xl font-bold text-slate-900">{{ number_format($totalUsers) }}</h3>
             </div>
 
-            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
                 <div class="flex items-center gap-2 text-slate-500 mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
                     <span class="text-sm font-medium">Active QR Codes</span>
@@ -78,7 +108,7 @@
                 <h3 class="text-4xl font-bold text-slate-900">{{ number_format($totalQrCodes) }}</h3>
             </div>
 
-            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
                 <div class="flex items-center gap-2 text-slate-500 mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                     <span class="text-sm font-medium">Total Scans</span>
@@ -86,12 +116,12 @@
                 <h3 class="text-4xl font-bold text-slate-900">{{ number_format($totalScans) }}</h3>
             </div>
 
-            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+            <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between">
                 <div class="flex items-center gap-2 text-slate-500 mb-4">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-teal-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
                     <span class="text-sm font-medium">Revenue</span>
                 </div>
-                <h3 class="text-3xl font-bold text-slate-900">
+                <h3 class="text-3xl font-bold text-slate-900 truncate">
                     @if($totalRevenue >= 1000000)
                         Rp{{ number_format($totalRevenue / 1000000, 1) }}M
                     @else
@@ -166,12 +196,12 @@
          
         <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 class="text-lg font-bold text-slate-900">User Management</h2>
-            <div class="flex items-center gap-3 w-full sm:w-auto">
-                <div class="relative max-w-xs w-full">
+            <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                <div class="relative w-full sm:w-64">
                     <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     <input type="text" placeholder="Cari user..." @input.debounce.300ms="fetchUsers($event.target.value)" class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition-all">
                 </div>
-                <button @click="showAddUserModal = true" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm whitespace-nowrap transition-colors">
+                <button @click="showAddUserModal = true" class="w-full sm:w-auto bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm whitespace-nowrap transition-colors">
                     + Tambah Akun
                 </button>
             </div>
@@ -196,13 +226,13 @@
             </table>
         </div>
 
-        <div class="p-4 border-t border-slate-100">
+        <div class="p-4 border-t border-slate-100 flex overflow-x-auto">
             {{ $users->appends(['active_tab' => 'users', 'txn_page' => request('txn_page')])->links() }}
         </div>
 
-        <div x-show="showModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center">
+        <div x-show="showModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div x-show="showModal" x-transition.opacity.duration.300ms class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showModal = false"></div>
-            <div x-show="showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 overflow-hidden">
+            <div x-show="showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 overflow-hidden">
                 <div class="flex justify-center mb-5">
                     <div x-show="action === 'suspend' || action === 'delete'" class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-red-500 border-[6px] border-red-50/50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -223,23 +253,23 @@
                     </p>
                 </div>
 
-                <div class="flex gap-3">
-                    <button @click="showModal = false" type="button" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">Batal</button>
-                    <button @click="submitForm()" type="button" :class="(action === 'suspend' || action === 'delete') ? 'bg-red-600 hover:bg-red-700 shadow-red-200/50' : 'bg-teal-600 hover:bg-teal-700 shadow-teal-200/50'" class="flex-1 px-4 py-2.5 rounded-xl text-white font-semibold shadow-lg transition-all hover:-translate-y-0.5">
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button @click="showModal = false" type="button" class="w-full sm:flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">Batal</button>
+                    <button @click="submitForm()" type="button" :class="(action === 'suspend' || action === 'delete') ? 'bg-red-600 hover:bg-red-700 shadow-red-200/50' : 'bg-teal-600 hover:bg-teal-700 shadow-teal-200/50'" class="w-full sm:flex-1 px-4 py-2.5 rounded-xl text-white font-semibold shadow-lg transition-all hover:-translate-y-0.5">
                         Ya, <span x-text="action === 'delete' ? 'Hapus' : (action === 'suspend' ? 'Suspend' : 'Aktifkan')"></span>
                     </button>
                 </div>
             </div>
         </div>
 
-        <div x-show="showAddUserModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center">
+        <div x-show="showAddUserModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div x-show="showAddUserModal" x-transition.opacity class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showAddUserModal = false"></div>
-            <div x-show="showAddUserModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
-                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+            <div x-show="showAddUserModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden max-h-[90vh] flex flex-col">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 flex-shrink-0">
                     <h3 class="text-xl font-bold text-slate-900">Tambah Akun User</h3>
                     <button @click="showAddUserModal = false" class="text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                 </div>
-                <form action="{{ route('admin.users.store') }}" method="POST" class="p-6 space-y-4">
+                <form action="{{ route('admin.users.store') }}" method="POST" class="p-6 space-y-4 overflow-y-auto">
                     @csrf
                     <div>
                         <label class="block text-sm font-bold text-slate-700 mb-1">Nama Lengkap</label>
@@ -261,9 +291,9 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="pt-4 flex gap-3">
-                        <button @click="showAddUserModal = false" type="button" class="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50">Batal</button>
-                        <button type="submit" class="flex-1 py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold shadow-lg">Buat Akun</button>
+                    <div class="pt-4 flex flex-col sm:flex-row gap-3">
+                        <button @click="showAddUserModal = false" type="button" class="w-full sm:flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50">Batal</button>
+                        <button type="submit" class="w-full sm:flex-1 py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold shadow-lg">Buat Akun</button>
                     </div>
                 </form>
             </div>
@@ -283,7 +313,6 @@
                 this.pkgId = pkg.id;
                 this.pkgName = pkg.name;
                 this.pkgPrice = pkg.price;
-                // Parsing angka dari string features
                 this.pkgImage = parseInt(pkg.features[0]) || 0;
                 this.pkgVoice = parseInt(pkg.features[1]) || 0;
                 this.pkgScan = parseInt(pkg.features[2]) || 0;
@@ -302,11 +331,11 @@
             <table class="w-full text-left text-sm text-slate-600">
                 <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                     <tr>
-                        <th class="px-6 py-4">Paket</th>
-                        <th class="px-6 py-4">Harga</th>
-                        <th class="px-6 py-4">Image</th>
-                        <th class="px-6 py-4">Voice</th>
-                        <th class="px-6 py-4">Total Scan</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Paket</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Harga</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Image</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Voice</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Total Scan</th>
                         <th class="px-6 py-4">Aksi</th>
                     </tr>
                 </thead>
@@ -329,27 +358,27 @@
             </table>
         </div>
 
-        <div x-show="showEditModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center">
+        <div x-show="showEditModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div x-show="showEditModal" x-transition.opacity.duration.300ms class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showEditModal = false"></div>
 
             <div x-show="showEditModal" 
                 x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 scale-95"
                 x-transition:enter-end="opacity-100 scale-100"
-                class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+                class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden max-h-[90vh] flex flex-col">
                 
-                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-                    <h3 class="text-xl font-bold text-slate-900">Edit Paket: <span x-text="pkgName" class="text-teal-600"></span></h3>
-                    <button @click="showEditModal = false" class="text-slate-400 hover:text-slate-600">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 flex-shrink-0">
+                    <h3 class="text-xl font-bold text-slate-900 truncate">Edit Paket: <span x-text="pkgName" class="text-teal-600"></span></h3>
+                    <button @click="showEditModal = false" class="text-slate-400 hover:text-slate-600 flex-shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
 
-                <form :action="`/admin/packages/${pkgId}`" method="POST" class="p-6 space-y-4">
+                <form :action="`/admin/packages/${pkgId}`" method="POST" class="p-6 space-y-4 overflow-y-auto">
                     @csrf
                     @method('PATCH')
 
-                    <div class="grid grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-1">Nama Paket</label>
                             <input type="text" name="name" x-model="pkgName" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all">
@@ -360,7 +389,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Limit Image</label>
                             <input type="number" name="image_limit" x-model="pkgImage" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none">
@@ -375,9 +404,9 @@
                         </div>
                     </div>
 
-                    <div class="pt-4 flex gap-3">
-                        <button @click="showEditModal = false" type="button" class="flex-1 py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all">Batal</button>
-                        <button type="submit" class="flex-1 py-3 px-4 rounded-xl btn-gradient text-white font-bold shadow-lg shadow-indigo-200 hover:-translate-y-0.5 transition-all">Simpan Perubahan</button>
+                    <div class="pt-4 flex flex-col sm:flex-row gap-3">
+                        <button @click="showEditModal = false" type="button" class="w-full sm:flex-1 py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all">Batal</button>
+                        <button type="submit" class="w-full sm:flex-1 py-3 px-4 rounded-xl btn-gradient text-white font-bold shadow-lg shadow-indigo-200 hover:-translate-y-0.5 transition-all">Simpan</button>
                     </div>
                 </form>
             </div>
@@ -392,12 +421,12 @@
             <table class="w-full text-left text-sm text-slate-600">
                 <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                     <tr>
-                        <th class="px-6 py-4">ID</th>
-                        <th class="px-6 py-4">User</th>
-                        <th class="px-6 py-4">Paket</th>
-                        <th class="px-6 py-4">Jumlah</th>
-                        <th class="px-6 py-4">Status</th>
-                        <th class="px-6 py-4">Tanggal</th>
+                        <th class="px-6 py-4 whitespace-nowrap">ID</th>
+                        <th class="px-6 py-4 whitespace-nowrap">User</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Paket</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Jumlah</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Status</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Tanggal</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -414,10 +443,10 @@
                         </td>
                         <td class="px-6 py-4 font-bold text-slate-900">Rp{{ number_format($txn->amount, 0, ',', '.') }}</td>
                         <td class="px-6 py-4">
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold 
-                                {{ $txn->status == 'Berhasil' ? 'bg-teal-100 text-teal-700' : 
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold inline-block
+                                {{ in_array(strtolower($txn->status), ['berhasil', 'paid', 'success', 'unsettled']) ? 'bg-teal-100 text-teal-700' : 
                                 ($txn->status == 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">
-                                {{ $txn->status }}
+                                {{ in_array(strtolower($txn->status), ['berhasil', 'paid', 'success', 'unsettled']) ? 'Berhasil' : $txn->status }}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-slate-500">{{ $txn->created_at->format('Y-m-d') }}</td>
@@ -425,9 +454,9 @@
                     @endforeach
                 </tbody>
             </table>
-            <div class="p-4 border-t border-slate-100">
+        </div>
+        <div class="p-4 border-t border-slate-100 flex overflow-x-auto">
             {{ $transactions->appends(['active_tab' => 'transaksi', 'users_page' => request('users_page')])->links() }}
-            </div>
         </div>
     </div>
 
