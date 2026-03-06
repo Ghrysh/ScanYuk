@@ -345,18 +345,19 @@
                     </button>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-bold text-slate-700 mb-1">Nama Paket</label>
-                    <input type="text" name="name" x-model="pkgName" required class="p-6 space-y-4 w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all">
-                </div>
-
                 <form :action="`/admin/packages/${pkgId}`" method="POST" class="p-6 space-y-4">
                     @csrf
                     @method('PATCH')
 
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-1">Harga (Rp)</label>
-                        <input type="number" name="price" x-model="pkgPrice" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1">Nama Paket</label>
+                            <input type="text" name="name" x-model="pkgName" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1">Harga (Rp)</label>
+                            <input type="number" name="price" x-model="pkgPrice" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all">
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-3 gap-4">
