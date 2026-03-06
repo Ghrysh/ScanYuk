@@ -24,8 +24,10 @@ class AdminController extends Controller
         $totalUsers = User::where('role', '!=', 'admin')->count();
         $totalQrCodes = User::sum('image'); 
         $totalScans = User::sum('scan'); 
-        
-        $totalRevenue = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])->sum('amount');
+
+        $grossRevenue = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])->sum('amount');
+
+        $totalRevenue = round($grossRevenue / 1.11);
 
         return view('admin.dashboard', compact(
             'packages', 
