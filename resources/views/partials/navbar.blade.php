@@ -162,21 +162,26 @@
                 @else
                     <div class="flex flex-col gap-4">
                         <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200">
-                            <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold">
+                            <div class="w-10 h-10 rounded-full bg-teal-100 flex items-center justify-center text-teal-700 font-bold flex-shrink-0">
                                 {{ substr(Auth::user()->name, 0, 1) }}
                             </div>
-                            <div class="flex flex-col">
-                                <span class="text-sm font-bold text-slate-900">{{ Auth::user()->name }}</span>
-                                <span class="text-xs text-slate-500">{{ Auth::user()->email }}</span>
+                            <div class="flex flex-col min-w-0">
+                                <span class="text-sm font-bold text-slate-900 truncate">{{ Auth::user()->name }}</span>
+                                <span class="text-xs text-slate-500 truncate">{{ Auth::user()->email }}</span>
                             </div>
                         </div>
                         
-                        <form action="{{ route('logout') }}" method="POST" class="w-full">
-                            @csrf
-                            <button type="submit" class="w-full py-3 rounded-xl border-2 border-red-100 bg-red-50 text-red-600 text-sm font-bold hover:bg-red-100 transition-colors">
-                                Logout
-                            </button>
-                        </form>
+                        <div class="flex items-center gap-3">
+                            <a href="{{ Auth::user()->role === 'admin' ? route('admin.dashboard') : route('user.dashboard') }}" class="w-full text-center py-3 rounded-xl btn-gradient text-white text-sm font-bold shadow-md shadow-teal-200/50 hover:opacity-90 transition-opacity">
+                                Dashboard
+                            </a>
+                            <form action="{{ route('logout') }}" method="POST" class="w-full m-0">
+                                @csrf
+                                <button type="submit" class="w-full py-3 rounded-xl border-2 border-red-100 bg-red-50 text-red-600 text-sm font-bold hover:bg-red-100 transition-colors">
+                                    Logout
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 @endguest
             </div>
