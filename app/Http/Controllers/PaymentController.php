@@ -95,24 +95,30 @@ public function checkout(Request $request)
         $transaction = Transaction::find($request->reference_id);
         
         if ($transaction) {
-            if ($request->status_code == 1 || strtolower($request->status) == 'berhasil') {
-                $transaction->update(['status' => 'Berhasil']);
-
-                $user = User::find($transaction->user_id);
-                $package = PricingPackage::find($transaction->pricing_package_id);
+            $statusStr = strtolower($request->status ?? '');
+            
+            if ($request->status_code == 1 || in_array($statusStr, ['berhasil', 'success', 'paid', 'unsettled'])) {
                 
-                $roleMap = ['Bisnis' => User::ROLE_BUSINESS, 'Profesional' => User::ROLE_PROFESSIONAL, 'Pemula' => User::ROLE_STARTER, 'Gratis' => User::ROLE_FREE];
-                $newRole = $roleMap[$package->name] ?? strtolower($package->name);
+                if ($transaction->status !== 'Berhasil') {
+                    $transaction->update(['status' => 'Berhasil']);
 
-                \App\Models\QrCode::where('user_id', $user->id)->delete();
-                $user->update(['role' => $newRole, 'image' => 0, 'voice' => 0, 'scan' => 0]);
+                    $user = User::find($transaction->user_id);
+                    $package = PricingPackage::find($transaction->pricing_package_id);
+                    
+                    $roleMap = ['Bisnis' => User::ROLE_BUSINESS, 'Profesional' => User::ROLE_PROFESSIONAL, 'Pemula' => User::ROLE_STARTER, 'Gratis' => User::ROLE_FREE];
+                    $newRole = $roleMap[$package->name] ?? strtolower($package->name);
 
-                Mail::to($user->email)->send(new PaymentSuccessMail($user, $package, $transaction));
+                    \App\Models\QrCode::where('user_id', $user->id)->delete();
+                    $user->update(['role' => $newRole, 'image' => 0, 'voice' => 0, 'scan' => 0]);
 
-            } elseif ($request->status_code == -1 || strtolower($request->status) == 'expired') {
+                    Mail::to($user->email)->send(new PaymentSuccessMail($user, $package, $transaction));
+                }
+
+            } elseif ($request->status_code == -1 || in_array($statusStr, ['expired', 'batal', 'failed', 'cancel'])) {
                 $transaction->update(['status' => 'Batal']);
             }
         }
+        
         return response()->json(['status' => 'OK']);
     }
 }
