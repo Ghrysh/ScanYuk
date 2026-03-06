@@ -126,4 +126,22 @@ class AdminController extends Controller
             'active_tab' => 'paket'
         ]);
     }
+
+    public function searchTransactions(Request $request)
+    {
+        $query = $request->get('query');
+        
+        $transactions = Transaction::with(['user', 'package'])
+            ->where(function($q) use ($query) {
+                $q->where('id', 'ilike', "%{$query}%")
+                  ->orWhere('status', 'ilike', "%{$query}%")
+                  ->orWhereHas('user', function($userQuery) use ($query) {
+                      $userQuery->where('name', 'ilike', "%{$query}%");
+                  });
+            })
+            ->latest()
+            ->paginate(10, ['*'], 'txn_page');
+
+        return view('admin.partials._transaction_table', compact('transactions'))->render();
+    }
 }

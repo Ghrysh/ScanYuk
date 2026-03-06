@@ -403,10 +403,28 @@
         </div>
     </div>
 
-    <div x-show="activeTab === 'transaksi'" style="display: none;" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" x-transition.opacity.duration.300ms>
-        <div class="p-6 border-b border-slate-100">
+    <div x-show="activeTab === 'transaksi'" 
+         x-data="{
+            fetchTransactions(query) {
+                fetch(`/admin/transactions/search?query=${query}`)
+                    .then(response => response.text())
+                    .then(html => {
+                        document.getElementById('transaction-table-body').innerHTML = html;
+                    });
+            }
+         }"
+         style="display: none;" 
+         class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" 
+         x-transition.opacity.duration.300ms>
+         
+        <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 class="text-lg font-bold text-slate-900">Riwayat Transaksi</h2>
+            <div class="relative w-full sm:w-64">
+                <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                <input type="text" placeholder="Cari transaksi..." @input.debounce.300ms="fetchTransactions($event.target.value)" class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition-all">
+            </div>
         </div>
+        
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-slate-600">
                 <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
@@ -419,29 +437,8 @@
                         <th class="px-6 py-4 whitespace-nowrap">Tanggal</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-100">
-                    @foreach($transactions as $txn)
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="px-6 py-4 text-xs font-mono text-slate-500">{{ $txn->id }}</td>
-                        <td class="px-6 py-4 text-slate-900">{{ $txn->user->name }}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold
-                                {{ strtolower($txn->package->name) == 'pemula' ? 'bg-teal-50 text-teal-600' : 
-                                (strtolower($txn->package->name) == 'profesional' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600') }}">
-                                {{ $txn->package->name }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 font-bold text-slate-900">Rp{{ number_format($txn->amount, 0, ',', '.') }}</td>
-                        <td class="px-6 py-4">
-                            <span class="px-3 py-1 rounded-full text-xs font-semibold inline-block
-                                {{ in_array(strtolower($txn->status), ['berhasil', 'paid', 'success', 'unsettled']) ? 'bg-teal-100 text-teal-700' : 
-                                ($txn->status == 'Pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">
-                                {{ in_array(strtolower($txn->status), ['berhasil', 'paid', 'success', 'unsettled']) ? 'Berhasil' : $txn->status }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-slate-500">{{ $txn->created_at->format('Y-m-d') }}</td>
-                    </tr>   
-                    @endforeach
+                <tbody id="transaction-table-body" class="divide-y divide-slate-100">
+                    @include('admin.partials._transaction_table')
                 </tbody>
             </table>
         </div>
