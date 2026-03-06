@@ -281,18 +281,38 @@
                                 if(!viewer) return resolve();
 
                                 const onProgress = (event) => {
-                                    this.loadingProgress = Math.round(event.detail.totalProgress * 100);
-                                    if (event.detail.totalProgress === 1) {
-                                        viewer.removeEventListener('progress', onProgress);
-                                        resolve();
+                                    let currentProg = Math.round(event.detail.totalProgress * 100);
+                                    if (currentProg > this.loadingProgress) {
+                                        this.loadingProgress = currentProg;
                                     }
                                 };
-                                viewer.addEventListener('progress', onProgress);
-                                
-                                setTimeout(() => {
-                                    viewer.removeEventListener('progress', onProgress);
+
+                                const onLoad = () => {
+                                    this.loadingProgress = 100;
+                                    cleanUp();
                                     resolve();
-                                }, 25000); 
+                                };
+
+                                const onError = () => {
+                                    console.error("Gagal merender 3D. Pastikan file .glb valid dan bukan 404 HTML.");
+                                    cleanUp();
+                                    resolve();
+                                };
+
+                                const cleanUp = () => {
+                                    viewer.removeEventListener('progress', onProgress);
+                                    viewer.removeEventListener('load', onLoad);
+                                    viewer.removeEventListener('error', onError);
+                                };
+
+                                viewer.addEventListener('progress', onProgress);
+                                viewer.addEventListener('load', onLoad);
+                                viewer.addEventListener('error', onError);
+
+                                setTimeout(() => {
+                                    cleanUp();
+                                    resolve();
+                                }, 10000); 
                             });
                         }));
                     } else {
@@ -324,11 +344,16 @@
                         }
 
                         promises.push(new Promise((resolve) => {
-                            this.bgmPlayer.addEventListener('canplaythrough', () => {
+                            let timeout = setTimeout(resolve, 5000);
+                            this.bgmPlayer.addEventListener('loadeddata', () => {
+                                clearTimeout(timeout);
                                 this.bgmPlayer.currentTime = startTime; 
                                 resolve();
                             }, { once: true });
-                            this.bgmPlayer.addEventListener('error', resolve, { once: true });
+                            this.bgmPlayer.addEventListener('error', () => {
+                                clearTimeout(timeout);
+                                resolve();
+                            }, { once: true });
                             this.bgmPlayer.load(); 
                         }));
                     }
@@ -342,8 +367,15 @@
                         this.narrationPlayer.src = cache.custom_audio_url;
                         
                         promises.push(new Promise((resolve) => {
-                            this.narrationPlayer.addEventListener('canplaythrough', resolve, { once: true });
-                            this.narrationPlayer.addEventListener('error', resolve, { once: true });
+                            let timeout = setTimeout(resolve, 5000);
+                            this.narrationPlayer.addEventListener('loadeddata', () => {
+                                clearTimeout(timeout);
+                                resolve();
+                            }, { once: true });
+                            this.narrationPlayer.addEventListener('error', () => {
+                                clearTimeout(timeout);
+                                resolve();
+                            }, { once: true });
                             this.narrationPlayer.load();
                         }));
                     }
