@@ -6,22 +6,26 @@ use App\Models\PricingPackage;
 use App\Models\User;
 use App\Models\Transaction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
-    public function dashboard()
+    public function dashboard(Request $request)
     {
+        Transaction::where('status', 'Pending')
+            ->where('created_at', '<', now()->subHours(24))
+            ->update(['status' => 'Batal']);
+
         $packages = PricingPackage::all();
-        $users = User::where('role', '!=', 'admin')->get();
-        $transactions = Transaction::with(['user', 'package'])->latest()->get();
+        
+        $users = User::where('role', '!=', 'admin')->latest()->paginate(10, ['*'], 'users_page');
+        $transactions = Transaction::with(['user', 'package'])->latest()->paginate(10, ['*'], 'txn_page');
 
         $totalUsers = User::where('role', '!=', 'admin')->count();
-        
         $totalQrCodes = User::sum('image'); 
-        
         $totalScans = User::sum('scan'); 
         
-        $totalRevenue = Transaction::where('status', 'Paid')->sum('amount');
+        $totalRevenue = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])->sum('amount');
 
         return view('admin.dashboard', compact(
             'packages', 
@@ -32,6 +36,40 @@ class AdminController extends Controller
             'totalScans', 
             'totalRevenue'
         ));
+    }
+
+    public function storeUser(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8',
+            'package_id' => 'required|exists:pricing_packages,id'
+        ]);
+
+        $package = PricingPackage::find($request->package_id);
+        $role = strtolower($package->name);
+
+        User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => $role === 'pemula' ? 'starter' : ($role === 'profesional' ? 'professional' : ($role === 'bisnis' ? 'business' : 'free')),
+            'status' => 'active',
+            'email_verified_at' => now(),
+            'image' => 0,
+            'voice' => 0,
+            'scan' => 0,
+        ]);
+
+        return back()->with(['success' => "Akun {$request->name} berhasil ditambahkan!", 'active_tab' => 'users']);
+    }
+
+    public function destroyUser(User $user)
+    {
+        $name = $user->name;
+        $user->delete();
+        return back()->with(['success' => "Akun {$name} beserta datanya berhasil dihapus permanen.", 'active_tab' => 'users']);
     }
 
     public function toggleStatus(User $user)
@@ -49,13 +87,11 @@ class AdminController extends Controller
     public function search(Request $request)
     {
         $query = $request->get('query');
-        
         $users = User::where('role', '!=', 'admin')
             ->where(function($q) use ($query) {
                 $q->where('name', 'ilike', "%{$query}%")
                 ->orWhere('email', 'ilike', "%{$query}%");
-            })
-            ->get();
+            })->paginate(10);
 
         return view('admin.partials._user_table', compact('users'))->render();
     }
@@ -63,12 +99,14 @@ class AdminController extends Controller
     public function updatePackage(Request $request, \App\Models\PricingPackage $package)
     {
         $request->validate([
+            'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
             'image_limit' => 'required|integer|min:0',
             'voice_limit' => 'required|integer|min:0',
             'scan_limit' => 'required|integer|min:0',
         ]);
 
+        $package->name = $request->name;
         $package->price = $request->price;
         
         $package->features = [
