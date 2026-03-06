@@ -9,6 +9,22 @@ class ScanController extends Controller
 {
     public function scanQr($uuid)
     {
+        if ($uuid === 'demo-scanyuk') {
+            return response()->json([
+                'status' => 'success',
+                'data' => [
+                    'title' => 'Demo Augmented Reality ScanYuk',
+                    'ar_type' => '3d',
+                    'narration' => 'Selamat datang di scanyuk, ciptakan kreasi Augmented Reality mu sendiri',
+                    'ai_voice' => null,
+                    'custom_audio_url' => null,
+                    'image_url' => null,
+                    'file_3d_url' => url('/demo/logo.glb'),
+                    'bgm_url' => url('/demo/future.mp3')
+                ]
+            ]);
+        }
+
         $qr = DB::table('qr_codes')
                 ->where('uuid', $uuid)
                 ->where('status', 'Aktif')
@@ -29,17 +45,21 @@ class ScanController extends Controller
             'professional' => 100,
             'business' => 150,
         ];
+        
         $userRole = strtolower($user->role);
-        $maxScans = $scanLimits[$userRole] ?? 0;
-
-        if ($user->scan >= $maxScans) {
-            return response()->json([
-                'status' => 'limit_reached',
-                'message' => 'Akun pembuat QR ini telah mencapai batas maksimal scan ('. $maxScans .').'
-            ], 403);
+        
+        if ($userRole !== 'admin') {
+            $maxScans = $scanLimits[$userRole] ?? 0;
+            if ($user->scan >= $maxScans) {
+                return response()->json([
+                    'status' => 'limit_reached',
+                    'message' => 'Akun pembuat QR ini telah mencapai batas maksimal scan ('. $maxScans .').'
+                ], 403);
+            }
+            
+            DB::table('users')->where('id', $user->id)->increment('scan');
         }
 
-        DB::table('users')->where('id', $user->id)->increment('scan');
         DB::table('qr_codes')->where('id', $qr->id)->increment('scan_count');
 
         $bgmUrl = null;
