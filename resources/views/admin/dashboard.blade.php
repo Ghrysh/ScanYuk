@@ -347,7 +347,7 @@
 
                 <div>
                     <label class="block text-sm font-bold text-slate-700 mb-1">Nama Paket</label>
-                    <input type="text" name="name" x-model="pkgName" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 outline-none">
+                    <input type="text" name="name" x-model="pkgName" required class="p-6 space-y-4 w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 outline-none transition-all">
                 </div>
 
                 <form :action="`/admin/packages/${pkgId}`" method="POST" class="p-6 space-y-4">
