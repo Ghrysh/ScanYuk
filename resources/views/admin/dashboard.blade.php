@@ -3,16 +3,6 @@
 @section('content')
 
 @php
-    $features = $currentPackage ? $currentPackage->features : [];
-    
-    $imgLimit = (int) filter_var($features[0] ?? 0, FILTER_SANITIZE_NUMBER_INT);
-    $voiceLimit = (int) filter_var($features[1] ?? 0, FILTER_SANITIZE_NUMBER_INT);
-    $scanLimit = (int) filter_var($features[2] ?? 0, FILTER_SANITIZE_NUMBER_INT);
-
-    $imgPercent = $imgLimit > 0 ? min(($user->image / $imgLimit) * 100, 100) : 0;
-    $voicePercent = $voiceLimit > 0 ? min(($user->voice / $voiceLimit) * 100, 100) : 0;
-    $scanPercent = $scanLimit > 0 ? min(($user->scan / $scanLimit) * 100, 100) : 0;
-
     $initialTab = request('active_tab', session('active_tab', 'overview'));
 @endphp
 
