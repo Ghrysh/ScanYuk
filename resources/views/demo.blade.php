@@ -21,14 +21,14 @@
 
         <div class="bg-white rounded-3xl shadow-xl shadow-slate-300 border border-slate-100 p-8 md:p-10 inline-block mx-auto transform transition-transform duration-300">
             
-            <div class="flex justify-center text-teal-500 mb-6">
+            <div class="flex flex-col items-center">
                 <div class="bg-white p-4 rounded-3xl shadow-xl shadow-teal-500/20 border-4 border-teal-100 transition-transform hover:scale-105 duration-300">
-                    {!! QrCode::size(220)->color(15, 23, 42)->backgroundColor(255, 255, 255)->margin(1)->generate(url('/scanner/' . $demoId)) !!}
+                    <div id="qrcode-demo"></div>
                 </div>
             </div>
 
-            <p class="text-slate-500 text-sm mt-4 font-medium">
-                Scan QR code ini dengan kamera HP Anda
+            <p class="text-slate-500 text-sm mt-6 font-medium">
+                Arahkan kamera HP Anda ke kode di atas
             </p>
         </div>
 
@@ -62,7 +62,7 @@
                     </svg>
                 </div>
                 <h3 class="text-lg font-bold text-slate-900 mb-2">2. AR Muncul</h3>
-                <p class="text-slate-500 text-sm">Gambar/infografis tampil sebagai AR overlay</p>
+                <p class="text-slate-500 text-sm">Objek 3D tampil memukau di layar</p>
             </div>
 
             <div class="bg-white p-8 rounded-2xl border border-slate-200 text-center hover:shadow-lg transition-shadow">
@@ -71,8 +71,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
                     </svg>
                 </div>
-                <h3 class="text-lg font-bold text-slate-900 mb-2">3. Audio Plays</h3>
-                <p class="text-slate-500 text-sm">Narasi suara diputar otomatis</p>
+                <h3 class="text-lg font-bold text-slate-900 mb-2">3. Suara Bermain</h3>
+                <p class="text-slate-500 text-sm">Narasi suara diputar otomatis bersama musik</p>
             </div>
 
         </div>
@@ -87,6 +87,23 @@
         </div>
 
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <script>
+        const qrUrl = "{{ url('/scanner/' . $demoId) }}";
+
+        document.addEventListener('DOMContentLoaded', function() {
+            new QRCode(document.getElementById("qrcode-demo"), {
+                text: qrUrl,
+                width: 240,
+                height: 240,
+                colorDark : "#0f172a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.H
+            });
+        });
+    </script>
 </section>
 
 @endsection
