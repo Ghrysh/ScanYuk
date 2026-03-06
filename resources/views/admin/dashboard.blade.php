@@ -129,6 +129,7 @@
     <div x-show="activeTab === 'users'" 
          x-data="{ 
             showModal: false, 
+            showAddUserModal: false,
             userId: '', 
             userName: '', 
             action: '', 
@@ -145,20 +146,37 @@
                 this.action = currentStatus === 'active' ? 'suspend' : 'activate'; 
                 this.showModal = true; 
             }, 
+            openDeleteModal(id, name) {
+                this.userId = id; 
+                this.userName = name; 
+                this.action = 'delete'; 
+                this.showModal = true; 
+            },
             submitForm() { 
-                document.getElementById('toggle-form-' + this.userId).submit(); 
+                if(this.action === 'delete') {
+                    document.getElementById('delete-form-' + this.userId).submit(); 
+                } else {
+                    document.getElementById('toggle-form-' + this.userId).submit(); 
+                }
             }
          }" 
          style="display: none;" 
          class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative" 
          x-transition.opacity.duration.300ms>
+         
         <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <h2 class="text-lg font-bold text-slate-900">User Management</h2>
-            <div class="relative max-w-xs w-full">
-                <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                <input type="text" placeholder="Cari user..." @input.debounce.300ms="fetchUsers($event.target.value)" class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition-all">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <div class="relative max-w-xs w-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    <input type="text" placeholder="Cari user..." @input.debounce.300ms="fetchUsers($event.target.value)" class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:bg-white focus:border-teal-500 focus:ring-1 focus:ring-teal-500 outline-none transition-all">
+                </div>
+                <button @click="showAddUserModal = true" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-sm whitespace-nowrap transition-colors">
+                    + Tambah Akun
+                </button>
             </div>
         </div>
+        
         <div class="overflow-x-auto">
             <table class="w-full text-left text-sm text-slate-600">
                 <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
@@ -169,7 +187,7 @@
                         <th class="px-6 py-4">Voice</th>
                         <th class="px-6 py-4">Scan</th>
                         <th class="px-6 py-4">Status</th>
-                        <th class="px-6 py-4">Aksi</th>
+                        <th class="px-6 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="user-table-body" class="divide-y divide-slate-100">
@@ -178,25 +196,19 @@
             </table>
         </div>
 
+        <div class="p-4 border-t border-slate-100">
+            {{ $users->appends(['active_tab' => 'users', 'txn_page' => request('txn_page')])->links() }}
+        </div>
+
         <div x-show="showModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center">
-            
-            <div x-show="showModal" 
-                 x-transition.opacity.duration.300ms 
-                 class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" 
-                 @click="showModal = false"></div>
-
-            <div x-show="showModal" 
-                 x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave="transition ease-in duration-200"
-                 x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-                 x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                 class="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 overflow-hidden">
-
+            <div x-show="showModal" x-transition.opacity.duration.300ms class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showModal = false"></div>
+            <div x-show="showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full mx-4 p-6 overflow-hidden">
                 <div class="flex justify-center mb-5">
-                    <div x-show="action === 'suspend'" class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-red-500 border-[6px] border-red-50/50">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <div x-show="action === 'suspend' || action === 'delete'" class="w-14 h-14 rounded-full bg-red-50 flex items-center justify-center text-red-500 border-[6px] border-red-50/50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path x-show="action === 'suspend'" stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            <path x-show="action === 'delete'" stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                     </div>
                     <div x-show="action === 'activate'" class="w-14 h-14 rounded-full bg-teal-50 flex items-center justify-center text-teal-500 border-[6px] border-teal-50/50">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -204,23 +216,56 @@
                 </div>
 
                 <div class="text-center mb-8">
-                    <h3 class="text-xl font-extrabold text-slate-900 mb-2" x-text="action === 'suspend' ? 'Suspend User?' : 'Aktifkan User?'"></h3>
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-2" x-text="action === 'delete' ? 'Hapus Permanen?' : (action === 'suspend' ? 'Suspend User?' : 'Aktifkan User?')"></h3>
                     <p class="text-slate-500 text-sm leading-relaxed">
-                        Apakah Anda yakin ingin <span class="font-bold text-slate-700" x-text="action === 'suspend' ? 'menangguhkan' : 'mengaktifkan kembali'"></span> akun milik 
+                        Apakah Anda yakin ingin <span class="font-bold text-slate-700" x-text="action === 'delete' ? 'MENGHAPUS PERMANEN' : (action === 'suspend' ? 'menangguhkan' : 'mengaktifkan kembali')"></span> akun milik 
                         <br><span class="font-bold text-brand-primary" x-text="userName"></span>?
                     </p>
                 </div>
 
                 <div class="flex gap-3">
-                    <button @click="showModal = false" type="button" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">
-                        Batal
-                    </button>
-                    <button @click="submitForm()" type="button" 
-                        :class="action === 'suspend' ? 'bg-red-600 hover:bg-red-700 shadow-red-200/50' : 'bg-teal-600 hover:bg-teal-700 shadow-teal-200/50'"
-                        class="flex-1 px-4 py-2.5 rounded-xl text-white font-semibold shadow-lg transition-all hover:-translate-y-0.5">
-                        Ya, <span x-text="action === 'suspend' ? 'Suspend' : 'Aktifkan'"></span>
+                    <button @click="showModal = false" type="button" class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors">Batal</button>
+                    <button @click="submitForm()" type="button" :class="(action === 'suspend' || action === 'delete') ? 'bg-red-600 hover:bg-red-700 shadow-red-200/50' : 'bg-teal-600 hover:bg-teal-700 shadow-teal-200/50'" class="flex-1 px-4 py-2.5 rounded-xl text-white font-semibold shadow-lg transition-all hover:-translate-y-0.5">
+                        Ya, <span x-text="action === 'delete' ? 'Hapus' : (action === 'suspend' ? 'Suspend' : 'Aktifkan')"></span>
                     </button>
                 </div>
+            </div>
+        </div>
+
+        <div x-show="showAddUserModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center">
+            <div x-show="showAddUserModal" x-transition.opacity class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showAddUserModal = false"></div>
+            <div x-show="showAddUserModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h3 class="text-xl font-bold text-slate-900">Tambah Akun User</h3>
+                    <button @click="showAddUserModal = false" class="text-slate-400 hover:text-slate-600"><svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                </div>
+                <form action="{{ route('admin.users.store') }}" method="POST" class="p-6 space-y-4">
+                    @csrf
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Nama Lengkap</label>
+                        <input type="text" name="name" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Email</label>
+                        <input type="email" name="email" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Password</label>
+                        <input type="password" name="password" required minlength="8" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-1">Pilih Paket</label>
+                        <select name="package_id" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 outline-none cursor-pointer">
+                            @foreach($packages as $pkg)
+                                <option value="{{ $pkg->id }}">{{ $pkg->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="pt-4 flex gap-3">
+                        <button @click="showAddUserModal = false" type="button" class="flex-1 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50">Batal</button>
+                        <button type="submit" class="flex-1 py-3 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold shadow-lg">Buat Akun</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -300,6 +345,11 @@
                     </button>
                 </div>
 
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Nama Paket</label>
+                    <input type="text" name="name" x-model="pkgName" required class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-teal-500 outline-none">
+                </div>
+
                 <form :action="`/admin/packages/${pkgId}`" method="POST" class="p-6 space-y-4">
                     @csrf
                     @method('PATCH')
@@ -374,6 +424,9 @@
                     @endforeach
                 </tbody>
             </table>
+            <div class="p-4 border-t border-slate-100">
+            {{ $transactions->appends(['active_tab' => 'transaksi', 'users_page' => request('users_page')])->links() }}
+            </div>
         </div>
     </div>
 
