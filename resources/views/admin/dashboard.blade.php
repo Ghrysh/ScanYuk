@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8" x-data="{ activeTab: '{{ session('active_tab', 'overview') }}' }">
+<div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-8" x-data="{ activeTab: '{{ request('active_tab', session('active_tab', 'overview')) }}' }">
 
     @if(session('success'))
     <div x-data="{ show: true }" 
