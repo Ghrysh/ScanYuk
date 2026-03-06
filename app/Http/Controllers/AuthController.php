@@ -11,10 +11,72 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
+use App\Mail\ResetPasswordMail;
 use Carbon\Carbon;
 
 class AuthController extends Controller
 {
+    public function showForgotPassword() {
+        return view('auth.forgot-password');
+    }
+
+    public function sendResetLink(Request $request) {
+        $request->validate([
+            'email' => 'required|email|exists:users,email'
+        ], [
+            'email.exists' => 'Email ini belum terdaftar di sistem kami.'
+        ]);
+
+        $token = Str::random(60);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $request->email],
+            ['token' => $token, 'created_at' => Carbon::now()]
+        );
+
+        Mail::to($request->email)->send(new ResetPasswordMail($token, $request->email));
+
+        return back()->with('status', 'Link reset password telah dikirim ke email Anda.');
+    }
+
+    public function showResetPassword(Request $request, $token) {
+        return view('auth.reset-password', ['token' => $token, 'email' => $request->email]);
+    }
+
+    public function resetPassword(Request $request) {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+            'password' => 'required|min:8|confirmed',
+            'token' => 'required'
+        ]);
+
+        $record = DB::table('password_reset_tokens')
+            ->where('email', $request->email)
+            ->where('token', $request->token)
+            ->first();
+
+        if (!$record) {
+            return back()->withErrors(['email' => 'Token reset password tidak valid. Silakan minta ulang link.']);
+        }
+
+        if (Carbon::parse($record->created_at)->addMinutes(60)->isPast()) {
+            return back()->withErrors(['email' => 'Link reset password sudah kadaluarsa. Silakan minta ulang.']);
+        }
+
+        $user = User::where('email', $request->email)->first();
+        $user->update(['password' => Hash::make($request->password)]);
+
+        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+
+        Auth::login($user);
+
+        $dashboards = ['admin' => '/admin/dashboard', 'free' => '/dashboard', 'starter' => '/dashboard', 'professional' => '/dashboard', 'business' => '/dashboard'];
+        $redirectUrl = $dashboards[$user->role] ?? '/dashboard';
+
+        return redirect($redirectUrl)->with('success', 'Password Anda berhasil diubah!');
+    }
+
     public function showLogin() {
         return view('auth.login');
     }

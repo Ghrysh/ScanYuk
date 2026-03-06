@@ -90,6 +90,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     
     Route::post('/send-otp', [AuthController::class, 'sendOtp'])->name('send-otp');
+
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLink'])->name('password.email');
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
 });
 
 Route::get('/checkout/register/{refId}', [\App\Http\Controllers\PaymentController::class, 'registerCheckout'])->name('payment.register_checkout');

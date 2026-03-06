@@ -73,8 +73,12 @@
             </div>
 
             <div>
-                <label for="password" class="block text-sm font-semibold text-slate-700 mb-1">Password</label>
-                <div class="relative">
+                <div class="flex items-center justify-between mb-2">
+                    <label for="password" class="block text-sm font-bold text-slate-700">Password</label>
+                    <a href="{{ route('password.request') }}" class="text-xs font-bold text-teal-600 hover:text-teal-700 hover:underline transition-colors">
+                        Lupa Password?
+                    </a>
+                </div>
                     <input :type="showPassword ? 'text' : 'password'" id="password" name="password" required 
                         class="appearance-none block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm" 
                         placeholder="••••••••">
