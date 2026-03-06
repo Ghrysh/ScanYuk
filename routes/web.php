@@ -37,9 +37,7 @@ Route::get('/pricing', function () {
     return view('pricing', compact('packages'));
 })->name('pricing');
 
-Route::get('/demo', function () {
-    return view('demo');
-})->name('demo');
+Route::get('/demo', [App\Http\Controllers\Controller::class, 'showDemo'])->name('demo');
 
 Route::get('/how-it-works', function () {
     return view('how-it-works');
