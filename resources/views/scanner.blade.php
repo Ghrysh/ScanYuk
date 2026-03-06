@@ -145,6 +145,8 @@
                             uuid = qrData.split('?id=')[1];
                         } else if (qrData.includes('/api/scan/')) {
                             uuid = qrData.split('/api/scan/')[1];
+                        } else if (qrData.includes('/scanner/')) {
+                            uuid = qrData.split('/scanner/')[1];
                         }
 
                         if (uuid) {
