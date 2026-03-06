@@ -1,7 +1,5 @@
 <?php
-
 namespace App\Mail;
-
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -12,15 +10,15 @@ class ResetPasswordMail extends Mailable
 
     public $token;
     public $email;
+    public $pid;
 
-    public function __construct($token, $email)
-    {
+    public function __construct($token, $email, $pid = null) {
         $this->token = $token;
         $this->email = $email;
+        $this->pid = $pid;
     }
 
-    public function build()
-    {
+    public function build() {
         return $this->from('noreply@scanyuk.com', 'ScanYuk')
                     ->subject('Reset Password Akun ScanYuk Anda')
                     ->view('emails.reset-password');

@@ -36,6 +36,14 @@
 </head>
 <body class="font-sans antialiased text-slate-600 bg-white bg-grid-pattern min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
 
+    @if(session('success') || session('status'))
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] flex items-center p-4 mb-4 text-teal-800 rounded-2xl bg-white border border-teal-200 shadow-xl shadow-teal-100/50" role="alert">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-white bg-teal-500 rounded-full"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></div>
+        <div class="ms-3 text-sm font-bold pr-4">{{ session('success') ?? session('status') }}</div>
+        <button type="button" @click="show = false" class="ms-auto -mx-1.5 -my-1.5 bg-white text-slate-400 rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-900 h-8 w-8"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
+    </div>
+    @endif
+
     <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
         <div class="absolute top-[-10%] right-[-5%] w-96 h-96 bg-teal-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
         <div class="absolute bottom-[-10%] left-[-5%] w-96 h-96 bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
@@ -61,12 +69,6 @@
                 <div class="mb-4 p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 flex items-center gap-3">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                     <p class="text-sm font-bold">Pembayaran berhasil diproses! Akun Anda telah dibuat. Silakan login untuk memulai.</p>
-                </div>
-            @endif
-
-            @if(session('success'))
-                <div class="mb-4 p-4 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 text-sm font-bold text-center">
-                    {{ session('success') }}
                 </div>
             @endif
 

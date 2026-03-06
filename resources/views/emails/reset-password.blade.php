@@ -14,7 +14,7 @@
                 Kami menerima permintaan untuk mereset password akun ScanYuk Anda. Silakan klik tombol di bawah ini untuk membuat password baru:
             </p>
             <div style="text-align: center; margin: 30px 0;">
-                <a href="{{ route('password.reset', ['token' => $token, 'email' => $email]) }}" style="background-color: #14b8a6; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Reset Password Sekarang</a>
+                <a href="{{ route('password.reset', ['token' => $token, 'email' => $email, 'pid' => $pid]) }}" style="background-color: #14b8a6; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; display: inline-block;">Reset Password Sekarang</a>
             </div>
             <p style="color: #475569; font-size: 14px; line-height: 1.6;">
                 Jika Anda tidak pernah meminta reset password, abaikan email ini. Tautan ini akan kadaluarsa dalam 60 menit.

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 use App\Mail\ResetPasswordMail;
 use Carbon\Carbon;
 
@@ -22,12 +23,7 @@ class AuthController extends Controller
     }
 
     public function sendResetLink(Request $request) {
-        $request->validate([
-            'email' => 'required|email|exists:users,email'
-        ], [
-            'email.exists' => 'Email ini belum terdaftar di sistem kami.'
-        ]);
-
+        $request->validate(['email' => 'required|email|exists:users,email'], ['email.exists' => 'Email ini belum terdaftar di sistem.']);
         $token = Str::random(60);
 
         DB::table('password_reset_tokens')->updateOrInsert(
@@ -35,46 +31,58 @@ class AuthController extends Controller
             ['token' => $token, 'created_at' => Carbon::now()]
         );
 
-        Mail::to($request->email)->send(new ResetPasswordMail($token, $request->email));
+        $pid = session()->getId();
+        Mail::to($request->email)->send(new ResetPasswordMail($token, $request->email, $pid));
 
-        return back()->with('status', 'Link reset password telah dikirim ke email Anda.');
+        return back()->with(['status' => 'Link reset password telah dikirim ke email Anda.', 'polling' => true]);
     }
 
     public function showResetPassword(Request $request, $token) {
-        return view('auth.reset-password', ['token' => $token, 'email' => $request->email]);
+        if ($request->has('pid')) {
+            Cache::put('reset_clicked_' . $request->pid, ['token' => $token, 'email' => $request->email], 300);
+        }
+        return view('auth.reset-password', ['token' => $token, 'email' => $request->email, 'pid' => $request->pid]);
     }
 
     public function resetPassword(Request $request) {
-        $request->validate([
-            'email' => 'required|email|exists:users,email',
-            'password' => 'required|min:8|confirmed',
-            'token' => 'required'
-        ]);
+        $request->validate(['email' => 'required|email|exists:users,email', 'password' => 'required|min:8|confirmed', 'token' => 'required']);
 
-        $record = DB::table('password_reset_tokens')
-            ->where('email', $request->email)
-            ->where('token', $request->token)
-            ->first();
-
-        if (!$record) {
-            return back()->withErrors(['email' => 'Token reset password tidak valid. Silakan minta ulang link.']);
-        }
-
-        if (Carbon::parse($record->created_at)->addMinutes(60)->isPast()) {
-            return back()->withErrors(['email' => 'Link reset password sudah kadaluarsa. Silakan minta ulang.']);
-        }
+        $record = DB::table('password_reset_tokens')->where('email', $request->email)->where('token', $request->token)->first();
+        if (!$record) return back()->withErrors(['email' => 'Token reset password tidak valid.']);
+        if (Carbon::parse($record->created_at)->addMinutes(60)->isPast()) return back()->withErrors(['email' => 'Link reset password kadaluarsa.']);
 
         $user = User::where('email', $request->email)->first();
         $user->update(['password' => Hash::make($request->password)]);
-
         DB::table('password_reset_tokens')->where('email', $request->email)->delete();
 
+        if ($request->has('pid')) {
+            Cache::put('auto_login_' . $request->pid, $user->id, 300);
+        }
+
         Auth::login($user);
+        $redirectUrl = in_array($user->role, ['admin']) ? '/admin/dashboard' : '/dashboard';
+        return redirect($redirectUrl)->with('success', 'Password berhasil diubah!');
+    }
 
-        $dashboards = ['admin' => '/admin/dashboard', 'free' => '/dashboard', 'starter' => '/dashboard', 'professional' => '/dashboard', 'business' => '/dashboard'];
-        $redirectUrl = $dashboards[$user->role] ?? '/dashboard';
+    public function checkResetStatus(Request $request) {
+        $pid = session()->getId();
+        
+        if ($userId = Cache::get('auto_login_' . $pid)) {
+            Auth::loginUsingId($userId);
+            Cache::forget('auto_login_' . $pid);
+            $user = Auth::user();
+            $redirectUrl = in_array($user->role, ['admin']) ? '/admin/dashboard' : '/dashboard';
+            session()->flash('success', 'Berhasil masuk melalui perangkat lain!');
+            return response()->json(['status' => 'logged_in', 'redirect' => url($redirectUrl)]);
+        }
 
-        return redirect($redirectUrl)->with('success', 'Password Anda berhasil diubah!');
+        if ($clickedData = Cache::get('reset_clicked_' . $pid)) {
+            Cache::forget('reset_clicked_' . $pid);
+            $url = route('password.reset', ['token' => $clickedData['token'], 'email' => $clickedData['email'], 'pid' => $pid]);
+            return response()->json(['status' => 'clicked', 'redirect' => $url]);
+        }
+
+        return response()->json(['status' => 'pending']);
     }
 
     public function showLogin() {

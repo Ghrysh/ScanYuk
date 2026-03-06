@@ -33,7 +33,15 @@
         }
     </style>
 </head>
-<body class="font-sans antialiased text-slate-600 bg-white bg-grid-pattern min-h-screen flex items-center justify-center p-4 relative">
+<body class="font-sans antialiased text-slate-600 bg-white bg-grid-pattern min-h-screen flex items-center justify-center p-4 relative" x-data="{ otpSent: {{ old('otpSent', 'false') }}, showPassword: false, showConfirm: false }">
+
+    @if(session('success'))
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] flex items-center p-4 mb-4 text-teal-800 rounded-2xl bg-white border border-teal-200 shadow-xl shadow-teal-100/50" role="alert">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-white bg-teal-500 rounded-full"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></div>
+        <div class="ms-3 text-sm font-bold pr-4">{{ session('success') }}</div>
+        <button type="button" @click="show = false" class="ms-auto -mx-1.5 -my-1.5 bg-white text-slate-400 rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-900 h-8 w-8"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
+    </div>
+    @endif
 
     <div class="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
         <div class="absolute top-[-10%] left-[-5%] w-96 h-96 bg-purple-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
@@ -118,17 +126,26 @@
                     </button>
                 </div>
             </div>
-
-            <button type="submit" class="w-full py-3 px-4 rounded-lg btn-gradient text-white font-bold shadow-lg shadow-indigo-200 hover:opacity-90 transition-all hover:-translate-y-0.5">
-                Create Account
-            </button>
-
-            <div class="text-center text-sm pt-2">
-                <span class="text-slate-500">Already have an account?</span>
-                <a href="{{ route('login') }}" class="font-semibold text-teal-600 hover:text-teal-700 ml-1">
-                    Sign in
-                </a>
+            <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1">Confirm Password</label>
+                <div class="relative" x-data="{ showConf: false }">
+                    <input :type="showConf ? 'text' : 'password'" id="password_confirmation" name="password_confirmation" required class="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all placeholder-slate-400 sm:text-sm" placeholder="••••••••">
+                    <button type="button" @click="showConf = !showConf" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
+                        <svg x-show="!showConf" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        <svg x-show="showConf" style="display: none;" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.05 10.05 0 01-5.557 5.919" /></svg>
+                    </button>
+                </div>
             </div>
+            
+            <button type="submit" class="w-full py-3 px-4 rounded-lg btn-gradient text-white font-bold shadow-lg hover:-translate-y-0.5 transition-all">Create Account</button>
+            <div class="text-center text-sm pt-2"><span class="text-slate-500">Already have an account?</span><a href="{{ route('login') }}" class="font-semibold text-teal-600 hover:text-teal-700 ml-1">Sign in</a></div>
+        </form>
+
+        <form x-show="otpSent" style="display: none;" action="{{ route('register') }}" method="POST" class="space-y-5" id="regFormSubmit">
+            @csrf
+            <input type="hidden" name="name" :value="formData.name">
+            <input type="hidden" name="email" :value="formData.email">
+            <input type="hidden" name="password" :value="document.querySelector('input[name=password]').value">
         </form>
     </div>
 
@@ -214,7 +231,12 @@
 
                 submitForm() {
                     if (this.otpSent && this.otpDigits.join('').length === 6) {
-                        document.getElementById('regForm').submit();
+                        const hiddenInput = document.createElement('input');
+                        hiddenInput.type = 'hidden';
+                        hiddenInput.name = 'otp_combined';
+                        hiddenInput.value = this.otpDigits.join('');
+                        document.getElementById('regFormSubmit').appendChild(hiddenInput);
+                        document.getElementById('regFormSubmit').submit();
                     } else if(!this.otpSent) {
                         this.emailError = 'Harap verifikasi email terlebih dahulu.';
                     } else {
