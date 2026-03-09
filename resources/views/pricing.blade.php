@@ -36,7 +36,6 @@
             
             @foreach($packages as $package)
                 @php
-                    // Set parameter dinamis untuk tampilan dan link
                     $isPopular = $package->id == 3;
                     $roleName = 'free';
                     if($package->id == 2) $roleName = 'starter';
@@ -63,8 +62,6 @@
                         <div class="text-4xl font-bold text-slate-900 mb-6">
                             @if($package->price > 0)
                                 Rp{{ number_format($package->price, 0, ',', '.') }}
-                            @else
-                                Gratis
                             @endif
                         </div>
                     </div>

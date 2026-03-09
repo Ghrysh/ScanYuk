@@ -109,13 +109,18 @@
             </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto items-start">
             
             @foreach($packages as $package)
                 @php
                     $isPopular = $package->id == 3;
-                    $roleName = $package->id == 1 ? 'free' : ($package->id == 2 ? 'starter' : 'professional');
+                    $roleName = 'free';
+                    if($package->id == 2) $roleName = 'starter';
+                    if($package->id == 3) $roleName = 'professional';
+                    if($package->id == 4) $roleName = 'business';
+                    
                     $buttonText = $package->price == 0 ? 'Mulai Gratis' : 'Pilih Paket';
+                    if ($roleName === 'business') $buttonText = 'Hubungi Kami';
                 @endphp
 
                 <div class="{{ $isPopular 
@@ -134,8 +139,6 @@
                         <div class="text-4xl font-bold text-slate-900 mb-6">
                             @if($package->price > 0)
                                 Rp{{ number_format($package->price, 0, ',', '.') }}
-                            @else
-                                Gratis
                             @endif
                         </div>
                     </div>
