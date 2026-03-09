@@ -535,7 +535,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl border border-slate-200 shadow-sm" x-data="{ showContactModal: false, activeMsg: null }">
+        <!-- <div class="bg-white rounded-xl border border-slate-200 shadow-sm" x-data="{ showContactModal: false, activeMsg: null }">
             <div class="p-6 border-b border-slate-100 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-slate-900">Pesan Masuk (Contact Us)</h3>
             </div>
@@ -614,7 +614,7 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </div> -->
 
     </div>
 
