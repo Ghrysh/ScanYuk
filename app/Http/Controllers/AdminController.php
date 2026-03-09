@@ -37,7 +37,7 @@ class AdminController extends Controller
             $query->whereYear('date', now()->year);
         }
 
-        $visitorLogs = (clone $query)->latest('updated_at')->take(50)->get();
+        $visitorLogs = (clone $query)->latest('updated_at')->paginate(10, ['*'], 'journey_page');
         $totalVisitors = (clone $query)->count();
 
         $chartLabels = [];
