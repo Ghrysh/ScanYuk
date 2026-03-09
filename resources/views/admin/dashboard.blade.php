@@ -61,6 +61,11 @@
                 class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap">
                 Overview
             </button>
+            <button @click="activeTab = 'monitoring'" 
+                :class="activeTab === 'monitoring' ? 'bg-teal-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'"
+                class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap">
+                Monitoring
+            </button>
             <button @click="activeTab = 'users'" 
                 :class="activeTab === 'users' ? 'bg-teal-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'"
                 class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap">
@@ -447,5 +452,156 @@
         </div>
     </div>
 
+    <div x-show="activeTab === 'monitoring'" style="display: none;" x-transition.opacity.duration.300ms>
+        
+        <div class="mb-6 flex justify-between items-end">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900">Monitoring & Analitik</h2>
+                <p class="text-slate-500 text-sm mt-1">Pantau performa bisnis dan interaksi pengguna.</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pengunjung Web</p>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-2">{{ $webVisitors }}</h3>
+                        <p class="text-xs text-amber-500 mt-1">*Integrasikan Google Analytics</p>
+                    </div>
+                    <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Pendaftar</p>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-2">{{ $totalUsers }}</h3>
+                        <p class="text-xs text-teal-600 mt-1 font-medium">User Aktif</p>
+                    </div>
+                    <div class="p-3 bg-teal-50 text-teal-600 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Scan AR</p>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-2">{{ number_format($totalScans) }}</h3>
+                        <p class="text-xs text-slate-400 mt-1">Oleh semua user</p>
+                    </div>
+                    <div class="p-3 bg-purple-50 text-purple-600 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Scan QR Demo</p>
+                        <h3 class="text-2xl font-bold text-slate-900 mt-2">{{ $demoScans }}</h3>
+                        <p class="text-xs text-amber-500 mt-1">*Membutuhkan Database Log</p>
+                    </div>
+                    <div class="p-3 bg-slate-100 text-slate-600 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col gap-6">
+                
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-4">Pengguna Berdasarkan Paket</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-slate-600 flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-slate-300"></div> Paket Gratis</span>
+                            <span class="text-sm font-bold text-slate-900">{{ $countFree }} Akun</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-slate-600 flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-teal-400"></div> Paket Pemula (Starter)</span>
+                            <span class="text-sm font-bold text-slate-900">{{ $countStarter }} Akun</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-slate-600 flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-indigo-500"></div> Paket Profesional</span>
+                            <span class="text-sm font-bold text-slate-900">{{ $countPro }} Akun</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-medium text-slate-600 flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-purple-600"></div> Paket Bisnis</span>
+                            <span class="text-sm font-bold text-slate-900">{{ $countBusiness }} Akun</span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="border-slate-100 border-dashed">
+
+                <div>
+                    <h3 class="text-lg font-bold text-slate-900 mb-4">Rasio Konversi Transaksi</h3>
+                    <div class="flex items-center gap-6">
+                        <div class="flex-1 bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+                            <p class="text-xs text-slate-500 uppercase tracking-widest font-bold">Berhasil</p>
+                            <p class="text-3xl font-black text-teal-600 mt-1">{{ $txnSuccess }}</p>
+                        </div>
+                        <div class="flex-1 bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
+                            <p class="text-xs text-slate-500 uppercase tracking-widest font-bold">Gagal/Batal</p>
+                            <p class="text-3xl font-black text-red-500 mt-1">{{ $txnFailed }}</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-3 text-center">Bandingkan jumlah orang yang niat beli vs yang berhasil transfer.</p>
+                </div>
+
+            </div>
+
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-slate-900">Pesan Masuk (Contact Us)</h3>
+                    <span class="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-md">Belum Aktif</span>
+                </div>
+                <p class="text-sm text-slate-500 mb-4">Saat ini form kontak langsung dikirim ke email <b>ptbtt01@gmail.com</b>. Jika ingin pesan muncul di sini, Anda perlu membuat tabel database <code class="bg-slate-100 text-pink-500 px-1 rounded">contacts</code> terlebih dahulu.</p>
+                
+                <div class="border border-slate-200 rounded-lg overflow-hidden opacity-50 pointer-events-none grayscale">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                            <tr>
+                                <th class="px-4 py-3">Nama / Perusahaan</th>
+                                <th class="px-4 py-3">Topik</th>
+                                <th class="px-4 py-3">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100">
+                            <tr>
+                                <td class="px-4 py-3">
+                                    <div class="font-bold text-slate-900">Budi Santoso</div>
+                                    <div class="text-xs">PT Maju Mundur</div>
+                                </td>
+                                <td class="px-4 py-3">Paket Enterprise</td>
+                                <td class="px-4 py-3"><button class="text-teal-600 font-bold text-xs">Lihat Pesan</button></td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-3">
+                                    <div class="font-bold text-slate-900">Siti Nurwida</div>
+                                    <div class="text-xs">Personal</div>
+                                </td>
+                                <td class="px-4 py-3">Tanya Harga</td>
+                                <td class="px-4 py-3"><button class="text-teal-600 font-bold text-xs">Lihat Pesan</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
 </div>
 @endsection

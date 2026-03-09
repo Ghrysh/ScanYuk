@@ -16,27 +16,35 @@ class AdminController extends Controller
             ->where('created_at', '<', now()->subHours(24))
             ->update(['status' => 'Batal']);
 
-        $packages = PricingPackage::orderBy('id', 'asc')->get();
-        
+        $packages = PricingPackage::all();
         $users = User::where('role', '!=', 'admin')->latest()->paginate(10, ['*'], 'users_page');
         $transactions = Transaction::with(['user', 'package'])->latest()->paginate(10, ['*'], 'txn_page');
 
         $totalUsers = User::where('role', '!=', 'admin')->count();
         $totalQrCodes = User::sum('image'); 
         $totalScans = User::sum('scan'); 
-
         $grossRevenue = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])->sum('amount');
-
         $totalRevenue = round($grossRevenue / 1.11);
 
+        $usersByRole = User::select('role', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+                            ->groupBy('role')->pluck('total', 'role')->toArray();
+        
+        $countFree = $usersByRole['free'] ?? 0;
+        $countStarter = $usersByRole['starter'] ?? 0;
+        $countPro = $usersByRole['professional'] ?? 0;
+        $countBusiness = $usersByRole['business'] ?? 0;
+
+        $txnSuccess = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])->count();
+        $txnFailed = Transaction::whereIn('status', ['Batal', 'Failed', 'Pending'])->count();
+
+        $webVisitors = 0;
+        $demoScans = 0;
+        $contactMessages = [];
+
         return view('admin.dashboard', compact(
-            'packages', 
-            'users', 
-            'transactions', 
-            'totalUsers', 
-            'totalQrCodes', 
-            'totalScans', 
-            'totalRevenue'
+            'packages', 'users', 'transactions', 'totalUsers', 'totalQrCodes', 'totalScans', 'totalRevenue',
+            'countFree', 'countStarter', 'countPro', 'countBusiness', 'txnSuccess', 'txnFailed',
+            'webVisitors', 'demoScans', 'contactMessages'
         ));
     }
 
