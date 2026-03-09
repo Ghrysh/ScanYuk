@@ -57,10 +57,12 @@ class AdminController extends Controller
         $webVisitors = \Illuminate\Support\Facades\Cache::get('web_visitors_total', 0);
         $scanClicks = \Illuminate\Support\Facades\Cache::get('click_scan_home', 0);
 
+        $contactMessages = \App\Models\Contact::latest()->take(20)->get();
+
         return view('admin.dashboard', compact(
             'packages', 'users', 'transactions', 'totalUsers', 'totalQrCodes', 'totalScans', 'totalRevenue',
             'countFree', 'countStarter', 'countPro', 'countBusiness', 'txnSuccess', 'txnFailed',
-            'webVisitors', 'popularPackageName', 'scanClicks'
+            'webVisitors', 'popularPackageName', 'scanClicks', 'contactMessages'
         ));
     }
 

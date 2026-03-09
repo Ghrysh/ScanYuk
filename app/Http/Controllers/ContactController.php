@@ -29,6 +29,14 @@ class ContactController extends Controller
 
         Mail::to('ptbtt01@gmail.com')->send(new ContactSalesMail($request->all()));
 
+        \App\Models\Contact::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'company' => $request->company ?? null,
+            'subject' => $request->subject ?? 'General Inquiry',
+            'message' => $request->message,
+        ]);
+
         return back()->with('success', 'Pesan Anda telah terkirim! Tim kami akan segera menghubungi Anda.');
     }
 }

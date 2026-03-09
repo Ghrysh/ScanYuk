@@ -562,41 +562,77 @@
 
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm" x-data="{ showContactModal: false, activeMsg: null }">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-lg font-bold text-slate-900">Pesan Masuk (Contact Us)</h3>
-                    <span class="px-2.5 py-1 bg-slate-100 text-slate-600 text-xs font-bold rounded-md">Belum Aktif</span>
+                    <span class="px-2.5 py-1 bg-teal-100 text-teal-700 text-xs font-bold rounded-md">Aktif</span>
                 </div>
-                <p class="text-sm text-slate-500 mb-4">Saat ini form kontak langsung dikirim ke email <b>ptbtt01@gmail.com</b>. Jika ingin pesan muncul di sini, Anda perlu membuat tabel database <code class="bg-slate-100 text-pink-500 px-1 rounded">contacts</code> terlebih dahulu.</p>
                 
-                <div class="border border-slate-200 rounded-lg overflow-hidden opacity-50 pointer-events-none grayscale">
-                    <table class="w-full text-left text-sm text-slate-600">
-                        <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
+                <div class="border border-slate-200 rounded-lg overflow-hidden h-[250px] overflow-y-auto no-scrollbar">
+                    <table class="w-full text-left text-sm text-slate-600 relative">
+                        <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0 z-10">
                             <tr>
-                                <th class="px-4 py-3">Nama / Perusahaan</th>
-                                <th class="px-4 py-3">Topik</th>
-                                <th class="px-4 py-3">Aksi</th>
+                                <th class="px-4 py-3">Pengirim</th>
+                                <th class="px-4 py-3 hidden sm:table-cell">Topik</th>
+                                <th class="px-4 py-3 text-right">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            <tr>
+                            @forelse($contactMessages as $msg)
+                            <tr class="hover:bg-slate-50 transition-colors">
                                 <td class="px-4 py-3">
-                                    <div class="font-bold text-slate-900">Budi Santoso</div>
-                                    <div class="text-xs">PT Maju Mundur</div>
+                                    <div class="font-bold text-slate-900">{{ $msg->name }}</div>
+                                    <div class="text-xs text-slate-500">{{ $msg->company ?? 'Personal' }}</div>
                                 </td>
-                                <td class="px-4 py-3">Paket Enterprise</td>
-                                <td class="px-4 py-3"><button class="text-teal-600 font-bold text-xs">Lihat Pesan</button></td>
+                                <td class="px-4 py-3 truncate max-w-[150px] hidden sm:table-cell">{{ $msg->subject }}</td>
+                                <td class="px-4 py-3 text-right">
+                                    <button @click="activeMsg = {{ json_encode($msg) }}; showContactModal = true" class="text-teal-600 font-bold text-xs bg-teal-50 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition-colors">Lihat</button>
+                                </td>
                             </tr>
+                            @empty
                             <tr>
-                                <td class="px-4 py-3">
-                                    <div class="font-bold text-slate-900">Siti Nurwida</div>
-                                    <div class="text-xs">Personal</div>
-                                </td>
-                                <td class="px-4 py-3">Tanya Harga</td>
-                                <td class="px-4 py-3"><button class="text-teal-600 font-bold text-xs">Lihat Pesan</button></td>
+                                <td colspan="3" class="px-4 py-8 text-center text-slate-400">Belum ada pesan masuk.</td>
                             </tr>
+                            @endforelse
                         </tbody>
                     </table>
+                </div>
+
+                <div x-show="showContactModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div x-show="showContactModal" x-transition.opacity class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showContactModal = false"></div>
+                    <div x-show="showContactModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 overflow-hidden flex flex-col">
+                        <div class="flex justify-between items-center mb-5 border-b border-slate-100 pb-4">
+                            <h3 class="text-xl font-bold text-slate-900">Detail Pesan</h3>
+                            <button @click="showContactModal = false" class="text-slate-400 hover:text-slate-600 bg-slate-100 p-1.5 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+                        <div class="space-y-4 text-sm text-slate-600" x-if="activeMsg">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pengirim</p>
+                                <p class="font-bold text-slate-900 text-base" x-text="activeMsg?.name"></p>
+                                <p class="text-teal-600 font-medium" x-text="activeMsg?.email"></p>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Perusahaan</p>
+                                    <p class="font-semibold text-slate-800" x-text="activeMsg?.company || '-'"></p>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Tanggal</p>
+                                    <p class="font-semibold text-slate-800" x-text="new Date(activeMsg?.created_at).toLocaleDateString('id-ID')"></p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Topik / Subjek</p>
+                                <p class="font-bold text-slate-900" x-text="activeMsg?.subject || '-'"></p>
+                            </div>
+                            <div class="pt-2">
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pesan Isi</p>
+                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 whitespace-pre-wrap text-slate-700 leading-relaxed max-h-[150px] overflow-y-auto" x-text="activeMsg?.message"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
