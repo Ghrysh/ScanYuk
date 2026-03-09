@@ -3,7 +3,7 @@
 @section('content')
 
 @php
-    $packages = \App\Models\PricingPackage::whereIn('id', [1, 2, 3])->orderBy('id', 'asc')->get();
+    $packages = \App\Models\PricingPackage::whereIn('id', [1, 2, 3, 4])->orderBy('id', 'asc')->get();
 @endphp
 
 <section class="w-full flex flex-col items-center justify-center px-6 text-center pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-to-b from-white to-slate-50/50">
