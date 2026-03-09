@@ -37,19 +37,21 @@ class AdminController extends Controller
         $txnSuccess = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])->count();
         $txnFailed = Transaction::whereIn('status', ['Batal', 'Failed', 'Pending'])->count();
 
-        $popularPackageId = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])
+        $popularPackageRow = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])
             ->whereHas('package', function($q) {
                 $q->where('price', '>', 0);
             })
-            ->select('package_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
-            ->groupBy('package_id')
+            ->select('pricing_package_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+            ->groupBy('pricing_package_id')
             ->orderBy('total', 'desc')
             ->first();
 
         $popularPackageName = 'Belum Ada';
-        if ($popularPackageId) {
-            $pkg = PricingPackage::find($popularPackageId->package_id);
-            if ($pkg) $popularPackageName = $pkg->name;
+        if ($popularPackageRow && $popularPackageRow->pricing_package_id) {
+            $pkg = PricingPackage::find($popularPackageRow->pricing_package_id);
+            if ($pkg) {
+                $popularPackageName = $pkg->name;
+            }
         }
 
         $webVisitors = \Illuminate\Support\Facades\Cache::get('web_visitors_total', 0);
