@@ -26,46 +26,58 @@ class AdminController extends Controller
         $grossRevenue = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])->sum('amount');
         $totalRevenue = round($grossRevenue / 1.11);
 
-        $usersByRole = User::select('role', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
-                            ->groupBy('role')->pluck('total', 'role')->toArray();
+        $filter = $request->query('filter', 'today');
+        $query = \App\Models\VisitorLog::query();
         
-        $countFree = $usersByRole['free'] ?? 0;
-        $countStarter = $usersByRole['starter'] ?? 0;
-        $countPro = $usersByRole['professional'] ?? 0;
-        $countBusiness = $usersByRole['business'] ?? 0;
+        if ($filter == 'today') {
+            $query->where('date', now()->toDateString());
+        } elseif ($filter == 'month') {
+            $query->whereMonth('date', now()->month)->whereYear('date', now()->year);
+        } elseif ($filter == 'year') {
+            $query->whereYear('date', now()->year);
+        }
 
-        $txnSuccess = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])->count();
-        $txnFailed = Transaction::whereIn('status', ['Batal', 'Failed', 'Pending'])->count();
+        $visitorLogs = (clone $query)->latest('updated_at')->take(50)->get();
+        $totalVisitors = (clone $query)->count();
 
-        $popularPackageRow = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])
-            ->whereHas('package', function($q) {
-                $q->where('price', '>', 0);
-            })
-            ->select('pricing_package_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
-            ->groupBy('pricing_package_id')
-            ->orderBy('total', 'desc')
-            ->first();
+        $chartLabels = [];
+        $chartValues = [];
 
-        $popularPackageName = 'Belum Ada';
-        if ($popularPackageRow && $popularPackageRow->pricing_package_id) {
-            $pkg = PricingPackage::find($popularPackageRow->pricing_package_id);
-            if ($pkg) {
-                $popularPackageName = $pkg->name;
+        if ($filter == 'today') {
+            $stats = (clone $query)->selectRaw('EXTRACT(HOUR FROM created_at) as hour, count(*) as count')
+                ->groupBy('hour')->pluck('count', 'hour')->toArray();
+            for ($i = 0; $i < 24; $i++) {
+                $chartLabels[] = str_pad($i, 2, '0', STR_PAD_LEFT) . ':00';
+                $chartValues[] = $stats[$i] ?? 0;
+            }
+        } elseif ($filter == 'month') {
+            $stats = (clone $query)->selectRaw('EXTRACT(DAY FROM created_at) as day, count(*) as count')
+                ->groupBy('day')->pluck('count', 'day')->toArray();
+            for ($i = 1; $i <= now()->daysInMonth; $i++) {
+                $chartLabels[] = $i;
+                $chartValues[] = $stats[$i] ?? 0;
+            }
+        } elseif ($filter == 'year') {
+            $stats = (clone $query)->selectRaw('EXTRACT(MONTH FROM created_at) as month, count(*) as count')
+                ->groupBy('month')->pluck('count', 'month')->toArray();
+            $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+            for ($i = 1; $i <= 12; $i++) {
+                $chartLabels[] = $months[$i-1];
+                $chartValues[] = $stats[$i] ?? 0;
             }
         }
 
-        $analyticsPath = storage_path('app/analytics.json');
-        $analyticsData = file_exists($analyticsPath) ? json_decode(file_get_contents($analyticsPath), true) : ['visitors' => 0, 'clicks' => 0];
-        
-        $webVisitors = $analyticsData['visitors'] ?? 0;
-        $scanClicks = $analyticsData['clicks'] ?? 0;
+        $chartData = [
+            'labels' => $chartLabels,
+            'values' => $chartValues,
+            'labelName' => $filter == 'today' ? 'Pengunjung per Jam' : ($filter == 'month' ? 'Pengunjung per Hari' : 'Pengunjung per Bulan')
+        ];
 
         $contactMessages = \App\Models\Contact::latest()->take(20)->get();
 
         return view('admin.dashboard', compact(
             'packages', 'users', 'transactions', 'totalUsers', 'totalQrCodes', 'totalScans', 'totalRevenue',
-            'countFree', 'countStarter', 'countPro', 'countBusiness', 'txnSuccess', 'txnFailed',
-            'webVisitors', 'popularPackageName', 'scanClicks', 'contactMessages'
+            'contactMessages', 'visitorLogs', 'totalVisitors', 'filter', 'chartData'
         ));
     }
 

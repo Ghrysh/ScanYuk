@@ -454,196 +454,207 @@
 
     <div x-show="activeTab === 'monitoring'" style="display: none;" x-transition.opacity.duration.300ms>
         
-        <div class="mb-6 flex justify-between items-end">
+        <div class="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
             <div>
-                <h2 class="text-2xl font-bold text-slate-900">Monitoring & Analitik</h2>
-                <p class="text-slate-500 text-sm mt-1">Pantau performa bisnis dan interaksi pengguna.</p>
+                <h2 class="text-2xl font-bold text-slate-900">Monitoring & Trafik</h2>
+                <p class="text-slate-500 text-sm mt-1">Pantau perjalanan pengunjung di dalam website.</p>
+            </div>
+            
+            <div class="flex bg-slate-100 p-1 rounded-xl w-fit">
+                <a href="{{ route('admin.dashboard', ['active_tab' => 'monitoring', 'filter' => 'today']) }}" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all {{ $filter == 'today' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-500 hover:text-slate-700' }}">Hari Ini</a>
+                <a href="{{ route('admin.dashboard', ['active_tab' => 'monitoring', 'filter' => 'month']) }}" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all {{ $filter == 'month' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-500 hover:text-slate-700' }}">Bulan Ini</a>
+                <a href="{{ route('admin.dashboard', ['active_tab' => 'monitoring', 'filter' => 'year']) }}" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all {{ $filter == 'year' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-500 hover:text-slate-700' }}">Tahun Ini</a>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            
-            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pengunjung Web</p>
-                        <h3 class="text-2xl font-bold text-slate-900 mt-2">{{ number_format($webVisitors) }}</h3>
-                        <p class="text-xs text-teal-600 mt-1 font-medium">Real-time Tracker Aktif</p>
-                    </div>
-                    <div class="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    </div>
-                </div>
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col justify-center items-center text-center h-full">
+                <p class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">Total Pengunjung</p>
+                <h3 class="text-6xl font-black text-slate-900 mb-2">{{ number_format($totalVisitors) }}</h3>
+                <p class="text-xs text-teal-600 font-medium bg-teal-50 px-3 py-1 rounded-full">
+                    Sesi Aktif: {{ $filter == 'today' ? 'Hari ini' : ($filter == 'month' ? 'Bulan ini' : 'Tahun ini') }}
+                </p>
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Pendaftar</p>
-                        <h3 class="text-2xl font-bold text-slate-900 mt-2">{{ $totalUsers }}</h3>
-                        <p class="text-xs text-teal-600 mt-1 font-medium">User Aktif</p>
-                    </div>
-                    <div class="p-3 bg-teal-50 text-teal-600 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
-                    </div>
-                </div>
+            <div class="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6 shadow-sm relative h-64">
+                <canvas id="trafficChart"></canvas>
             </div>
-
-            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Paket Terlaris</p>
-                        <h3 class="text-2xl font-bold text-slate-900 mt-2">{{ $popularPackageName }}</h3>
-                        <p class="text-xs text-slate-400 mt-1">Selain paket gratis</p>
-                    </div>
-                    <div class="p-3 bg-amber-50 text-amber-500 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Klik Tombol Scan</p>
-                        <h3 class="text-2xl font-bold text-slate-900 mt-2">{{ number_format($scanClicks) }}</h3>
-                        <p class="text-xs text-slate-400 mt-1">Interaksi di halaman Home</p>
-                    </div>
-                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
-                    </div>
-                </div>
-            </div>
-
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+            <div class="p-6 border-b border-slate-100">
+                <h3 class="text-lg font-bold text-slate-900">Perjalanan Pengunjung (Visitor Journey)</h3>
+            </div>
+            <div class="overflow-x-auto max-h-[500px] overflow-y-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-4">IP / Sesi</th>
+                            <th class="px-6 py-4 w-1/2">Alur Halaman</th>
+                            <th class="px-6 py-4">Mulai</th>
+                            <th class="px-6 py-4">Aktivitas Terakhir</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($visitorLogs as $log)
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-slate-900">{{ $log->ip_address }}</div>
+                                <div class="text-xs text-slate-400 truncate w-24" title="{{ $log->session_id }}">ID: {{ substr($log->session_id, 0, 8) }}...</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    @if($log->page_journey && is_array($log->page_journey))
+                                        @foreach($log->page_journey as $step)
+                                            <div class="flex items-center gap-1 group relative">
+                                                <span class="px-2 py-1 bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs rounded-md shadow-sm">
+                                                    {{ $step['path'] == '/' ? '/ (Home)' : $step['path'] }}
+                                                </span>
+                                                <span class="absolute -top-7 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">Jam: {{ $step['time'] }}</span>
+
+                                                @if(!$loop->last)
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <span class="text-slate-400 italic">Belum ada data alur</span>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">{{ $log->created_at->format('H:i:s') }}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-2.5 py-1 bg-teal-50 text-teal-600 rounded-lg text-xs font-bold">{{ $log->updated_at->diffForHumans() }}</span>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="4" class="px-6 py-8 text-center text-slate-400">Belum ada data pengunjung pada rentang waktu ini.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm" x-data="{ showContactModal: false, activeMsg: null }">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-slate-900">Pesan Masuk (Contact Us)</h3>
+            </div>
             
-            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm flex flex-col gap-6">
-                
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-4">Pengguna Berdasarkan Paket</h3>
-                    <div class="space-y-4">
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-slate-600 flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-slate-300"></div> Paket Gratis</span>
-                            <span class="text-sm font-bold text-slate-900">{{ $countFree }} Akun</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-slate-600 flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-teal-400"></div> Paket Pemula (Starter)</span>
-                            <span class="text-sm font-bold text-slate-900">{{ $countStarter }} Akun</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-slate-600 flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-indigo-500"></div> Paket Profesional</span>
-                            <span class="text-sm font-bold text-slate-900">{{ $countPro }} Akun</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-sm font-medium text-slate-600 flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-purple-600"></div> Paket Bisnis</span>
-                            <span class="text-sm font-bold text-slate-900">{{ $countBusiness }} Akun</span>
-                        </div>
-                    </div>
-                </div>
-
-                <hr class="border-slate-100 border-dashed">
-
-                <div>
-                    <h3 class="text-lg font-bold text-slate-900 mb-4">Rasio Konversi Transaksi</h3>
-                    <div class="flex items-center gap-6">
-                        <div class="flex-1 bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
-                            <p class="text-xs text-slate-500 uppercase tracking-widest font-bold">Berhasil</p>
-                            <p class="text-3xl font-black text-teal-600 mt-1">{{ $txnSuccess }}</p>
-                        </div>
-                        <div class="flex-1 bg-slate-50 p-4 rounded-xl border border-slate-100 text-center">
-                            <p class="text-xs text-slate-500 uppercase tracking-widest font-bold">Gagal/Batal</p>
-                            <p class="text-3xl font-black text-red-500 mt-1">{{ $txnFailed }}</p>
-                        </div>
-                    </div>
-                    <p class="text-xs text-slate-400 mt-3 text-center">Bandingkan jumlah orang yang niat beli vs yang berhasil transfer.</p>
-                </div>
-
+            <div class="overflow-x-auto max-h-[300px] overflow-y-auto no-scrollbar">
+                <table class="w-full text-left text-sm text-slate-600 relative">
+                    <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0 z-10">
+                        <tr>
+                            <th class="px-6 py-4">Pengirim</th>
+                            <th class="px-6 py-4 hidden sm:table-cell">Email</th>
+                            <th class="px-6 py-4">Waktu</th>
+                            <th class="px-6 py-4 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @forelse($contactMessages as $msg)
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="font-bold text-slate-900">{{ $msg->name }}</div>
+                                <div class="text-xs text-slate-500">{{ $msg->company ?? 'Personal' }}</div>
+                            </td>
+                            <td class="px-6 py-4 truncate max-w-[150px] hidden sm:table-cell">{{ $msg->email }}</td>
+                            <td class="px-6 py-4 text-xs">{{ $msg->created_at->format('d M Y, H:i') }}</td>
+                            <td class="px-6 py-4 text-right">
+                                <button @click="activeMsg = {{ json_encode($msg) }}; showContactModal = true" class="text-teal-600 font-bold text-xs bg-teal-50 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition-colors">Lihat</button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-slate-400">Belum ada pesan masuk.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
 
-            <div class="bg-white rounded-xl border border-slate-200 p-6 shadow-sm" x-data="{ showContactModal: false, activeMsg: null }">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-bold text-slate-900">Pesan Masuk (Contact Us)</h3>
-                    <span class="px-2.5 py-1 bg-teal-100 text-teal-700 text-xs font-bold rounded-md">Aktif</span>
-                </div>
-                
-                <div class="border border-slate-200 rounded-lg overflow-hidden h-[250px] overflow-y-auto no-scrollbar">
-                    <table class="w-full text-left text-sm text-slate-600 relative">
-                        <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0 z-10">
-                            <tr>
-                                <th class="px-4 py-3">Pengirim</th>
-                                <th class="px-4 py-3 hidden sm:table-cell">Email</th>
-                                <th class="px-4 py-3 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100">
-                            @forelse($contactMessages as $msg)
-                            <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-4 py-3">
-                                    <div class="font-bold text-slate-900">{{ $msg->name }}</div>
-                                    <div class="text-xs text-slate-500">{{ $msg->company ?? 'Personal' }}</div>
-                                </td>
-                                <td class="px-4 py-3 truncate max-w-[150px] hidden sm:table-cell">{{ $msg->email }}</td>
-                                <td class="px-4 py-3 text-right">
-                                    <button @click="activeMsg = {{ json_encode($msg) }}; showContactModal = true" class="text-teal-600 font-bold text-xs bg-teal-50 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition-colors">Lihat</button>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="3" class="px-4 py-8 text-center text-slate-400">Belum ada pesan masuk.</td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-
-                <div x-show="showContactModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                    <div x-show="showContactModal" x-transition.opacity class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showContactModal = false"></div>
-                    <div x-show="showContactModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 overflow-hidden flex flex-col">
-                        <div class="flex justify-between items-center mb-5 border-b border-slate-100 pb-4">
-                            <h3 class="text-xl font-bold text-slate-900">Detail Pesan</h3>
-                            <button @click="showContactModal = false" class="text-slate-400 hover:text-slate-600 bg-slate-100 p-1.5 rounded-lg">
-                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
+            <div x-show="showContactModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div x-show="showContactModal" x-transition.opacity class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showContactModal = false"></div>
+                <div x-show="showContactModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 overflow-hidden flex flex-col">
+                    <div class="flex justify-between items-center mb-5 border-b border-slate-100 pb-4">
+                        <h3 class="text-xl font-bold text-slate-900">Detail Pesan</h3>
+                        <button @click="showContactModal = false" class="text-slate-400 hover:text-slate-600 bg-slate-100 p-1.5 rounded-lg">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                    <div class="space-y-4 text-sm text-slate-600" x-if="activeMsg">
+                        <div>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pengirim</p>
+                            <p class="font-bold text-slate-900 text-base" x-text="activeMsg?.name"></p>
+                            <p class="text-teal-600 font-medium" x-text="activeMsg?.email"></p>
                         </div>
-                        <div class="space-y-4 text-sm text-slate-600" x-if="activeMsg">
+                        <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pengirim</p>
-                                <p class="font-bold text-slate-900 text-base" x-text="activeMsg?.name"></p>
-                                <p class="text-teal-600 font-medium" x-text="activeMsg?.email"></p>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Perusahaan</p>
+                                <p class="font-semibold text-slate-800" x-text="activeMsg?.company || '-'"></p>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Perusahaan</p>
-                                    <p class="font-semibold text-slate-800" x-text="activeMsg?.company || '-'"></p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Tanggal</p>
-                                    <p class="font-semibold text-slate-800" x-text="new Date(activeMsg?.created_at).toLocaleDateString('id-ID')"></p>
-                                </div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Tanggal</p>
+                                <p class="font-semibold text-slate-800" x-text="new Date(activeMsg?.created_at).toLocaleDateString('id-ID')"></p>
                             </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Industri</p>
-                                    <p class="font-semibold text-slate-800" x-text="activeMsg?.industry || '-'"></p>
-                                </div>
-                                <div>
-                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Estimasi Volume QR</p>
-                                    <p class="font-semibold text-slate-800" x-text="activeMsg?.volume || '-'"></p>
-                                </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Industri</p>
+                                <p class="font-semibold text-slate-800" x-text="activeMsg?.industry || '-'"></p>
                             </div>
-                            <div class="pt-2">
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pesan Isi</p>
-                                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 whitespace-pre-wrap text-slate-700 leading-relaxed max-h-[150px] overflow-y-auto" x-text="activeMsg?.message"></div>
+                            <div>
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Estimasi Volume QR</p>
+                                <p class="font-semibold text-slate-800" x-text="activeMsg?.volume || '-'"></p>
                             </div>
+                        </div>
+                        <div class="pt-2">
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pesan Isi</p>
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 whitespace-pre-wrap text-slate-700 leading-relaxed max-h-[150px] overflow-y-auto" x-text="activeMsg?.message"></div>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
 
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chartData = @json($chartData);
+            const ctx = document.getElementById('trafficChart');
+            
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            label: chartData.labelName,
+                            data: chartData.values,
+                            borderColor: '#0d9488',
+                            backgroundColor: 'rgba(20, 184, 166, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4, // Membuat garis melengkung halus
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#0d9488',
+                            pointBorderWidth: 2,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
 </div>
 @endsection

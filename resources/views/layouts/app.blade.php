@@ -12,6 +12,7 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script type="text/javascript">
         (function(c,l,a,r,i,t,y){
@@ -126,41 +127,12 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            
-            fetch('/internal/stats/v', {
+            const currentPath = encodeURIComponent(window.location.pathname);
+            fetch('/sys-ping/v1?path=' + currentPath, {
                 method: 'GET',
+                keepalive: true,
                 headers: { 'Accept': 'application/json' }
             }).catch(e => {});
-
-            document.body.addEventListener('click', async function(e) {
-                const link = e.target.closest('a[href*="scan-ar"], a[href*="demo"]');
-                
-                if (link && link.href) {
-                    e.preventDefault();
-                    const targetUrl = link.href;
-
-                    let isNavigating = false;
-                    const navigate = () => {
-                        if (!isNavigating) {
-                            isNavigating = true;
-                            window.location.href = targetUrl;
-                        }
-                    };
-
-                    setTimeout(navigate, 500);
-
-                    try {
-                        await fetch('/internal/stats/c', {
-                            method: 'GET',
-                            headers: { 'Accept': 'application/json' }
-                        });
-                        navigate(); 
-                    } catch (error) {
-                        navigate();
-                    }
-                }
-            });
-
         });
     </script>
 

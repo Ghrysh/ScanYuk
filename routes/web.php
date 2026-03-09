@@ -164,19 +164,27 @@ Route::get('/internal/stats/c', function () {
     return response()->json(['success' => true]);
 });
 
-Route::get('/internal/stats/v', function (\Illuminate\Http\Request $request) {
+Route::get('/sys-ping/v1', function (\Illuminate\Http\Request $request) {
+    $sessionId = session()->getId();
     $ip = $request->ip();
-    $today = now()->format('Y-m-d');
-    $cacheKey = "v_{$ip}_{$today}";
+    $path = $request->query('path', '/');
+    $date = now()->toDateString();
 
-    if (!\Illuminate\Support\Facades\Cache::has($cacheKey)) {
-        \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addDay());
+    $log = \App\Models\VisitorLog::firstOrCreate(
+        ['session_id' => $sessionId, 'date' => $date],
+        ['ip_address' => $ip, 'page_journey' => []]
+    );
 
-        $path = storage_path('app/analytics.json');
-        $data = file_exists($path) ? json_decode(file_get_contents($path), true) : ['visitors' => 0, 'clicks' => 0];
-        
-        $data['visitors'] = ($data['visitors'] ?? 0) + 1;
-        file_put_contents($path, json_encode($data));
+    $journey = $log->page_journey ?? [];
+    
+    $lastVisit = end($journey);
+    if (!$lastVisit || $lastVisit['path'] !== $path) {
+        $journey[] = [
+            'path' => $path, 
+            'time' => now()->format('H:i')
+        ];
+        $log->page_journey = $journey;
+        $log->save();
     }
 
     return response()->json(['success' => true]);
