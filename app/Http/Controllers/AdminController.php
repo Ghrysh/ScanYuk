@@ -16,7 +16,7 @@ class AdminController extends Controller
             ->where('created_at', '<', now()->subHours(24))
             ->update(['status' => 'Batal']);
 
-        $packages = PricingPackage::all();
+        $packages = PricingPackage::orderBy('id', 'asc')->get();
         
         $users = User::where('role', '!=', 'admin')->latest()->paginate(10, ['*'], 'users_page');
         $transactions = Transaction::with(['user', 'package'])->latest()->paginate(10, ['*'], 'txn_page');

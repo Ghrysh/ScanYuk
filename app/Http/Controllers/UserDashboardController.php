@@ -11,7 +11,8 @@ class UserDashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-        $packages = PricingPackage::all();
+
+        $packages = PricingPackage::orderBy('id', 'asc')->get();
 
         $roleMap = [
             'free' => 1,
