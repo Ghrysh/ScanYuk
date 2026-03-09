@@ -3,7 +3,7 @@
 @section('content')
 
 @php
-    $packages = \App\Models\PricingPackage::whereIn('id', [1, 2, 3, 4])->orderBy('id', 'asc')->get();
+    $packages = \App\Models\PricingPackage::orderBy('id', 'asc')->get();
 @endphp
 
 <section class="w-full flex flex-col items-center justify-center px-6 text-center pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-to-b from-white to-slate-50/50">
@@ -109,7 +109,7 @@
             </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto items-start">
             
             @foreach($packages as $package)
                 @php
