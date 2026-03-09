@@ -126,31 +126,38 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-
-            fetch('/sys-ping/v1', {
+            
+            fetch('/internal/stats/v', {
                 method: 'GET',
-                keepalive: true,
                 headers: { 'Accept': 'application/json' }
             }).catch(e => {});
 
-            document.body.addEventListener('click', function(e) {
-                const link = e.target.closest('a[href*="scan-ar"]');
+            document.body.addEventListener('click', async function(e) {
+                const link = e.target.closest('a[href*="scan-ar"], a[href*="demo"]');
                 
                 if (link && link.href) {
                     e.preventDefault();
                     const targetUrl = link.href;
 
-                    fetch('/sys-action/sc', {
-                        method: 'GET',
-                        keepalive: true,
-                        headers: { 'Accept': 'application/json' }
-                    }).finally(() => {
-                        window.location.href = targetUrl;
-                    });
-                    
-                    setTimeout(() => {
-                        window.location.href = targetUrl;
-                    }, 500);
+                    let isNavigating = false;
+                    const navigate = () => {
+                        if (!isNavigating) {
+                            isNavigating = true;
+                            window.location.href = targetUrl;
+                        }
+                    };
+
+                    setTimeout(navigate, 500);
+
+                    try {
+                        await fetch('/internal/stats/c', {
+                            method: 'GET',
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        navigate(); 
+                    } catch (error) {
+                        navigate();
+                    }
                 }
             });
 

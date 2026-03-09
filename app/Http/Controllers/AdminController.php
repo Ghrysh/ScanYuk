@@ -54,8 +54,11 @@ class AdminController extends Controller
             }
         }
 
-        $webVisitors = \Illuminate\Support\Facades\Cache::get('web_visitors_total', 0);
-        $scanClicks = \Illuminate\Support\Facades\Cache::get('click_scan_home', 0);
+        $analyticsPath = storage_path('app/analytics.json');
+        $analyticsData = file_exists($analyticsPath) ? json_decode(file_get_contents($analyticsPath), true) : ['visitors' => 0, 'clicks' => 0];
+        
+        $webVisitors = $analyticsData['visitors'] ?? 0;
+        $scanClicks = $analyticsData['clicks'] ?? 0;
 
         $contactMessages = \App\Models\Contact::latest()->take(20)->get();
 

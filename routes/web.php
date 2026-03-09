@@ -154,23 +154,29 @@ Route::get('/minio-proxy/{any}', function ($any) {
     return $disk->response($target, null, $headers);
 })->where('any', '.*')->name('minio.proxy');
 
-Route::get('/sys-action/sc', function () {
-    \Illuminate\Support\Facades\Cache::increment('click_scan_home');
+Route::get('/internal/stats/c', function () {
+    $path = storage_path('app/analytics.json');
+    $data = file_exists($path) ? json_decode(file_get_contents($path), true) : ['visitors' => 0, 'clicks' => 0];
+    
+    $data['clicks'] = ($data['clicks'] ?? 0) + 1;
+    file_put_contents($path, json_encode($data));
+    
     return response()->json(['success' => true]);
 });
 
-Route::get('/sys-ping/v1', function (\Illuminate\Http\Request $request) {
+Route::get('/internal/stats/v', function (\Illuminate\Http\Request $request) {
     $ip = $request->ip();
     $today = now()->format('Y-m-d');
-    $cacheKey = "visitor_{$ip}_{$today}";
+    $cacheKey = "v_{$ip}_{$today}";
 
     if (!\Illuminate\Support\Facades\Cache::has($cacheKey)) {
         \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addDay());
+
+        $path = storage_path('app/analytics.json');
+        $data = file_exists($path) ? json_decode(file_get_contents($path), true) : ['visitors' => 0, 'clicks' => 0];
         
-        if (!\Illuminate\Support\Facades\Cache::has('web_visitors_total')) {
-            \Illuminate\Support\Facades\Cache::put('web_visitors_total', 0);
-        }
-        \Illuminate\Support\Facades\Cache::increment('web_visitors_total');
+        $data['visitors'] = ($data['visitors'] ?? 0) + 1;
+        file_put_contents($path, json_encode($data));
     }
 
     return response()->json(['success' => true]);
