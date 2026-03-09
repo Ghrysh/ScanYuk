@@ -4,6 +4,7 @@ use App\Models\PricingPackage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\AdminController;
@@ -153,14 +154,14 @@ Route::get('/minio-proxy/{any}', function ($any) {
     return $disk->response($target, null, $headers);
 })->where('any', '.*')->name('minio.proxy');
 
-Route::post('/track/scan-click', function() {
-    \Illuminate\Support\Facades\Cache::increment('click_scan_home');
+Route::post('/track/scan-click', function () {
+    Cache::increment('click_scan_home');
     return response()->json(['success' => true]);
 });
 
-Route::post('/track/visitor', function() {
+Route::post('/track/visitor', function () {
     if (!session()->has('visited')) {
-        \Illuminate\Support\Facades\Cache::increment('web_visitors_total');
+        Cache::increment('web_visitors_total');
         session(['visited' => true]);
     }
     return response()->json(['success' => true]);
