@@ -2,6 +2,10 @@
 
 @section('content')
 
+@php
+    $packages = \App\Models\PricingPackage::orderBy('id', 'asc')->get();
+@endphp
+
 <section class="w-full pt-24 pb-12 md:pt-32 md:pb-16 px-6 bg-white text-center relative overflow-hidden">
     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-6xl pointer-events-none z-0 opacity-40">
         <div class="absolute top-20 right-1/4 w-96 h-96 bg-teal-50 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
@@ -31,12 +35,24 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
             
             @foreach($packages as $package)
-                <div class="{{ $package->is_popular 
+                @php
+                    // Set parameter dinamis untuk tampilan dan link
+                    $isPopular = $package->id == 3;
+                    $roleName = 'free';
+                    if($package->id == 2) $roleName = 'starter';
+                    if($package->id == 3) $roleName = 'professional';
+                    if($package->id == 4) $roleName = 'business';
+                    
+                    $buttonText = $package->price == 0 ? 'Mulai Gratis' : 'Pilih Paket';
+                    if ($roleName === 'business') $buttonText = 'Hubungi Kami';
+                @endphp
+
+                <div class="{{ $isPopular 
                     ? 'relative p-8 rounded-2xl border border-indigo-100 bg-white shadow-xl shadow-indigo-100 transform lg:-translate-y-4 z-10 flex flex-col h-full' 
                     : 'p-8 rounded-2xl border border-slate-200 bg-white flex flex-col h-full' 
                 }}">
                     
-                    @if($package->is_popular)
+                    @if($isPopular)
                         <div class="absolute -top-4 right-1/2 translate-x-1/2 px-4 py-1 bg-gradient-to-r from-teal-500 to-indigo-600 rounded-full text-white text-xs font-bold tracking-wide shadow-md">
                             POPULER
                         </div>
@@ -45,28 +61,35 @@
                     <div>
                         <h3 class="text-lg font-semibold text-slate-900 mb-2">{{ $package->name }}</h3>
                         <div class="text-4xl font-bold text-slate-900 mb-6">
-                            Rp{{ number_format($package->price, 0, ',', '.') }}
+                            @if($package->price > 0)
+                                Rp{{ number_format($package->price, 0, ',', '.') }}
+                            @else
+                                Gratis
+                            @endif
                         </div>
                     </div>
 
                     <ul class="space-y-4 mb-8 text-sm text-slate-600 flex-grow">
-                        @foreach($package->features as $feature)
-                            <li class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                </svg> 
-                                <span>{{ $feature }}</span>
-                            </li>
-                        @endforeach
+                        @if(is_array($package->features))
+                            @foreach($package->features as $feature)
+                                <li class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg> 
+                                    <span>{{ $feature }}</span>
+                                </li>
+                            @endforeach
+                        @endif
                     </ul>
-                        <a href="{{ route('register', ['plan' => Str::lower($package->name)]) }}" 
+                        
+                    <a href="{{ $roleName === 'business' ? route('contact') : route('register', ['plan' => $roleName]) }}" 
                         class="mt-auto block w-full py-3 rounded-lg font-semibold text-center transition-all duration-200 
-                        {{ $package->is_popular 
+                        {{ $isPopular 
                             ? 'btn-gradient text-white hover:opacity-90 shadow-lg shadow-indigo-200' 
                             : 'border border-teal-500 text-teal-600 hover:bg-teal-50' 
                         }}">
-                            {{ $package->button_text }}
-                        </a>
+                        {{ $buttonText }}
+                    </a>
                 </div>
             @endforeach
 

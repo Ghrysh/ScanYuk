@@ -2,6 +2,10 @@
 
 @section('content')
 
+@php
+    $packages = \App\Models\PricingPackage::whereIn('id', [1, 2, 3])->orderBy('id', 'asc')->get();
+@endphp
+
 <section class="w-full flex flex-col items-center justify-center px-6 text-center pt-24 pb-16 md:pt-32 md:pb-24 bg-gradient-to-b from-white to-slate-50/50">
     
     <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-slate-900 leading-tight">
@@ -105,15 +109,21 @@
             </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
             
             @foreach($packages as $package)
-                <div class="{{ $package->is_popular 
+                @php
+                    $isPopular = $package->id == 3;
+                    $roleName = $package->id == 1 ? 'free' : ($package->id == 2 ? 'starter' : 'professional');
+                    $buttonText = $package->price == 0 ? 'Mulai Gratis' : 'Pilih Paket';
+                @endphp
+
+                <div class="{{ $isPopular 
                     ? 'relative p-8 rounded-2xl border border-indigo-100 bg-white shadow-xl shadow-indigo-100 transform lg:-translate-y-4 z-10 flex flex-col h-full' 
                     : 'p-8 rounded-2xl border border-slate-200 bg-white flex flex-col h-full' 
                 }}">
                     
-                    @if($package->is_popular)
+                    @if($isPopular)
                         <div class="absolute -top-4 right-1/2 translate-x-1/2 px-4 py-1 bg-gradient-to-r from-teal-500 to-indigo-600 rounded-full text-white text-xs font-bold tracking-wide shadow-md">
                             POPULER
                         </div>
@@ -122,27 +132,34 @@
                     <div>
                         <h3 class="text-lg font-semibold text-slate-900 mb-2">{{ $package->name }}</h3>
                         <div class="text-4xl font-bold text-slate-900 mb-6">
-                            Rp{{ number_format($package->price, 0, ',', '.') }}
+                            @if($package->price > 0)
+                                Rp{{ number_format($package->price, 0, ',', '.') }}
+                            @else
+                                Gratis
+                            @endif
                         </div>
                     </div>
 
-                    <ul class="space-y-4 mb-8 text-sm text-slate-600">
-                        @foreach($package->features as $feature)
-                            <li class="flex items-center gap-2">
-                                <svg class="w-4 h-4 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                </svg> 
-                                <span>{{ $feature }}</span>
-                            </li>
-                        @endforeach
+                    <ul class="space-y-4 mb-8 text-sm text-slate-600 flex-grow">
+                        @if(is_array($package->features))
+                            @foreach($package->features as $feature)
+                                <li class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-teal-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg> 
+                                    <span>{{ $feature }}</span>
+                                </li>
+                            @endforeach
+                        @endif
                     </ul>
 
-                    <a href="{{ route('register') }}" class="mt-auto block w-full py-3 rounded-lg font-semibold text-center transition-all duration-200 
-                        {{ $package->is_popular 
+                    <a href="{{ route('register', ['plan' => $roleName]) }}" 
+                        class="mt-auto block w-full py-3 rounded-lg font-semibold text-center transition-all duration-200 
+                        {{ $isPopular 
                             ? 'btn-gradient text-white hover:opacity-90 shadow-lg shadow-indigo-200' 
                             : 'border border-teal-500 text-teal-600 hover:bg-teal-50' 
                         }}">
-                        {{ $package->button_text }}
+                        {{ $buttonText }}
                     </a>
 
                 </div>
