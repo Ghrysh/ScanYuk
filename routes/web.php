@@ -165,8 +165,17 @@ Route::get('/internal/stats/c', function () {
 });
 
 Route::get('/sys-ping/v1', function (\Illuminate\Http\Request $request) {
-    $sessionId = session()->getId();
-    $ip = $request->ip();
+    if (!session()->has('tracked_session')) {
+        session(['tracked_session' => true]);
+        session()->save(); 
+    }
+    $sessionId = session()->getId(); 
+
+    $ip = $request->header('X-Forwarded-For', $request->ip());
+    if (strpos($ip, ',') !== false) {
+        $ip = trim(explode(',', $ip)[0]);
+    }
+
     $path = $request->query('path', '/');
     $date = now()->toDateString();
 
@@ -174,6 +183,10 @@ Route::get('/sys-ping/v1', function (\Illuminate\Http\Request $request) {
         ['session_id' => $sessionId, 'date' => $date],
         ['ip_address' => $ip, 'page_journey' => []]
     );
+
+    if ($log->ip_address === '172.19.0.1' || $log->ip_address === '127.0.0.1') {
+        $log->ip_address = $ip;
+    }
 
     $journey = $log->page_journey ?? [];
     

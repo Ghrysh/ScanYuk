@@ -128,9 +128,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const currentPath = encodeURIComponent(window.location.pathname);
+            
             fetch('/sys-ping/v1?path=' + currentPath, {
                 method: 'GET',
                 keepalive: true,
+                credentials: 'same-origin',
                 headers: { 'Accept': 'application/json' }
             }).catch(e => {});
         });
