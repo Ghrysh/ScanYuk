@@ -109,7 +109,7 @@
             </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-5xl mx-auto items-start">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
             
             @foreach($packages as $package)
                 @php
@@ -137,9 +137,7 @@
                     <div>
                         <h3 class="text-lg font-semibold text-slate-900 mb-2">{{ $package->name }}</h3>
                         <div class="text-4xl font-bold text-slate-900 mb-6">
-                            @if($package->price > 0)
-                                Rp{{ number_format($package->price, 0, ',', '.') }}
-                            @endif
+                            Rp{{ number_format($package->price, 0, ',', '.') }}
                         </div>
                     </div>
 
@@ -156,7 +154,7 @@
                         @endif
                     </ul>
 
-                    <a href="{{ route('register', ['plan' => $roleName]) }}" 
+                    <a href="{{ $roleName === 'business' ? route('contact') : route('register', ['plan' => $roleName]) }}" 
                         class="mt-auto block w-full py-3 rounded-lg font-semibold text-center transition-all duration-200 
                         {{ $isPopular 
                             ? 'btn-gradient text-white hover:opacity-90 shadow-lg shadow-indigo-200' 

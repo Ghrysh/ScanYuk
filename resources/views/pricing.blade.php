@@ -60,9 +60,7 @@
                     <div>
                         <h3 class="text-lg font-semibold text-slate-900 mb-2">{{ $package->name }}</h3>
                         <div class="text-4xl font-bold text-slate-900 mb-6">
-                            @if($package->price > 0)
-                                Rp{{ number_format($package->price, 0, ',', '.') }}
-                            @endif
+                            Rp{{ number_format($package->price, 0, ',', '.') }}
                         </div>
                     </div>
 
