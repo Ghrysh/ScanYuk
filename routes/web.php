@@ -153,4 +153,17 @@ Route::get('/minio-proxy/{any}', function ($any) {
     return $disk->response($target, null, $headers);
 })->where('any', '.*')->name('minio.proxy');
 
+Route::post('/track/scan-click', function() {
+    \Illuminate\Support\Facades\Cache::increment('click_scan_home');
+    return response()->json(['success' => true]);
+});
+
+Route::post('/track/visitor', function() {
+    if (!session()->has('visited')) {
+        \Illuminate\Support\Facades\Cache::increment('web_visitors_total');
+        session(['visited' => true]);
+    }
+    return response()->json(['success' => true]);
+});
+
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');

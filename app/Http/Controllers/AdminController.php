@@ -37,14 +37,28 @@ class AdminController extends Controller
         $txnSuccess = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])->count();
         $txnFailed = Transaction::whereIn('status', ['Batal', 'Failed', 'Pending'])->count();
 
-        $webVisitors = 0;
-        $demoScans = 0;
-        $contactMessages = [];
+        $popularPackageId = Transaction::whereIn('status', ['Berhasil', 'Paid', 'success'])
+            ->whereHas('package', function($q) {
+                $q->where('price', '>', 0);
+            })
+            ->select('package_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+            ->groupBy('package_id')
+            ->orderBy('total', 'desc')
+            ->first();
+
+        $popularPackageName = 'Belum Ada';
+        if ($popularPackageId) {
+            $pkg = PricingPackage::find($popularPackageId->package_id);
+            if ($pkg) $popularPackageName = $pkg->name;
+        }
+
+        $webVisitors = \Illuminate\Support\Facades\Cache::get('web_visitors_total', 0);
+        $scanClicks = \Illuminate\Support\Facades\Cache::get('click_scan_home', 0);
 
         return view('admin.dashboard', compact(
             'packages', 'users', 'transactions', 'totalUsers', 'totalQrCodes', 'totalScans', 'totalRevenue',
             'countFree', 'countStarter', 'countPro', 'countBusiness', 'txnSuccess', 'txnFailed',
-            'webVisitors', 'demoScans', 'contactMessages'
+            'webVisitors', 'popularPackageName', 'scanClicks'
         ));
     }
 

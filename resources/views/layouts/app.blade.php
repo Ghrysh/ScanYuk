@@ -3,6 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
     <title>Scan Yuk - Platform AR QR Code</title>
 
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -11,6 +13,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "GANTI_DENGAN_ID_PROJECT_ANDA");
+    </script>
     <script>
         tailwind.config = {
             theme: {
@@ -114,6 +123,35 @@
     @if(!request()->is('admin*') && !request()->is('dashboard*'))
         @include('partials.footer')
     @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+            fetch('/track/visitor', {
+                method: 'POST',
+                headers: { 
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            }).catch(e => console.log('Tracker init.'));
+
+            const scanButtons = document.querySelectorAll('a[href*="/scan-ar"], a[href*="/scanner"], button[onclick*="scanner"]');
+            scanButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    fetch('/track/scan-click', {
+                        method: 'POST',
+                        headers: { 
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        }
+                    }).catch(e => {});
+                });
+            });
+        });
+    </script>
 
 </body>
 </html>
