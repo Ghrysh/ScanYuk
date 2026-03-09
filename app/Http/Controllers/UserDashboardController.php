@@ -14,18 +14,17 @@ class UserDashboardController extends Controller
         $packages = PricingPackage::all();
 
         $roleMap = [
-            'business' => 'Bisnis',
-            'professional' => 'Profesional',
-            'starter' => 'Pemula',
-            'free' => 'Gratis'
+            'free' => 1,
+            'starter' => 2,
+            'professional' => 3,
+            'business' => 4
         ];
         
-        $searchRole = $roleMap[strtolower($user->role)] ?? $user->role;
-        
-        $currentPackage = PricingPackage::where('name', 'like', "%{$searchRole}%")->first();
+        $packageId = $roleMap[strtolower($user->role)] ?? 1;
+        $currentPackage = PricingPackage::find($packageId);
 
         if (!$currentPackage && $packages->isNotEmpty()) {
-            $currentPackage = $packages->where('price', 0)->first() ?? $packages->first();
+            $currentPackage = $packages->first();
         }
 
         $qrCodes = $user->qrCodes()->latest()->get();

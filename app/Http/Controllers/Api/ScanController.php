@@ -38,25 +38,32 @@ class ScanController extends Controller
         }
 
         $user = DB::table('users')->where('id', $qr->user_id)->first();
-
-        $scanLimits = [
-            'free' => 2,
-            'starter' => 50,
-            'professional' => 100,
-            'business' => 150,
-        ];
         
         $userRole = strtolower($user->role);
-        
+
         if ($userRole !== 'admin') {
-            $maxScans = $scanLimits[$userRole] ?? 0;
+            
+            $roleMap = [
+                'free' => 1,
+                'starter' => 2,
+                'professional' => 3,
+                'business' => 4
+            ];
+            $packageId = $roleMap[$userRole] ?? 1;
+            $package = \App\Models\PricingPackage::find($packageId);
+            
+            $maxScans = 0;
+            if ($package && is_array($package->features) && isset($package->features[2])) {
+                $maxScans = (int) filter_var($package->features[2], FILTER_SANITIZE_NUMBER_INT);
+            }
+
             if ($user->scan >= $maxScans) {
                 return response()->json([
                     'status' => 'limit_reached',
                     'message' => 'Akun pembuat QR ini telah mencapai batas maksimal scan ('. $maxScans .').'
                 ], 403);
             }
-            
+
             DB::table('users')->where('id', $user->id)->increment('scan');
         }
 
