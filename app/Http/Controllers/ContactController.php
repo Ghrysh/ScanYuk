@@ -32,8 +32,9 @@ class ContactController extends Controller
         \App\Models\Contact::create([
             'name' => $request->name,
             'email' => $request->email,
-            'company' => $request->company ?? null,
-            'subject' => $request->subject ?? 'General Inquiry',
+            'company' => $request->company,
+            'industry' => $request->industry,
+            'volume' => $request->volume,
             'message' => $request->message,
         ]);
 

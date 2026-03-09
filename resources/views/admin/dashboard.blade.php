@@ -623,6 +623,16 @@
                                     <p class="font-semibold text-slate-800" x-text="new Date(activeMsg?.created_at).toLocaleDateString('id-ID')"></p>
                                 </div>
                             </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Industri</p>
+                                    <p class="font-semibold text-slate-800" x-text="activeMsg?.industry || '-'"></p>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Estimasi Volume QR</p>
+                                    <p class="font-semibold text-slate-800" x-text="activeMsg?.volume || '-'"></p>
+                                </div>
+                            </div>
                             <div class="pt-2">
                                 <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pesan Isi</p>
                                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 whitespace-pre-wrap text-slate-700 leading-relaxed max-h-[150px] overflow-y-auto" x-text="activeMsg?.message"></div>
