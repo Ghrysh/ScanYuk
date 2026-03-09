@@ -154,14 +154,20 @@ Route::get('/minio-proxy/{any}', function ($any) {
     return $disk->response($target, null, $headers);
 })->where('any', '.*')->name('minio.proxy');
 
-Route::post('/track/scan-click', function () {
-    Cache::increment('click_scan_home');
+Route::get('/track/scan-click', function () {
+    if (!\Illuminate\Support\Facades\Cache::has('click_scan_home')) {
+        \Illuminate\Support\Facades\Cache::put('click_scan_home', 0);
+    }
+    \Illuminate\Support\Facades\Cache::increment('click_scan_home');
     return response()->json(['success' => true]);
 });
 
-Route::post('/track/visitor', function () {
+Route::get('/track/visitor', function () {
     if (!session()->has('visited')) {
-        Cache::increment('web_visitors_total');
+        if (!\Illuminate\Support\Facades\Cache::has('web_visitors_total')) {
+            \Illuminate\Support\Facades\Cache::put('web_visitors_total', 0);
+        }
+        \Illuminate\Support\Facades\Cache::increment('web_visitors_total');
         session(['visited' => true]);
     }
     return response()->json(['success' => true]);

@@ -126,27 +126,19 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
             fetch('/track/visitor', {
-                method: 'POST',
-                headers: { 
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            }).catch(e => console.log('Tracker init.'));
+                method: 'GET',
+                keepalive: true,
+                headers: { 'Accept': 'application/json' }
+            }).catch(e => {});
 
-            const scanButtons = document.querySelectorAll('a[href*="/scan-ar"], a[href*="/scanner"], button[onclick*="scanner"]');
+            const scanButtons = document.querySelectorAll('a[href*="scan"], button[onclick*="scan"]');
             scanButtons.forEach(btn => {
                 btn.addEventListener('click', function() {
                     fetch('/track/scan-click', {
-                        method: 'POST',
-                        headers: { 
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        }
+                        method: 'GET',
+                        keepalive: true,
+                        headers: { 'Accept': 'application/json' }
                     }).catch(e => {});
                 });
             });
