@@ -155,21 +155,25 @@ Route::get('/minio-proxy/{any}', function ($any) {
 })->where('any', '.*')->name('minio.proxy');
 
 Route::get('/track/scan-click', function () {
-    if (!\Illuminate\Support\Facades\Cache::has('click_scan_home')) {
-        \Illuminate\Support\Facades\Cache::put('click_scan_home', 0);
-    }
     \Illuminate\Support\Facades\Cache::increment('click_scan_home');
     return response()->json(['success' => true]);
 });
 
-Route::get('/track/visitor', function () {
-    if (!session()->has('visited')) {
+Route::get('/track/visitor', function (\Illuminate\Http\Request $request) {
+    
+    $ip = $request->ip();
+    $today = now()->format('Y-m-d');
+    $cacheKey = "visitor_{$ip}_{$today}";
+
+    if (!\Illuminate\Support\Facades\Cache::has($cacheKey)) {
+        \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addDay());
+
         if (!\Illuminate\Support\Facades\Cache::has('web_visitors_total')) {
             \Illuminate\Support\Facades\Cache::put('web_visitors_total', 0);
         }
         \Illuminate\Support\Facades\Cache::increment('web_visitors_total');
-        session(['visited' => true]);
     }
+
     return response()->json(['success' => true]);
 });
 

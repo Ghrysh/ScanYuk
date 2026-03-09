@@ -573,7 +573,7 @@
                         <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0 z-10">
                             <tr>
                                 <th class="px-4 py-3">Pengirim</th>
-                                <th class="px-4 py-3 hidden sm:table-cell">Topik</th>
+                                <th class="px-4 py-3 hidden sm:table-cell">Email</th>
                                 <th class="px-4 py-3 text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -584,7 +584,7 @@
                                     <div class="font-bold text-slate-900">{{ $msg->name }}</div>
                                     <div class="text-xs text-slate-500">{{ $msg->company ?? 'Personal' }}</div>
                                 </td>
-                                <td class="px-4 py-3 truncate max-w-[150px] hidden sm:table-cell">{{ $msg->subject }}</td>
+                                <td class="px-4 py-3 truncate max-w-[150px] hidden sm:table-cell">{{ $msg->email }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <button @click="activeMsg = {{ json_encode($msg) }}; showContactModal = true" class="text-teal-600 font-bold text-xs bg-teal-50 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition-colors">Lihat</button>
                                 </td>
@@ -622,10 +622,6 @@
                                     <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Tanggal</p>
                                     <p class="font-semibold text-slate-800" x-text="new Date(activeMsg?.created_at).toLocaleDateString('id-ID')"></p>
                                 </div>
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Topik / Subjek</p>
-                                <p class="font-bold text-slate-900" x-text="activeMsg?.subject || '-'"></p>
                             </div>
                             <div class="pt-2">
                                 <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pesan Isi</p>
