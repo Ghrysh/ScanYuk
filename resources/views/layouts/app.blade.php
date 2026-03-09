@@ -126,22 +126,34 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            fetch('/track/visitor', {
+
+            fetch('/sys-ping/v1', {
                 method: 'GET',
                 keepalive: true,
                 headers: { 'Accept': 'application/json' }
             }).catch(e => {});
 
-            const scanButtons = document.querySelectorAll('a[href*="scan"], button[onclick*="scan"]');
-            scanButtons.forEach(btn => {
-                btn.addEventListener('click', function() {
-                    fetch('/track/scan-click', {
+            document.body.addEventListener('click', function(e) {
+                const link = e.target.closest('a[href*="scan-ar"]');
+                
+                if (link && link.href) {
+                    e.preventDefault();
+                    const targetUrl = link.href;
+
+                    fetch('/sys-action/sc', {
                         method: 'GET',
                         keepalive: true,
                         headers: { 'Accept': 'application/json' }
-                    }).catch(e => {});
-                });
+                    }).finally(() => {
+                        window.location.href = targetUrl;
+                    });
+                    
+                    setTimeout(() => {
+                        window.location.href = targetUrl;
+                    }, 500);
+                }
             });
+
         });
     </script>
 
