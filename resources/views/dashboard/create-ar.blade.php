@@ -3,6 +3,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
     <title>Create AR Experience - ScanYuk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='5' height='5' x='3' y='3' rx='1'%3E%3C/rect%3E%3Crect width='5' height='5' x='16' y='3' rx='1'%3E%3C/rect%3E%3Crect width='5' height='5' x='3' y='16' rx='1'%3E%3C/rect%3E%3Cpath d='M21 16h-3a2 2 0 0 0-2 2v3'%3E%3C/path%3E%3Cpath d='M21 21v.01'%3E%3C/path%3E%3Cpath d='M12 7v3a2 2 0 0 1-2 2H7'%3E%3C/path%3E%3Cpath d='M3 12h.01'%3E%3C/path%3E%3Cpath d='M12 3h.01'%3E%3C/path%3E%3Cpath d='M12 16v.01'%3E%3C/path%3E%3Cpath d='M16 12h1'%3E%3C/path%3E%3Cpath d='M21 12v.01'%3E%3C/path%3E%3Cpath d='M12 21v-1'%3E%3C/path%3E%3C/svg%3E">
@@ -565,6 +567,203 @@
             </div>
         </div>
     </main>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('ai3d', {
+                isProcessing: false,
+                isMinimized: false,
+                showModal: false,
+                progress: 0,
+                jobId: null,
+                resultUrl: null,
+                timeRemaining: 'Menghitung...',
+                
+                init() {
+                    let saved = localStorage.getItem('ai_job_state');
+                    if (saved) {
+                        let data = JSON.parse(saved);
+                        if (data.jobId && data.status !== 'completed') {
+                            this.jobId = data.jobId;
+                            this.isProcessing = true;
+                            this.isMinimized = true;
+                            this.pollStatus();
+                        } else if (data.status === 'completed' && data.resultUrl) {
+                            this.jobId = data.jobId;
+                            this.resultUrl = data.resultUrl;
+                            this.isProcessing = false;
+                            this.progress = 100;
+                            this.timeRemaining = 'Selesai!';
+                            this.isMinimized = true; 
+                        }
+                    }
+                },
+                
+                async startProcess(file) {
+                    this.isProcessing = true;
+                    this.showModal = true;
+                    this.isMinimized = false;
+                    this.progress = 0;
+                    this.resultUrl = null;
+                    this.timeRemaining = 'Mulai memproses...';
+                    
+                    let formData = new FormData();
+                    formData.append('image', file);
+                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                    
+                    try {
+                        let res = await fetch('/api/convert-3d/start', { method: 'POST', body: formData });
+                        let data = await res.json();
+                        
+                        if (data.success) {
+                            this.jobId = data.job_id;
+                            this.saveState();
+                            this.pollStatus();
+                        }
+                    } catch (e) {
+                        alert("Gagal memulai proses AI.");
+                        this.isProcessing = false;
+                        this.showModal = false;
+                    }
+                },
+                
+                pollStatus() {
+                    if (!this.jobId) return;
+                    let interval = setInterval(async () => {
+                        if (!this.isProcessing) {
+                            clearInterval(interval);
+                            return;
+                        }
+                        
+                        try {
+                            let res = await fetch('/api/convert-3d/status/' + this.jobId);
+                            let data = await res.json();
+                            
+                            this.progress = data.progress;
+                            this.timeRemaining = data.time_remaining;
+                            
+                            if (data.status === 'completed') {
+                                this.isProcessing = false;
+                                this.resultUrl = data.result_url;
+                                clearInterval(interval);
+                            } else if (data.status === 'failed') {
+                                this.isProcessing = false;
+                                this.timeRemaining = 'Gagal memproses';
+                                alert('Maaf, AI gagal memproses gambar ini. Coba gambar lain.');
+                                clearInterval(interval);
+                            }
+                            this.saveState();
+                        } catch (err) {
+                            console.error('Polling error:', err);
+                        }
+                    }, 3000);
+                },
+                
+                minimize() {
+                    this.showModal = false;
+                    this.isMinimized = true;
+                },
+                
+                openModal() {
+                    this.isMinimized = false;
+                    this.showModal = true;
+                },
+                
+                closeAll() {
+                    this.isProcessing = false;
+                    this.showModal = false;
+                    this.isMinimized = false;
+                    this.jobId = null;
+                    this.resultUrl = null;
+                    localStorage.removeItem('ai_job_state');
+                },
+
+                saveState() {
+                    localStorage.setItem('ai_job_state', JSON.stringify({
+                        jobId: this.jobId,
+                        status: this.isProcessing ? 'processing' : 'completed',
+                        resultUrl: this.resultUrl
+                    }));
+                }
+            });
+        });
+    </script>
+
+    <div x-data>
+        <div x-show="$store.ai3d.isMinimized && ($store.ai3d.isProcessing || $store.ai3d.resultUrl)" 
+             x-transition.opacity
+             @click="$store.ai3d.openModal()"
+             style="display: none;"
+             class="fixed bottom-6 right-6 z-[100] bg-white rounded-full shadow-2xl p-2.5 flex items-center gap-3 cursor-pointer hover:scale-105 transition-transform border border-slate-200">
+             
+             <div class="relative w-12 h-12 flex items-center justify-center bg-indigo-50 rounded-full flex-shrink-0">
+                 <template x-if="$store.ai3d.isProcessing">
+                     <svg class="w-10 h-10 text-indigo-500 animate-spin absolute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"></circle></svg>
+                 </template>
+                 <template x-if="!$store.ai3d.isProcessing">
+                     <span class="text-xl">✅</span>
+                 </template>
+                 <div x-show="$store.ai3d.isProcessing" class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-indigo-700" x-text="$store.ai3d.progress + '%'"></div>
+             </div>
+             
+             <div class="pr-4 hidden sm:block">
+                 <p class="text-sm font-bold text-slate-800" x-text="$store.ai3d.isProcessing ? 'Memproses 3D...' : '3D Selesai!'"></p>
+                 <p class="text-xs text-slate-500 font-medium" x-text="$store.ai3d.timeRemaining"></p>
+             </div>
+        </div>
+
+        <div x-show="$store.ai3d.showModal" style="display: none;" class="fixed inset-0 z-[150] flex items-center justify-center p-4">
+            <div x-show="$store.ai3d.showModal" x-transition.opacity class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
+            <div x-show="$store.ai3d.showModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col">
+                
+                <div class="w-full p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <h3 class="font-bold text-slate-900 text-lg flex items-center gap-2">
+                        <span x-text="$store.ai3d.isProcessing ? '⚙️ AI Bekerja...' : '✨ Hasil 3D'"></span>
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <button @click="$store.ai3d.minimize()" title="Sembunyikan ke Bubble" class="text-slate-400 hover:text-indigo-600 p-1.5 bg-white rounded-lg shadow-sm border border-slate-200 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M20 12H4" /></svg>
+                        </button>
+                        <button @click="$store.ai3d.closeAll()" title="Tutup & Hapus" class="text-slate-400 hover:text-red-600 p-1.5 bg-white rounded-lg shadow-sm border border-slate-200 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <template x-if="$store.ai3d.isProcessing">
+                        <div class="flex flex-col items-center text-center py-4">
+                            <div class="mb-4">
+                                <svg class="w-16 h-16 text-indigo-500 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"></circle></svg>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-1">Server AI sedang merender</h4>
+                            <p class="text-sm text-slate-500 mb-6 px-4">Anda bisa me-minimize jendela ini (klik tanda minus) dan lanjut bekerja. Kami akan memberitahu jika sudah selesai.</p>
+                            
+                            <div class="w-full bg-slate-100 rounded-full h-4 mb-2 overflow-hidden shadow-inner">
+                                <div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-4 rounded-full transition-all duration-1000 ease-out" :style="'width: ' + $store.ai3d.progress + '%'"></div>
+                            </div>
+                            <div class="w-full flex justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                <span x-text="$store.ai3d.progress + '%'"></span>
+                                <span x-text="'Sisa: ' + $store.ai3d.timeRemaining"></span>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="!$store.ai3d.isProcessing && $store.ai3d.resultUrl">
+                        <div class="flex flex-col gap-4">
+                            <div class="w-full bg-slate-100 relative h-[250px] rounded-2xl overflow-hidden border border-slate-200">
+                                <model-viewer :src="$store.ai3d.resultUrl" auto-rotate camera-controls shadow-intensity="1" class="w-full h-full bg-slate-100"></model-viewer>
+                            </div>
+                            <a :href="$store.ai3d.resultUrl" download="scanyuk_3d_model.glb" class="w-full py-3.5 px-6 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold shadow-lg shadow-teal-200 text-center flex items-center justify-center gap-2 transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                Download File 3D (.glb)
+                            </a>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         function arCreator() {
