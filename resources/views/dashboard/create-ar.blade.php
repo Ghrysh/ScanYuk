@@ -94,14 +94,29 @@
                         <button type="button" @click="arType = '3d'; reset2d();" :class="arType === '3d' ? 'border-teal-500 text-teal-600' : 'border-transparent text-slate-500 hover:text-slate-700'" class="flex-1 md:flex-none pb-3 px-2 border-b-2 font-bold text-sm transition-colors text-center md:text-left">Objek 3D (GLB)</button>
                     </div>
 
-                    <div x-show="arType === '2d'">
+                    <div x-show="arType === '2d'" class="space-y-4">
                         <label class="block text-sm font-bold text-slate-900 mb-2">Upload Gambar 2D</label>
-                        <input type="file" name="image" id="image-upload" accept=".jpg,.jpeg,.png" class="hidden" @change="handle2dUpload">
-                        <label for="image-upload" class="flex flex-col items-center justify-center w-full h-48 md:h-56 px-4 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors overflow-hidden relative">
-                            <img x-show="imageUrl2d" :src="imageUrl2d" class="max-h-full max-w-full object-contain">
-                        </label>
+                        
+                        <div class="relative">
+                            <input type="file" name="image" id="image-upload" accept=".jpg,.jpeg,.png" class="hidden" @change="handle2dUpload">
+                            <label for="image-upload" class="flex flex-col items-center justify-center w-full h-48 md:h-56 px-4 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors overflow-hidden group">
+                                
+                                <div x-show="!imageUrl2d" class="flex flex-col items-center text-slate-400 group-hover:text-teal-500 transition-colors">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    <span class="text-sm font-bold">Klik untuk upload gambar 2D</span>
+                                    <span class="text-xs font-medium mt-1">Format: JPG, PNG</span>
+                                </div>
 
-                        <div x-show="imageUrl2d" x-transition.opacity class="mt-4 flex justify-center">
+                                <img x-show="imageUrl2d" :src="imageUrl2d" class="max-h-full max-w-full object-contain drop-shadow-md" style="display: none;">
+                            </label>
+                            
+                            <button type="button" x-show="imageUrl2d" @click="reset2d()" style="display: none;" class="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 shadow-md transition-colors z-10" title="Hapus gambar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
+
+                        <div x-show="imageUrl2d" style="display: none;" x-transition.opacity.duration.300ms class="flex flex-col items-center bg-indigo-50 border border-indigo-100 rounded-xl p-4 mt-2">
+                            <p class="text-xs text-indigo-600 font-bold mb-3 text-center">Ingin mengubah gambar ini menjadi objek 3D interaktif?</p>
                             <button type="button" 
                                 @click="
                                     let fileInput = document.getElementById('image-upload');
@@ -112,8 +127,8 @@
                                     }
                                 " 
                                 :disabled="$store.ai3d.isProcessing" 
-                                :class="$store.ai3d.isProcessing ? 'opacity-50 cursor-not-allowed' : ''"
-                                class="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-md transition-all">
+                                :class="$store.ai3d.isProcessing ? 'opacity-50 cursor-not-allowed scale-95' : 'hover:shadow-lg hover:-translate-y-0.5'"
+                                class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl shadow-md shadow-indigo-200 transition-all">
                                 
                                 <template x-if="!$store.ai3d.isProcessing">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
@@ -122,7 +137,7 @@
                                     <svg class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                 </template>
                                 
-                                <span x-text="$store.ai3d.isProcessing ? 'Memuat...' : 'Convert ke 3D (AI)'"></span>
+                                <span x-text="$store.ai3d.isProcessing ? 'Server AI sedang merender...' : 'Convert ke 3D (AI)'"></span>
                             </button>
                         </div>
                     </div>
@@ -775,11 +790,21 @@
                 filteredMusic() { return this.musicList.filter(i => (i.name || '').toLowerCase().includes(this.searchMusic.toLowerCase())); },
                 filteredTemplates() { return this.templates.filter(i => (i.title || '').toLowerCase().includes(this.searchTemplate.toLowerCase()) || (i.narration || '').toLowerCase().includes(this.searchTemplate.toLowerCase())); },
 
-                reset2d() { this.imageUrl2d = null; document.getElementById('image-upload').value = ''; },
+                reset2d() { 
+                    if (this.imageUrl2d && this.imageUrl2d.startsWith('blob:')) {
+                        URL.revokeObjectURL(this.imageUrl2d);
+                    }
+                    this.imageUrl2d = null; 
+                    let input = document.getElementById('image-upload');
+                    if(input) input.value = ''; 
+                },
                 reset3d() { this.upload3dName = ''; this.upload3dDisplayName = ''; document.getElementById('glb-upload').value = ''; this.selectedLibrary3d = ''; if (this.local3dUrl) { URL.revokeObjectURL(this.local3dUrl); this.local3dUrl = null; } },
                 handle2dUpload(e) {
                     let file = e.target.files[0];
-                    if(!file) return;
+                    if(!file) {
+                        this.reset2d();
+                        return;
+                    }
                     if (this.imageUrl2d && this.imageUrl2d.startsWith('blob:')) {
                         URL.revokeObjectURL(this.imageUrl2d);
                     }
