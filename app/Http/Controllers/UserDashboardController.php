@@ -47,15 +47,19 @@ class UserDashboardController extends Controller
         ]);
 
         $outputDir = storage_path('app/public/ai_outputs');
-        if (!file_exists($outputDir)) {
-            mkdir($outputDir, 0777, true);
-        }
+        if (!file_exists($outputDir)) mkdir($outputDir, 0777, true);
+        
         $fullOutputPath = $outputDir . '/job_' . $job->id . '.glb';
 
         $scriptDir = base_path('TripoSR');
         $scriptPath = $scriptDir . '/run_triposr.py';
-        
-        $command = "cd " . escapeshellarg($scriptDir) . " && nohup python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " > /dev/null 2>&1 &";
+
+        $logPath = storage_path('logs/python_ai.log');
+
+        $hfHome = storage_path('app/public/ai_models');
+        if (!file_exists($hfHome)) mkdir($hfHome, 0777, true);
+
+        $command = "export HF_HOME=" . escapeshellarg($hfHome) . " && cd " . escapeshellarg($scriptDir) . " && nohup python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " > " . escapeshellarg($logPath) . " 2>&1 &";
         
         exec($command);
 
@@ -98,22 +102,23 @@ class UserDashboardController extends Controller
         }
 
         $waktuRender = 600;
-
         $detikBerjalan = now()->timestamp - $job->created_at->timestamp;
-        
-        if ($detikBerjalan < 0) {
-            $detikBerjalan = 0; 
-        }
+        if ($detikBerjalan < 0) $detikBerjalan = 0; 
 
         $progress = min(99, round(($detikBerjalan / $waktuRender) * 100));
         
-        $sisaDetik = max(0, $waktuRender - $detikBerjalan);
-        $sisaWaktuFormat = sprintf('%02d:%02d', floor($sisaDetik / 60), $sisaDetik % 60);
+        $sisaDetik = $waktuRender - $detikBerjalan;
+
+        if ($sisaDetik <= 0) {
+            $sisaWaktuFormat = 'Tahap Akhir (Merakit 3D...)';
+        } else {
+            $sisaWaktuFormat = 'Sisa: ' . sprintf('%02d:%02d', floor($sisaDetik / 60), $sisaDetik % 60);
+        }
 
         return response()->json([
             'status' => 'processing',
             'progress' => $progress,
-            'time_remaining' => 'AI sedang merender (' . $sisaWaktuFormat . ')'
+            'time_remaining' => $sisaWaktuFormat
         ]);
     }
 }
