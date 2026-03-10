@@ -52,8 +52,10 @@ class UserDashboardController extends Controller
         }
         $fullOutputPath = $outputDir . '/job_' . $job->id . '.glb';
 
-        $scriptPath = base_path('ai_scripts/run_triposr.py');
-        $command = "nohup python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " > /dev/null 2>&1 &";
+        $scriptDir = base_path('TripoSR');
+        $scriptPath = $scriptDir . '/run_triposr.py';
+        
+        $command = "cd " . escapeshellarg($scriptDir) . " && nohup python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " > /dev/null 2>&1 &";
         
         exec($command);
 
