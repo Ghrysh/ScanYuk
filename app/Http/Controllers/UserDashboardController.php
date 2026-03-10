@@ -59,7 +59,7 @@ class UserDashboardController extends Controller
         $hfHome = storage_path('app/public/ai_models');
         if (!file_exists($hfHome)) mkdir($hfHome, 0777, true);
 
-        $command = "export HF_HOME=" . escapeshellarg($hfHome) . " && cd " . escapeshellarg($scriptDir) . " && nohup python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " > " . escapeshellarg($logPath) . " 2>&1 &";
+        $command = "export U2NET_HOME=" . escapeshellarg($hfHome) . " && export HF_HOME=" . escapeshellarg($hfHome) . " && cd " . escapeshellarg($scriptDir) . " && nohup python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " > " . escapeshellarg($logPath) . " 2>&1 &";
         
         exec($command);
 
