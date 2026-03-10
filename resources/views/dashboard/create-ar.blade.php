@@ -98,12 +98,33 @@
                         <label class="block text-sm font-bold text-slate-900 mb-2">Upload Gambar 2D</label>
                         <input type="file" name="image" id="image-upload" accept=".jpg,.jpeg,.png" class="hidden" @change="handle2dUpload">
                         <label for="image-upload" class="flex flex-col items-center justify-center w-full h-48 md:h-56 px-4 border-2 border-slate-300 border-dashed rounded-xl cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors overflow-hidden relative">
-                            <div x-show="!imageUrl2d" class="text-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 md:w-10 md:h-10 text-slate-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-                                <span class="text-xs md:text-sm font-medium text-slate-600">Klik untuk upload gambar</span>
-                            </div>
                             <img x-show="imageUrl2d" :src="imageUrl2d" class="max-h-full max-w-full object-contain">
                         </label>
+
+                        <div x-show="imageUrl2d" x-transition.opacity class="mt-4 flex justify-center">
+                            <button type="button" 
+                                @click="
+                                    let fileInput = document.getElementById('image-upload');
+                                    if(fileInput.files.length > 0) {
+                                        $store.ai3d.startProcess(fileInput.files[0]);
+                                    } else {
+                                        alert('Pilih gambar 2D dulu!');
+                                    }
+                                " 
+                                :disabled="$store.ai3d.isProcessing" 
+                                :class="$store.ai3d.isProcessing ? 'opacity-50 cursor-not-allowed' : ''"
+                                class="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl shadow-md transition-all">
+                                
+                                <template x-if="!$store.ai3d.isProcessing">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                                </template>
+                                <template x-if="$store.ai3d.isProcessing">
+                                    <svg class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                </template>
+                                
+                                <span x-text="$store.ai3d.isProcessing ? 'Memuat...' : 'Convert ke 3D (AI)'"></span>
+                            </button>
+                        </div>
                     </div>
 
                     <div x-show="arType === '3d'" style="display: none;" class="space-y-6">
@@ -498,6 +519,36 @@
                 </div>
             </div>
         </div>
+
+        <div x-show="showConvertModal" style="display: none;" class="fixed inset-0 z-[150] flex items-center justify-center p-4">
+            <div x-show="showConvertModal" x-transition.opacity class="absolute inset-0 bg-slate-900/90 backdrop-blur-sm" @click="showConvertModal = false"></div>
+            <div x-show="showConvertModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col items-center">
+                
+                <div class="w-full p-4 border-b border-slate-100 flex items-center justify-between">
+                    <h3 class="font-bold text-slate-900 text-lg flex items-center gap-2">
+                        <span class="text-2xl">✨</span> Hasil Convert 3D
+                    </h3>
+                    <button @click="showConvertModal = false" type="button" class="text-slate-400 hover:text-red-500 transition-colors p-1.5 bg-slate-50 rounded-full hover:bg-red-50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                
+                <div class="w-full bg-slate-100 relative h-[300px] border-b border-slate-200">
+                    <template x-if="converted3dUrl">
+                        <model-viewer :src="converted3dUrl" auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full bg-slate-100"></model-viewer>
+                    </template>
+                </div>
+
+                <div class="w-full p-6 flex flex-col gap-3">
+                    <p class="text-xs text-slate-500 text-center font-medium mb-2">Ini adalah hasil objek 3D dari gambar Anda. Anda bisa mengunduhnya atau menutup jendela ini untuk kembali ke mode 2D.</p>
+                    
+                    <a :href="converted3dUrl" download="hasil_convert_scanyuk.glb" class="w-full py-3 px-6 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold shadow-lg shadow-teal-200 text-center flex items-center justify-center gap-2 transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        Download File 3D (.glb)
+                    </a>
+                </div>
+            </div>
+        </div>
     </main>
 
     <script>
@@ -554,6 +605,24 @@
 
                 isTemplateLoading: false, templateProgress: 0,
                 isPreviewLoading: false, previewProgress: 0,
+
+                isConverting3d: false,
+                showConvertModal: false,
+                converted3dUrl: null,
+
+                convertTo3D() {
+                    if (!this.imageUrl2d) return alert("Pilih gambar 2D terlebih dahulu!");
+                    
+                    this.isConverting3d = true;
+
+                    setTimeout(() => {
+                        this.isConverting3d = false;
+
+                        this.converted3dUrl = 'https://modelviewer.dev/shared-assets/models/Astronaut.glb';
+                        
+                        this.showConvertModal = true;
+                    }, 3000);
+                },
 
                 getAssetUrl(path) {
                     if (!path) return '';

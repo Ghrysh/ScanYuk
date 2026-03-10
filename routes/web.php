@@ -203,4 +203,7 @@ Route::get('/sys-ping/v1', function (\Illuminate\Http\Request $request) {
     return response()->json(['success' => true]);
 });
 
+Route::post('/api/convert-3d/start', [\App\Http\Controllers\UserDashboardController::class, 'startConversion']);
+Route::get('/api/convert-3d/status/{id}', [\App\Http\Controllers\UserDashboardController::class, 'checkStatus']);
+
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
