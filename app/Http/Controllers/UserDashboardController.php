@@ -97,8 +97,14 @@ class UserDashboardController extends Controller
             ]);
         }
 
-        $waktuRender = 600; 
-        $detikBerjalan = now()->diffInSeconds($job->created_at);
+        $waktuRender = 600;
+
+        $detikBerjalan = now()->timestamp - $job->created_at->timestamp;
+        
+        if ($detikBerjalan < 0) {
+            $detikBerjalan = 0; 
+        }
+
         $progress = min(99, round(($detikBerjalan / $waktuRender) * 100));
         
         $sisaDetik = max(0, $waktuRender - $detikBerjalan);
