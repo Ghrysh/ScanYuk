@@ -123,11 +123,11 @@
                                 @click="
                                     let fileInput = document.getElementById('image-upload');
                                     if(fileInput.files.length > 0) {
-                                        $store.ai3d.startProcess(fileInput.files[0]);
+                                        $store.ai3d.openSelection(fileInput.files[0]);
                                     } else {
-                                        alert('Pilih gambar 2D dulu!');
+                                        $store.toast.show('Pilih gambar 2D terlebih dahulu!', 'error');
                                     }
-                                " 
+                                "
                                 :disabled="$store.ai3d.isProcessing" 
                                 :class="$store.ai3d.isProcessing ? 'opacity-50 cursor-not-allowed scale-95' : 'hover:shadow-lg hover:-translate-y-0.5'"
                                 class="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold rounded-xl shadow-md shadow-indigo-200 transition-all">
@@ -139,7 +139,7 @@
                                     <svg class="w-5 h-5 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                                 </template>
                                 
-                                <span x-text="$store.ai3d.isProcessing ? 'Server AI sedang merender...' : 'Convert ke 3D (AI)'"></span>
+                                <span x-text="$store.ai3d.isProcessing ? 'Server AI sedang merender...' : 'Ubah ke 3D Interaktif'"></span>
                             </button>
                         </div>
                     </div>
@@ -570,10 +570,20 @@
 
     <script>
         document.addEventListener('alpine:init', () => {
+            Alpine.store('toast', {
+                visible: false, message: '', type: 'error',
+                show(msg, type = 'error') {
+                    this.message = msg; this.type = type; this.visible = true;
+                    setTimeout(() => { this.visible = false; }, 4000);
+                }
+            });
+
             Alpine.store('ai3d', {
                 isProcessing: false,
                 isMinimized: false,
                 showModal: false,
+                showSelectionModal: false,
+                pendingFile: null,
                 progress: 0,
                 jobId: null,
                 resultUrl: null,
@@ -598,17 +608,27 @@
                         }
                     }
                 },
+
+                openSelection(file) {
+                    this.pendingFile = file;
+                    this.showSelectionModal = true;
+                },
                 
-                async startProcess(file) {
+                async startProcess(mode) {
+                    if (!this.pendingFile) return;
+                    let file = this.pendingFile;
+                    
+                    this.showSelectionModal = false;
                     this.isProcessing = true;
                     this.showModal = true;
                     this.isMinimized = false;
                     this.progress = 0;
                     this.resultUrl = null;
-                    this.timeRemaining = 'Mulai memproses...';
+                    this.timeRemaining = 'Menyiapkan server...';
                     
                     let formData = new FormData();
                     formData.append('image', file);
+                    formData.append('mode', mode);
                     formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
                     
                     try {
@@ -621,7 +641,7 @@
                             this.pollStatus();
                         }
                     } catch (e) {
-                        alert("Gagal memulai proses AI.");
+                        Alpine.store('toast').show('Gagal memulai proses AI. Periksa koneksi.', 'error');
                         this.isProcessing = false;
                         this.showModal = false;
                     }
@@ -645,44 +665,31 @@
                             if (data.status === 'completed') {
                                 this.isProcessing = false;
                                 this.resultUrl = data.result_url;
+                                Alpine.store('toast').show('Berhasil! Objek 3D siap digunakan.', 'success');
                                 clearInterval(interval);
                             } else if (data.status === 'failed') {
                                 this.isProcessing = false;
                                 this.timeRemaining = 'Gagal memproses';
-                                alert('Maaf, AI gagal memproses gambar ini. Coba gambar lain.');
+                                Alpine.store('toast').show('Maaf, AI gagal memproses gambar ini. Coba gambar lain.', 'error');
                                 clearInterval(interval);
                             }
                             this.saveState();
                         } catch (err) {
                             console.error('Polling error:', err);
                         }
-                    }, 3000);
+                    }, 2000);
                 },
                 
-                minimize() {
-                    this.showModal = false;
-                    this.isMinimized = true;
-                },
-                
-                openModal() {
-                    this.isMinimized = false;
-                    this.showModal = true;
-                },
-                
+                minimize() { this.showModal = false; this.isMinimized = true; },
+                openModal() { this.isMinimized = false; this.showModal = true; },
                 closeAll() {
-                    this.isProcessing = false;
-                    this.showModal = false;
-                    this.isMinimized = false;
-                    this.jobId = null;
-                    this.resultUrl = null;
+                    this.isProcessing = false; this.showModal = false; this.isMinimized = false;
+                    this.jobId = null; this.resultUrl = null;
                     localStorage.removeItem('ai_job_state');
                 },
-
                 saveState() {
                     localStorage.setItem('ai_job_state', JSON.stringify({
-                        jobId: this.jobId,
-                        status: this.isProcessing ? 'processing' : 'completed',
-                        resultUrl: this.resultUrl
+                        jobId: this.jobId, status: this.isProcessing ? 'processing' : 'completed', resultUrl: this.resultUrl
                     }));
                 }
             });
@@ -744,7 +751,7 @@
                             </div>
                             <div class="w-full flex justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
                                 <span x-text="$store.ai3d.progress + '%'"></span>
-                                <span x-text="'Sisa: ' + $store.ai3d.timeRemaining"></span>
+                                <span x-text="$store.ai3d.timeRemaining"></span>
                             </div>
                         </div>
                     </template>
@@ -1431,5 +1438,56 @@
             }
         }
     </script>
+
+    <div x-data x-show="$store.ai3d.showSelectionModal" style="display: none;" class="fixed inset-0 z-[250] flex items-center justify-center p-4">
+        <div x-show="$store.ai3d.showSelectionModal" x-transition.opacity class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="$store.ai3d.showSelectionModal = false"></div>
+        <div x-show="$store.ai3d.showSelectionModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+            
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <h3 class="font-bold text-slate-900 text-lg">Pilih Mode Interaktif</h3>
+                <button @click="$store.ai3d.showSelectionModal = false" class="text-slate-400 hover:text-red-500 transition-colors p-1.5 bg-white rounded-full shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
+            </div>
+            
+            <div class="p-6 grid grid-cols-1 gap-4 bg-white">
+                
+                <button @click="$store.ai3d.startProcess('extrude')" class="text-left p-4 border-2 border-slate-200 rounded-2xl hover:border-teal-500 hover:bg-teal-50 hover:shadow-md transition-all group relative overflow-hidden">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" /></svg></div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-base mb-1">Cetak Timbul (Logo / Ikon / Teks)</h4>
+                            <p class="text-xs text-slate-500 leading-relaxed mb-2">Memotong garis tepi gambar PNG Anda dan memberinya ketebalan solid menyerupai plakat akrilik.</p>
+                            <span class="inline-block px-2 py-1 bg-teal-100 text-teal-700 rounded text-[10px] font-bold">⏱️ Estimasi Kilat: 2 - 5 Detik</span>
+                        </div>
+                    </div>
+                </button>
+
+                <button @click="$store.ai3d.startProcess('ai')" class="text-left p-4 border-2 border-slate-200 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 hover:shadow-md transition-all group relative overflow-hidden">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" /></svg></div>
+                        <div>
+                            <h4 class="font-bold text-slate-900 text-base mb-1">Mode Imajinas AI (Foto Benda Nyata)</h4>
+                            <p class="text-[11px] text-slate-500 leading-relaxed mb-2">Sistem AI akan menebak sisi belakang dari foto Anda dan merakitnya menjadi objek 3D solid penuh. <b class="text-indigo-600">Sangat cocok untuk produk, mainan, kursi, sepatu, dll.</b></p>
+                            <span class="inline-block px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-[10px] font-bold">⏱️ Estimasi Render: 2 - 10 Menit</span>
+                        </div>
+                    </div>
+                </button>
+
+            </div>
+        </div>
+    </div>
+
+    <div x-data x-show="$store.toast.visible"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-full"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-full"
+         class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[300] flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl font-bold text-sm text-white min-w-[300px] justify-center"
+         :class="$store.toast.type === 'error' ? 'bg-red-500' : 'bg-teal-500'"
+         style="display: none;">
+        <span x-text="$store.toast.type === 'error' ? '⚠️' : '✅'"></span>
+        <span x-text="$store.toast.message"></span>
+    </div>
 </body>
 </html>

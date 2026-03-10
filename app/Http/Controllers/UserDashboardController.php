@@ -35,13 +35,17 @@ class UserDashboardController extends Controller
 
     public function startConversion(Request $request)
     {
-        $request->validate(['image' => 'required|image|mimes:jpeg,png,jpg|max:5120']);
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+            'mode' => 'required|in:ai,extrude'
+        ]);
 
         $imagePath = $request->file('image')->store('ai_inputs', 'public');
         $fullInputPath = storage_path('app/public/' . $imagePath);
+        $mode = $request->mode;
 
         $job = \App\Models\AiConversion::create([
-            'user_id' => \Illuminate\Support\Facades\Auth::id() ?? 1,
+            'user_id' => Auth::id() ?? 1,
             'status' => 'processing',
             'progress' => 0,
         ]);
@@ -50,12 +54,13 @@ class UserDashboardController extends Controller
         if (!file_exists($outputDir)) mkdir($outputDir, 0777, true);
         
         $fullOutputPath = $outputDir . '/job_' . $job->id . '.glb';
-
         $scriptDir = base_path('TripoSR');
-        $scriptPath = $scriptDir . '/run_triposr.py';
+        
+        // Pilih script berdasarkan opsi mode dari user
+        $scriptName = ($mode === 'extrude') ? 'run_extrude.py' : 'run_triposr.py';
+        $scriptPath = $scriptDir . '/' . $scriptName;
 
         $logPath = storage_path('logs/python_ai.log');
-
         $hfHome = storage_path('app/public/ai_models');
         if (!file_exists($hfHome)) mkdir($hfHome, 0777, true);
 
@@ -80,12 +85,15 @@ class UserDashboardController extends Controller
 
         $fullOutputPath = storage_path('app/public/ai_outputs/job_' . $job->id . '.glb');
         $errorOutputPath = $fullOutputPath . '.error';
+        $progressPath = $fullOutputPath . '.progress';
 
-        if (file_exists($fullOutputPath)) {
+        if (file_exists($fullOutputPath) && filesize($fullOutputPath) > 0) {
             $job->status = 'completed';
             $job->progress = 100;
             $job->result_url = asset('storage/ai_outputs/job_' . $job->id . '.glb');
             $job->save();
+
+            if (file_exists($progressPath)) @unlink($progressPath);
 
             return response()->json([
                 'status' => 'completed', 'progress' => 100,
@@ -97,23 +105,42 @@ class UserDashboardController extends Controller
             $job->status = 'failed';
             $job->save();
             return response()->json([
-                'status' => 'failed', 'progress' => 0, 'time_remaining' => 'Terjadi kesalahan sistem AI.'
+                'status' => 'failed', 'progress' => 0, 'time_remaining' => 'Terjadi kesalahan sistem.'
             ]);
         }
 
-        $waktuRender = 600;
         $detikBerjalan = now()->timestamp - $job->created_at->timestamp;
-        if ($detikBerjalan < 0) $detikBerjalan = 0; 
+        if ($detikBerjalan < 1) $detikBerjalan = 1; 
 
-        $progress = min(99, round(($detikBerjalan / $waktuRender) * 100));
-        
-        $sisaDetik = $waktuRender - $detikBerjalan;
+        $progress = 0;
+        $statusText = "Memulai sistem...";
 
-        if ($sisaDetik <= 0) {
-            $sisaWaktuFormat = 'Tahap Akhir (Merakit 3D...)';
+        if (file_exists($progressPath)) {
+            $progData = json_decode(file_get_contents($progressPath), true);
+            if ($progData) {
+                $progress = $progData['progress'] ?? 5;
+                $statusText = $progData['text'] ?? $statusText;
+            }
         } else {
-            $sisaWaktuFormat = 'Sisa: ' . sprintf('%02d:%02d', floor($sisaDetik / 60), $sisaDetik % 60);
+            $progress = min(5, round($detikBerjalan / 2));
         }
+
+        if ($progress > 0 && $progress < 100) {
+            $estimasiTotalDetik = ($detikBerjalan / $progress) * 100;
+            $sisaDetik = round($estimasiTotalDetik - $detikBerjalan);
+            if ($sisaDetik < 0) $sisaDetik = 0;
+
+            if ($sisaDetik > 60) {
+                $sisaWaktuFormat = $statusText . " (~" . floor($sisaDetik / 60) . "m " . ($sisaDetik % 60) . "s)";
+            } else {
+                $sisaWaktuFormat = $statusText . " (~" . $sisaDetik . " detik)";
+            }
+        } else {
+            $sisaWaktuFormat = $statusText;
+        }
+
+        $job->progress = $progress;
+        $job->save();
 
         return response()->json([
             'status' => 'processing',
