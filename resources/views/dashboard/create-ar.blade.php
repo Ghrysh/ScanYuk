@@ -1327,11 +1327,38 @@
 
                 useTemplate() {
                     let tpl = this.previewData.fullData;
-                    this.title = tpl.title; this.arType = tpl.ar_type; this.narrationText = tpl.narration; this.selectedMusic = tpl.bgm_path;
+                    this.title = tpl.title; 
+                    this.arType = tpl.ar_type; 
+                    this.narrationText = tpl.narration; 
                     this.narrationMode = 'text';
-                    if(tpl.ar_type === '2d') this.imageUrl2d = this.getAssetUrl(tpl.file_path);
-                    else { let matched3d = this.library3dList.find(item => item.path === tpl.file_path); if(matched3d) this.selectedLibrary3d = matched3d.id; }
-                    this.closeModal(); this.mainTab = 'custom'; window.scrollTo({ top: 0, behavior: 'smooth' });
+                    
+                    if (tpl.bgm_path) {
+                        let bgmFilename = tpl.bgm_path.split('/').pop().split('#')[0].split('?')[0];
+                        let matchedMusic = this.musicList.find(m => m.path === bgmFilename || m.path.includes(bgmFilename));
+                        this.selectedMusic = matchedMusic ? matchedMusic.path : '';
+                    } else {
+                        this.selectedMusic = '';
+                    }
+
+                    if(tpl.ar_type === '2d') {
+                        this.imageUrl2d = this.getAssetUrl(tpl.file_path);
+                    } else { 
+                        let tplFilename = tpl.file_path.split('/').pop().split('?')[0];
+                        let matched3d = this.library3dList.find(item => {
+                            let itemFilename = item.path.split('/').pop().split('?')[0];
+                            return item.path === tpl.file_path || itemFilename === tplFilename;
+                        }); 
+                        
+                        if(matched3d) {
+                            this.selectedLibrary3d = matched3d.id; 
+                        } else {
+                            this.selectedLibrary3d = '';
+                        }
+                    }
+                    
+                    this.closeModal(); 
+                    this.mainTab = 'custom'; 
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
                 },
 
                 async previewBgm(src) {
