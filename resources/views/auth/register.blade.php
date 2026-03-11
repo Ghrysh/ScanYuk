@@ -67,7 +67,7 @@
             </div>
         </div>
 
-        <form x-data="registerForm()" @submit.prevent="submitForm" class="space-y-5" action="{{ route('register') }}" method="POST" id="regForm">
+<form x-data="registerForm()" @submit.prevent="submitForm($event)" class="space-y-5" action="{{ route('register') }}" method="POST" id="regForm">
             @csrf
             
             <input type="hidden" name="plan" value="{{ $plan }}">
@@ -97,18 +97,18 @@
             </div>
 
             <div x-show="otpSent" x-transition.opacity.duration.300ms class="space-y-2 p-4 bg-slate-50 rounded-xl border border-slate-100" style="display: none;">
-                <div class="flex justify-between items-center mb-1">
+                <div class="flex justify-between items-center mb-2">
                     <label class="block text-sm font-bold text-slate-700">Kode Verifikasi</label>
-                    <span class="text-xs text-slate-500">Cek email Anda</span>
+                    <span class="text-[10px] sm:text-xs text-slate-500 font-medium bg-slate-200 px-2 py-0.5 rounded-full">Cek email Anda</span>
                 </div>
                 
-                <div class="flex gap-2 justify-between">
+                <div class="flex gap-1.5 sm:gap-2 justify-between">
                     <template x-for="(digit, index) in 6" :key="index">
                         <input type="text" maxlength="1" inputmode="numeric" x-model="otpDigits[index]" 
                             @input="focusNext($event.target, index)"
                             @keydown.backspace="focusPrev($event.target, index)"
                             @paste="handlePaste($event)"
-                            class="otp-input w-10 h-12 md:w-12 md:h-12 text-center text-lg md:text-xl font-bold bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-100 focus:outline-none transition-all text-slate-800 shadow-sm">
+                            class="otp-input w-full h-12 sm:h-14 text-center text-lg sm:text-xl font-bold bg-white border border-slate-200 rounded-lg focus:border-teal-500 focus:ring-2 focus:ring-teal-100 focus:outline-none transition-all text-slate-800 shadow-sm">
                     </template>
                 </div>
                 <input type="hidden" name="otp_combined" :value="otpDigits.join('')">
@@ -139,13 +139,6 @@
             
             <button type="submit" class="w-full py-3 px-4 rounded-lg btn-gradient text-white font-bold shadow-lg hover:-translate-y-0.5 transition-all">Create Account</button>
             <div class="text-center text-sm pt-2"><span class="text-slate-500">Already have an account?</span><a href="{{ route('login') }}" class="font-semibold text-teal-600 hover:text-teal-700 ml-1">Sign in</a></div>
-        </form>
-
-        <form x-show="otpSent" style="display: none;" action="{{ route('register') }}" method="POST" class="space-y-5" id="regFormSubmit">
-            @csrf
-            <input type="hidden" name="name" :value="formData.name">
-            <input type="hidden" name="email" :value="formData.email">
-            <input type="hidden" name="password" :value="document.querySelector('input[name=password]').value">
         </form>
     </div>
 
@@ -229,18 +222,13 @@
                     }
                 },
 
-                submitForm() {
+                submitForm(e) {
                     if (this.otpSent && this.otpDigits.join('').length === 6) {
-                        const hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'hidden';
-                        hiddenInput.name = 'otp_combined';
-                        hiddenInput.value = this.otpDigits.join('');
-                        document.getElementById('regFormSubmit').appendChild(hiddenInput);
-                        document.getElementById('regFormSubmit').submit();
+                        e.target.submit();
                     } else if(!this.otpSent) {
                         this.emailError = 'Harap verifikasi email terlebih dahulu.';
                     } else {
-                        alert('Kode OTP belum lengkap.');
+                        alert('Kode OTP belum lengkap. Harap isi 6 digit angka.');
                     }
                 }
             }
