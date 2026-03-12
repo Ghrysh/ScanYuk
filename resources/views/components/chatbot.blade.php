@@ -144,7 +144,7 @@ function chatbot() {
                 messages: this.messages,
                 selectedTopic: this.selectedTopic,
                 followUpMode: this.followUpMode,
-                isFinished: this.isFinished
+                isFinished: this.isFinished,
                 leadId: this.leadId
             }));
         },
