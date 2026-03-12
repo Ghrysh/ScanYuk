@@ -109,6 +109,10 @@ function chatbot() {
         lastUserMessage: '',
         leadId: null,
         
+        lastActivity: Date.now(),
+        hasNudged: false,
+        activityTimer: null,
+        
         topics: [
             'Akun & Login',
             'Paket & Pembayaran',
@@ -133,12 +137,17 @@ function chatbot() {
                 this.followUpMode = data.followUpMode || false;
                 this.isFinished = data.isFinished || false;
                 this.leadId = data.leadId || null;
+                this.lastActivity = data.lastActivity || Date.now();
+                this.hasNudged = data.hasNudged || false;
                 
                 if (this.isOpen) this.scrollToBottom();
             } else {
                 this.unread = 1;
+                this.lastActivity = Date.now();
                 this.sendWelcome();
             }
+            
+            this.startActivityMonitor();
         },
 
         saveState() {
@@ -149,8 +158,65 @@ function chatbot() {
                 selectedTopic: this.selectedTopic,
                 followUpMode: this.followUpMode,
                 isFinished: this.isFinished,
-                leadId: this.leadId
+                leadId: this.leadId,
+                lastActivity: this.lastActivity,
+                hasNudged: this.hasNudged
             }));
+        },
+
+        startActivityMonitor() {
+            if(this.activityTimer) clearInterval(this.activityTimer);
+            
+            const checkTimeout = () => {
+                if (!this.selectedTopic || this.isFinished) return;
+                
+                let elapsed = Date.now() - this.lastActivity;
+                
+                if (elapsed >= 900000) {
+                    this.triggerAutoClose();
+                } 
+                else if (elapsed >= 600000 && !this.hasNudged) {
+                    this.hasNudged = true;
+                    this.messages.push({ sender: 'bot', text: 'Bot perhatikan tidak ada balasan cukup lama. Apakah Anda masih di sana? Sesi ini akan otomatis diakhiri dalam 5 menit.' });
+                    this.playNotification();
+                    if (!this.isOpen) this.unread++;
+                    this.saveState();
+                    this.scrollToBottom();
+                }
+            };
+            
+            checkTimeout();
+            this.activityTimer = setInterval(checkTimeout, 60000);
+        },
+
+        updateActivity() {
+            this.lastActivity = Date.now();
+            this.hasNudged = false;
+        },
+
+        async triggerAutoClose() {
+            this.isFinished = true;
+            this.followUpMode = false;
+            this.messages.push({ sender: 'bot', text: 'Sesi chat telah diakhiri otomatis oleh sistem karena tidak ada aktivitas.' });
+            this.saveState();
+            this.scrollToBottom();
+            
+            if (this.leadId) {
+                try {
+                    await fetch('/api/chatbot/send', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({ 
+                            is_autoclose: true,
+                            chat_history: this.messages,
+                            lead_id: this.leadId
+                        })
+                    });
+                } catch(e) {}
+            }
         },
 
         playNotification() {
@@ -182,13 +248,15 @@ function chatbot() {
             this.isFinished = false;
             this.inputText = '';
             this.unread = 1;
-            this.sendWelcome();
             this.leadId = null;
+            this.updateActivity();
+            this.sendWelcome();
         },
 
         reselectTopic() {
             this.selectedTopic = null;
             this.messages.push({ sender: 'bot', text: 'Topik apa lagi yang ingin Anda bahas?' });
+            this.updateActivity();
             this.saveState();
             this.scrollToBottom();
         },
@@ -196,6 +264,7 @@ function chatbot() {
         setTopic(topic) {
             this.selectedTopic = topic;
             this.messages.push({ sender: 'user', text: `Saya ingin bertanya seputar <b>${topic}</b>` });
+            this.updateActivity();
             this.saveState();
             
             this.isTyping = true;
@@ -203,7 +272,7 @@ function chatbot() {
 
             setTimeout(() => {
                 this.isTyping = false;
-                this.messages.push({ sender: 'bot', text: `Baik, mari kita bahas tentang <b>${topic}</b>. Ada hal spesifik yang bisa ScanYuk Bot jelaskan?` });
+                this.messages.push({ sender: 'bot', text: `Baik, mari kita bahas tentang <b>${topic}</b>. Ada hal spesifik yang bisa Mimin jelaskan?` });
                 this.playNotification();
                 this.saveState();
                 this.scrollToBottom();
@@ -212,7 +281,10 @@ function chatbot() {
 
         toggleChat() {
             this.isOpen = !this.isOpen;
-            if (this.isOpen) this.unread = 0;
+            if (this.isOpen) {
+                this.unread = 0;
+                this.updateActivity();
+            }
             this.saveState();
             this.scrollToBottom();
         },
@@ -228,6 +300,7 @@ function chatbot() {
             this.followUpMode = true;
             this.messages.push({ sender: 'bot', text: 'Tentu. Silakan ketikkan <b>Email atau No WA</b> Anda di bawah ini, agar tim teknis/CS kami bisa segera mengecek dan menghubungi Anda.' });
             this.playNotification();
+            this.updateActivity();
             this.saveState();
             this.scrollToBottom();
         },
@@ -238,6 +311,8 @@ function chatbot() {
             const msgText = this.inputText;
             this.messages.push({ sender: 'user', text: msgText });
             this.inputText = '';
+            
+            this.updateActivity();
             this.saveState();
             
             if (!this.followUpMode) {
@@ -285,7 +360,7 @@ function chatbot() {
 
             } catch (e) {
                 this.isTyping = false;
-                this.messages.push({ sender: 'bot', text: 'Maaf, ScanYuk Bot sedang gangguan jaringan. Coba lagi ya.' });
+                this.messages.push({ sender: 'bot', text: 'Maaf, Mimin sedang gangguan jaringan. Coba lagi ya.' });
                 this.saveState();
                 this.scrollToBottom();
             }

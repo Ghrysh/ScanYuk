@@ -40,16 +40,28 @@ class ChatbotController extends Controller
             $lead = ChatbotLead::find($request->lead_id);
         }
 
+        if ($request->is_autoclose) {
+            if ($lead) {
+                $contactInfo = auth()->check() ? auth()->user()->email : 'Diakhiri Otomatis (Guest)';
+                $lead->update([
+                    'contact_info' => $contactInfo,
+                    'chat_history' => json_encode($request->chat_history)
+                ]);
+            }
+            return response()->json(['success' => true]);
+        }
+
         if (!$lead) {
             $lead = ChatbotLead::create([
                 'user_id' => auth()->id(),
-                'ip_address' => $realIp,
+                'ip_address' => $realIp, 
                 'topic_context' => $topic,
-                'contact_info' => '-',
+                'contact_info' => '-', 
                 'chat_history' => json_encode($request->chat_history),
                 'last_message' => $message
             ]);
         } else {
+            // Update row yang sudah ada
             $lead->update([
                 'chat_history' => json_encode($request->chat_history),
                 'last_message' => $message
