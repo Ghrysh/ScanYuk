@@ -91,7 +91,7 @@ class ChatbotSeeder extends Seeder
                 'topic' => 'Umum',
                 'intent_name' => 'sapaan',
                 'keywords' => ['halo', 'hai', 'pagi', 'siang', 'sore', 'malam', 'ping', 'hei', 'helo'],
-                'response' => 'Halo kembali! Silakan tanyakan hal yang ingin Anda ketahui, Mimin siap membantu.'
+                'response' => 'Halo kembali! Silakan tanyakan hal yang ingin Anda ketahui, ScanYuk Bot siap membantu.'
             ],
             [
                 'topic' => 'Umum',

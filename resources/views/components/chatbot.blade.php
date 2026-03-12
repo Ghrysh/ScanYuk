@@ -16,24 +16,23 @@
          style="display: none;" 
          class="absolute bottom-0 right-0 w-[calc(100vw-2rem)] sm:w-[380px] h-[550px] max-h-[85vh] bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-slate-100 flex flex-col overflow-hidden">
         
-        <div class="bg-gradient-to-r from-teal-500 to-indigo-600 p-3 sm:p-4 flex items-center justify-between shadow-md z-10">
+        <div class="bg-gradient-to-r from-teal-500 to-indigo-600 p-3 sm:p-4 flex items-center justify-between shadow-md z-10 shrink-0">
             <div class="flex items-center gap-2 sm:gap-3">
                 <div class="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-base sm:text-xl shadow-inner border border-white/30">🤖</div>
                 <div>
-                    <h3 class="text-white font-bold text-xs sm:text-sm leading-tight flex items-center gap-2">
-                        Mimin ScanYuk 
-                        <span x-show="selectedTopic" class="bg-white/20 px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wide hidden sm:inline-block" x-text="selectedTopic"></span>
+                    <h3 class="text-white font-bold text-sm sm:text-base leading-tight">
+                        ScanYuk Bot 
                     </h3>
                     <p class="text-teal-100 text-[9px] sm:text-[10px] flex items-center gap-1 mt-0.5"><span class="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></span> Siap Membantu</p>
                 </div>
             </div>
             <div class="flex items-center gap-1 sm:gap-2">
-                <button @click="resetChat()" title="Mulai Chat Baru" class="text-white hover:bg-white/20 px-2 py-1.5 rounded-lg transition-colors flex items-center gap-1 bg-white/10">
+                <button @click="resetChat()" title="Mulai Chat Baru" class="text-white hover:bg-white/20 px-2.5 py-1.5 rounded-lg transition-colors flex items-center gap-1.5 bg-white/10 shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 sm:h-4 sm:w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
                     <span class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider">New Chat</span>
                 </button>
                 <button @click="toggleChat()" title="Tutup Chat" class="text-white hover:bg-white/20 p-1.5 rounded-lg transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 </button>
             </div>
         </div>
@@ -42,7 +41,7 @@
             
             <template x-for="(msg, index) in messages" :key="index">
                 <div class="flex flex-col" :class="msg.sender === 'user' ? 'items-end' : 'items-start'">
-                    <span class="text-[9px] text-slate-400 mb-1 px-1 font-medium" x-text="msg.sender === 'user' ? 'Anda' : 'Mimin'"></span>
+                    <span class="text-[9px] text-slate-400 mb-1 px-1 font-medium" x-text="msg.sender === 'user' ? 'Anda' : 'ScanYuk Bot'"></span>
                     <div class="max-w-[85%] px-4 py-2.5 rounded-2xl text-xs sm:text-sm shadow-sm"
                          :class="msg.sender === 'user' ? 'bg-indigo-500 text-white rounded-tr-sm' : 'bg-white text-slate-700 border border-slate-200 rounded-tl-sm leading-relaxed'"
                          x-html="msg.text"></div>
@@ -204,7 +203,7 @@ function chatbot() {
 
             setTimeout(() => {
                 this.isTyping = false;
-                this.messages.push({ sender: 'bot', text: `Baik, mari kita bahas tentang <b>${topic}</b>. Ada hal spesifik yang bisa Mimin jelaskan?` });
+                this.messages.push({ sender: 'bot', text: `Baik, mari kita bahas tentang <b>${topic}</b>. Ada hal spesifik yang bisa ScanYuk Bot jelaskan?` });
                 this.playNotification();
                 this.saveState();
                 this.scrollToBottom();
@@ -286,7 +285,7 @@ function chatbot() {
 
             } catch (e) {
                 this.isTyping = false;
-                this.messages.push({ sender: 'bot', text: 'Maaf, Mimin sedang gangguan jaringan. Coba lagi ya.' });
+                this.messages.push({ sender: 'bot', text: 'Maaf, ScanYuk Bot sedang gangguan jaringan. Coba lagi ya.' });
                 this.saveState();
                 this.scrollToBottom();
             }
