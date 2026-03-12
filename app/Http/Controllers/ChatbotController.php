@@ -29,6 +29,12 @@ class ChatbotController extends Controller
         }
         $cleanMessage = implode(' ', $words);
 
+        $realIp = $request->ip();
+        if ($request->hasHeader('X-Forwarded-For')) {
+            $ips = explode(',', $request->header('X-Forwarded-For'));
+            $realIp = trim($ips[0]);
+        }
+
         $lead = null;
         if ($request->lead_id) {
             $lead = ChatbotLead::find($request->lead_id);
@@ -37,7 +43,7 @@ class ChatbotController extends Controller
         if (!$lead) {
             $lead = ChatbotLead::create([
                 'user_id' => auth()->id(),
-                'ip_address' => $request->ip(),
+                'ip_address' => $realIp,
                 'topic_context' => $topic,
                 'contact_info' => '-',
                 'chat_history' => json_encode($request->chat_history),

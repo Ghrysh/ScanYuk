@@ -69,7 +69,7 @@
             <button @click="activeTab = 'chatbot'" 
                 :class="activeTab === 'chatbot' ? 'bg-teal-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'"
                 class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap">
-                Chatbot AI
+                Chatbot
             </button>
             <button @click="activeTab = 'users'" 
                 :class="activeTab === 'users' ? 'bg-teal-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'"
@@ -460,11 +460,6 @@
     <div x-show="activeTab === 'monitoring'" style="display: none;" x-transition.opacity.duration.300ms>
         
         <div class="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
-            <div>
-                <h2 class="text-2xl font-bold text-slate-900">Monitoring & Trafik</h2>
-                <p class="text-slate-500 text-sm mt-1">Pantau perjalanan pengunjung di dalam website.</p>
-            </div>
-            
             <div class="flex bg-slate-100 p-1 rounded-xl w-fit">
                 <a href="{{ route('admin.dashboard', ['active_tab' => 'monitoring', 'filter' => 'today']) }}" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all {{ $filter == 'today' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-500 hover:text-slate-700' }}">Hari Ini</a>
                 <a href="{{ route('admin.dashboard', ['active_tab' => 'monitoring', 'filter' => 'month']) }}" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all {{ $filter == 'month' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-500 hover:text-slate-700' }}">Bulan Ini</a>
@@ -591,14 +586,9 @@
     <div x-show="activeTab === 'chatbot'" style="display: none;" x-transition.opacity.duration.300ms x-data="{ botTab: 'leads' }">
         
         <div class="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
-            <div>
-                <h2 class="text-2xl font-bold text-slate-900">Manajemen Chatbot AI</h2>
-                <p class="text-slate-500 text-sm mt-1">Pantau percakapan pengguna & latih otak chatbot.</p>
-            </div>
-            
-            <div class="flex bg-slate-100 p-1 rounded-xl w-fit">
-                <button @click="botTab = 'leads'" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all" :class="botTab === 'leads' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-500 hover:text-slate-700'">Inbox Follow Up</button>
-                <button @click="botTab = 'knowledge'" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all" :class="botTab === 'knowledge' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-500 hover:text-slate-700'">Latih Otak Bot (Knowledge)</button>
+            <div class="flex flex-col sm:flex-row bg-slate-100 p-1 rounded-xl w-full md:w-fit gap-1">
+                <button @click="botTab = 'leads'" class="w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition-all" :class="botTab === 'leads' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-500 hover:text-slate-700'">Inbox Follow Up</button>
+                <button @click="botTab = 'knowledge'" class="w-full sm:w-auto px-4 py-2 rounded-lg text-sm font-semibold transition-all" :class="botTab === 'knowledge' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-500 hover:text-slate-700'">Latih Otak Bot</button>
             </div>
         </div>
 
@@ -756,7 +746,7 @@
                         @csrf
                         <template x-if="isEdit"><input type="hidden" name="_method" value="PATCH"></template>
                         
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Topik Terkait</label>
                                 <select name="topic" x-model="form.topic" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-teal-500 outline-none">
