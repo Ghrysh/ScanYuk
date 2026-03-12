@@ -1516,5 +1516,7 @@
         <span x-text="$store.toast.type === 'error' ? '⚠️' : '✅'"></span>
         <span x-text="$store.toast.message"></span>
     </div>
+
+    @include('components.chatbot')
 </body>
 </html>

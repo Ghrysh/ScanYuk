@@ -61,5 +61,7 @@
         }, 2000);
     </script>
     @endif
+
+    @include('components.chatbot')
 </body>
 </html>

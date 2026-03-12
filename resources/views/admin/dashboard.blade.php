@@ -66,6 +66,11 @@
                 class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap">
                 Monitoring
             </button>
+            <button @click="activeTab = 'chatbot'" 
+                :class="activeTab === 'chatbot' ? 'bg-teal-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'"
+                class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap">
+                Chatbot AI
+            </button>
             <button @click="activeTab = 'users'" 
                 :class="activeTab === 'users' ? 'bg-teal-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'"
                 class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap">
@@ -581,86 +586,183 @@
             </div>
         </div>
 
-        <!-- <div class="bg-white rounded-xl border border-slate-200 shadow-sm" x-data="{ showContactModal: false, activeMsg: null }">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-slate-900">Pesan Masuk (Contact Us)</h3>
+    <div x-show="activeTab === 'chatbot'" style="display: none;" x-transition.opacity.duration.300ms x-data="{ botTab: 'leads' }">
+        
+        <div class="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-900">Manajemen Chatbot AI</h2>
+                <p class="text-slate-500 text-sm mt-1">Pantau percakapan pengguna & latih otak chatbot.</p>
             </div>
             
-            <div class="overflow-x-auto max-h-[300px] overflow-y-auto no-scrollbar">
-                <table class="w-full text-left text-sm text-slate-600 relative">
-                    <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 sticky top-0 z-10">
+            <div class="flex bg-slate-100 p-1 rounded-xl w-fit">
+                <button @click="botTab = 'leads'" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all" :class="botTab === 'leads' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-500 hover:text-slate-700'">Inbox Follow Up</button>
+                <button @click="botTab = 'knowledge'" class="px-4 py-2 rounded-lg text-sm font-semibold transition-all" :class="botTab === 'knowledge' ? 'bg-white shadow-sm text-teal-600' : 'text-slate-500 hover:text-slate-700'">Latih Otak Bot (Knowledge)</button>
+            </div>
+        </div>
+
+        <div x-show="botTab === 'leads'" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" x-data="{ showChatModal: false, activeChat: [] }">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                         <tr>
-                            <th class="px-6 py-4">Pengirim</th>
-                            <th class="px-6 py-4 hidden sm:table-cell">Email</th>
-                            <th class="px-6 py-4">Waktu</th>
-                            <th class="px-6 py-4 text-right">Aksi</th>
+                            <th class="px-6 py-4 whitespace-nowrap">Pengguna (IP / Akun)</th>
+                            <th class="px-6 py-4 whitespace-nowrap">Topik</th>
+                            <th class="px-6 py-4">Kontak Diberikan (Email/No)</th>
+                            <th class="px-6 py-4 whitespace-nowrap">Waktu</th>
+                            <th class="px-6 py-4 text-center whitespace-nowrap">Status & Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
-                        @forelse($contactMessages as $msg)
+                        @forelse($chatbotLeads as $lead)
                         <tr class="hover:bg-slate-50 transition-colors">
                             <td class="px-6 py-4">
-                                <div class="font-bold text-slate-900">{{ $msg->name }}</div>
-                                <div class="text-xs text-slate-500">{{ $msg->company ?? 'Personal' }}</div>
+                                @if($lead->user)
+                                    <div class="font-bold text-teal-700 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg> {{ $lead->user->name }}</div>
+                                    <div class="text-xs text-slate-500">{{ $lead->user->email }}</div>
+                                @else
+                                    <div class="font-bold text-slate-700">Guest Visitor</div>
+                                    <div class="text-xs text-slate-400">IP: {{ $lead->ip_address }}</div>
+                                @endif
                             </td>
-                            <td class="px-6 py-4 truncate max-w-[150px] hidden sm:table-cell">{{ $msg->email }}</td>
-                            <td class="px-6 py-4 text-xs">{{ $msg->created_at->format('d M Y, H:i') }}</td>
-                            <td class="px-6 py-4 text-right">
-                                <button @click="activeMsg = {{ json_encode($msg) }}; showContactModal = true" class="text-teal-600 font-bold text-xs bg-teal-50 px-3 py-1.5 rounded-lg hover:bg-teal-100 transition-colors">Lihat</button>
+                            <td class="px-6 py-4 font-semibold text-slate-800">{{ $lead->topic_context }}</td>
+                            <td class="px-6 py-4 font-bold text-indigo-600 bg-indigo-50/50">{{ $lead->contact_info }}</td>
+                            <td class="px-6 py-4 text-xs text-slate-500">{{ $lead->created_at->format('d M Y, H:i') }}</td>
+                            <td class="px-6 py-4 text-center space-y-2">
+                                <form action="{{ route('admin.chatbot.lead.status', $lead->id) }}" method="POST">
+                                    @csrf @method('PATCH')
+                                    <button type="submit" class="text-[10px] font-bold px-2 py-1 rounded border w-full {{ $lead->status === 'contacted' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-amber-50 text-amber-600 border-amber-200' }}">
+                                        {{ $lead->status === 'contacted' ? '✅ Selesai Dihubungi' : 'Menunggu Dihubungi' }}
+                                    </button>
+                                </form>
+                                @if($lead->chat_history)
+                                    <button @click="activeChat = {{ $lead->chat_history }}; showChatModal = true" class="text-xs text-white bg-slate-800 hover:bg-slate-900 px-3 py-1.5 rounded-lg w-full font-semibold transition-colors flex items-center justify-center gap-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg> Lihat History Chat
+                                    </button>
+                                @endif
                             </td>
                         </tr>
                         @empty
-                        <tr>
-                            <td colspan="4" class="px-6 py-8 text-center text-slate-400">Belum ada pesan masuk.</td>
-                        </tr>
+                        <tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">Belum ada user yang meminta follow-up chat.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
+            <div class="p-4 border-t border-slate-100 flex overflow-x-auto">
+                {{ $chatbotLeads->appends(['active_tab' => 'chatbot', 'leads_page' => request('leads_page')])->links() }}
+            </div>
 
-            <div x-show="showContactModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <div x-show="showContactModal" x-transition.opacity class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showContactModal = false"></div>
-                <div x-show="showContactModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 overflow-hidden flex flex-col">
-                    <div class="flex justify-between items-center mb-5 border-b border-slate-100 pb-4">
-                        <h3 class="text-xl font-bold text-slate-900">Detail Pesan</h3>
-                        <button @click="showContactModal = false" class="text-slate-400 hover:text-slate-600 bg-slate-100 p-1.5 rounded-lg">
-                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
+            <div x-show="showChatModal" style="display: none;" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                <div x-show="showChatModal" x-transition.opacity class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showChatModal = false"></div>
+                <div x-show="showChatModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col h-[600px] max-h-[90vh]">
+                    <div class="bg-slate-800 p-4 flex items-center justify-between text-white flex-shrink-0">
+                        <h3 class="font-bold text-sm">📜 Riwayat Percakapan</h3>
+                        <button @click="showChatModal = false" class="hover:text-red-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
                     </div>
-                    <div class="space-y-4 text-sm text-slate-600" x-if="activeMsg">
-                        <div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pengirim</p>
-                            <p class="font-bold text-slate-900 text-base" x-text="activeMsg?.name"></p>
-                            <p class="text-teal-600 font-medium" x-text="activeMsg?.email"></p>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Perusahaan</p>
-                                <p class="font-semibold text-slate-800" x-text="activeMsg?.company || '-'"></p>
+                    <div class="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-4">
+                        <template x-for="(msg, i) in activeChat" :key="i">
+                            <div class="flex flex-col" :class="msg.sender === 'user' ? 'items-end' : 'items-start'">
+                                <span class="text-[9px] text-slate-400 mb-1 px-1 font-bold" x-text="msg.sender === 'user' ? 'User' : 'Bot AI'"></span>
+                                <div class="max-w-[85%] px-3 py-2 rounded-2xl text-sm shadow-sm" :class="msg.sender === 'user' ? 'bg-indigo-500 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'" x-html="msg.text"></div>
                             </div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Tanggal</p>
-                                <p class="font-semibold text-slate-800" x-text="new Date(activeMsg?.created_at).toLocaleDateString('id-ID')"></p>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Industri</p>
-                                <p class="font-semibold text-slate-800" x-text="activeMsg?.industry || '-'"></p>
-                            </div>
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Estimasi Volume QR</p>
-                                <p class="font-semibold text-slate-800" x-text="activeMsg?.volume || '-'"></p>
-                            </div>
-                        </div>
-                        <div class="pt-2">
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Pesan Isi</p>
-                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 whitespace-pre-wrap text-slate-700 leading-relaxed max-h-[150px] overflow-y-auto" x-text="activeMsg?.message"></div>
-                        </div>
+                        </template>
                     </div>
                 </div>
             </div>
-        </div> -->
+        </div>
+
+        <div x-show="botTab === 'knowledge'" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" x-data="{ showKnowModal: false, isEdit: false, form: { id: '', topic: '', intent: '', keywords: '', response: '' } }">
+            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <h3 class="text-sm font-bold text-slate-700">Daftar Pengetahuan Bot</h3>
+                <button @click="isEdit = false; form = {id:'', topic:'Umum', intent:'', keywords:'', response:''}; showKnowModal = true" class="bg-teal-500 hover:bg-teal-600 text-white px-4 py-2 rounded-lg text-xs font-bold shadow-sm transition-colors">+ Tambah Respon</button>
+            </div>
+            
+            <div class="overflow-x-auto max-h-[600px] overflow-y-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-100 text-slate-500 font-semibold sticky top-0 shadow-sm">
+                        <tr>
+                            <th class="px-6 py-3 whitespace-nowrap">Kategori / Topik</th>
+                            <th class="px-6 py-3 whitespace-nowrap">Kata Kunci (Keywords)</th>
+                            <th class="px-6 py-3 w-[40%]">Balasan Bot</th>
+                            <th class="px-6 py-3 text-right">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100">
+                        @foreach($chatbotKnowledges as $know)
+                        <tr class="hover:bg-slate-50">
+                            <td class="px-6 py-4">
+                                <span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-bold whitespace-nowrap">{{ $know->topic }}</span><br>
+                                <span class="text-[10px] text-slate-400 uppercase">{{ $know->intent_name }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                @php $kwArr = json_decode($know->keywords, true) ?? []; @endphp
+                                <div class="flex flex-wrap gap-1">
+                                    @foreach($kwArr as $kw)
+                                        <span class="px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded text-[10px] font-medium">{{ $kw }}</span>
+                                    @endforeach
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 text-xs leading-relaxed text-slate-700">{{ Str::limit($know->response, 100) }}</td>
+                            <td class="px-6 py-4 text-right space-y-1">
+                                <button @click="isEdit = true; form = { id: '{{$know->id}}', topic: '{{$know->topic}}', intent: '{{$know->intent_name}}', keywords: '{{ implode(', ', $kwArr) }}', response: `{{$know->response}}` }; showKnowModal = true" class="text-teal-600 hover:text-teal-800 text-xs font-bold px-2 w-full text-right">Edit</button>
+                                <form action="{{ route('admin.chatbot.destroy', $know->id) }}" method="POST" onsubmit="return confirm('Hapus respon bot ini?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="text-red-500 hover:text-red-700 text-xs font-bold px-2 w-full text-right">Hapus</button>
+                                </form>
+                            </td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <div x-show="showKnowModal" style="display: none;" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+                <div x-show="showKnowModal" x-transition.opacity class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showKnowModal = false"></div>
+                <div x-show="showKnowModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden flex flex-col max-h-[90vh]">
+                    <div class="p-5 border-b border-slate-100 flex justify-between bg-slate-50 flex-shrink-0">
+                        <h3 class="font-bold text-slate-900" x-text="isEdit ? 'Edit Respon Bot' : 'Tambah Respon Bot'"></h3>
+                        <button @click="showKnowModal = false" class="text-slate-400 hover:text-red-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                    </div>
+                    <form :action="isEdit ? '/admin/chatbot/knowledge/' + form.id : '{{ route('admin.chatbot.store') }}'" method="POST" class="p-5 space-y-4 overflow-y-auto">
+                        @csrf
+                        <template x-if="isEdit"><input type="hidden" name="_method" value="PATCH"></template>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Topik Terkait</label>
+                                <select name="topic" x-model="form.topic" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-teal-500 outline-none">
+                                    <option value="Akun & Login">Akun & Login</option>
+                                    <option value="Paket & Pembayaran">Paket & Pembayaran</option>
+                                    <option value="Pembuatan AR & 3D">Pembuatan AR & 3D</option>
+                                    <option value="Cara Scan & Kendala">Cara Scan & Kendala</option>
+                                    <option value="Umum">Umum / Lainnya</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Kode Intent (Opsional)</label>
+                                <input type="text" name="intent_name" x-model="form.intent" placeholder="cth: cara_login" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-teal-500 outline-none">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Kata Kunci (Pisahkan dengan koma)</label>
+                            <textarea name="keywords" x-model="form.keywords" rows="2" placeholder="cth: lupa password, sandi, reset akun" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-teal-500 outline-none resize-none"></textarea>
+                            <p class="text-[10px] text-slate-400 mt-1">Bot akan mengirim respon ini jika chat user mengandung salah satu kata kunci di atas.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Teks Balasan Bot</label>
+                            <textarea name="response" x-model="form.response" rows="4" placeholder="Ketik balasan untuk pengguna di sini..." required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:border-teal-500 outline-none resize-none"></textarea>
+                        </div>
+
+                        <div class="pt-2 flex gap-3">
+                            <button type="button" @click="showKnowModal = false" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50">Batal</button>
+                            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-teal-500 text-white font-bold hover:bg-teal-600 shadow-md">Simpan Respon</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     </div>
 
@@ -681,7 +783,7 @@
                             backgroundColor: 'rgba(20, 184, 166, 0.1)',
                             borderWidth: 3,
                             fill: true,
-                            tension: 0.4, // Membuat garis melengkung halus
+                            tension: 0.4,
                             pointBackgroundColor: '#ffffff',
                             pointBorderColor: '#0d9488',
                             pointBorderWidth: 2,

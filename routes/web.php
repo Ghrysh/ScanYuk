@@ -110,6 +110,10 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/admin/users/search', [AdminController::class, 'search'])->name('admin.users.search');
         Route::get('/admin/transactions/search', [AdminController::class, 'searchTransactions'])->name('admin.transactions.search');
         Route::patch('/admin/packages/{package}', [AdminController::class, 'updatePackage'])->name('admin.packages.update');
+        Route::post('/admin/chatbot/knowledge', [\App\Http\Controllers\AdminController::class, 'storeChatbotKnowledge'])->name('admin.chatbot.store');
+        Route::patch('/admin/chatbot/knowledge/{id}', [\App\Http\Controllers\AdminController::class, 'updateChatbotKnowledge'])->name('admin.chatbot.update');
+        Route::delete('/admin/chatbot/knowledge/{id}', [\App\Http\Controllers\AdminController::class, 'destroyChatbotKnowledge'])->name('admin.chatbot.destroy');
+        Route::patch('/admin/chatbot/leads/{id}/status', [\App\Http\Controllers\AdminController::class, 'toggleLeadStatus'])->name('admin.chatbot.lead.status');
     });
 
     Route::middleware(['auth', 'role:free,starter,professional,business'])->group(function () {
@@ -205,5 +209,7 @@ Route::get('/sys-ping/v1', function (\Illuminate\Http\Request $request) {
 
 Route::post('/api/convert-3d/start', [\App\Http\Controllers\UserDashboardController::class, 'startConversion']);
 Route::get('/api/convert-3d/status/{id}', [\App\Http\Controllers\UserDashboardController::class, 'checkStatus']);
+
+Route::post('/api/chatbot/send', [\App\Http\Controllers\ChatbotController::class, 'processChat']);
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');

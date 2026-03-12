@@ -74,5 +74,7 @@
                 }).catch(err => console.log(err));
         }, 2000);
     </script>
+
+    @include('components.chatbot')
 </body>
 </html>

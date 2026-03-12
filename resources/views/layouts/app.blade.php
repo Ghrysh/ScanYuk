@@ -325,5 +325,7 @@
             </div>
         </div>
     </div>
+
+    @include('components.chatbot')
 </body>
 </html>

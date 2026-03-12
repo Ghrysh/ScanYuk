@@ -75,9 +75,12 @@ class AdminController extends Controller
 
         $contactMessages = \App\Models\Contact::latest()->take(20)->get();
 
+        $chatbotKnowledges = \App\Models\ChatbotKnowledge::orderBy('topic')->get();
+        $chatbotLeads = \App\Models\ChatbotLead::with('user')->latest()->paginate(10, ['*'], 'leads_page');
+
         return view('admin.dashboard', compact(
             'packages', 'users', 'transactions', 'totalUsers', 'totalQrCodes', 'totalScans', 'totalRevenue',
-            'contactMessages', 'visitorLogs', 'totalVisitors', 'filter', 'chartData'
+            'contactMessages', 'visitorLogs', 'totalVisitors', 'filter', 'chartData', 'chatbotKnowledges', 'chatbotLeads'
         ));
     }
 
@@ -184,5 +187,43 @@ class AdminController extends Controller
             ->paginate(10, ['*'], 'txn_page');
 
         return view('admin.partials._transaction_table', compact('transactions'))->render();
+    }
+
+    public function storeChatbotKnowledge(Request $request)
+    {
+        $request->validate(['topic' => 'required', 'intent_name' => 'required', 'keywords' => 'required', 'response' => 'required']);
+        $keywordsArray = array_map('trim', explode(',', strtolower($request->keywords)));
+        
+        \App\Models\ChatbotKnowledge::create([
+            'topic' => $request->topic, 'intent_name' => Str::slug($request->intent_name, '_'),
+            'keywords' => json_encode($keywordsArray), 'response' => $request->response
+        ]);
+        return back()->with(['success' => 'Respon Chatbot berhasil ditambahkan!', 'active_tab' => 'chatbot']);
+    }
+
+    public function updateChatbotKnowledge(Request $request, $id)
+    {
+        $knowledge = \App\Models\ChatbotKnowledge::findOrFail($id);
+        $keywordsArray = array_map('trim', explode(',', strtolower($request->keywords)));
+        
+        $knowledge->update([
+            'topic' => $request->topic, 'intent_name' => Str::slug($request->intent_name, '_'),
+            'keywords' => json_encode($keywordsArray), 'response' => $request->response
+        ]);
+        return back()->with(['success' => 'Respon Chatbot berhasil diperbarui!', 'active_tab' => 'chatbot']);
+    }
+
+    public function destroyChatbotKnowledge($id)
+    {
+        \App\Models\ChatbotKnowledge::findOrFail($id)->delete();
+        return back()->with(['success' => 'Respon Chatbot dihapus!', 'active_tab' => 'chatbot']);
+    }
+
+    public function toggleLeadStatus($id)
+    {
+        $lead = \App\Models\ChatbotLead::findOrFail($id);
+        $lead->status = $lead->status === 'pending' ? 'contacted' : 'pending';
+        $lead->save();
+        return back()->with(['success' => 'Status follow up diperbarui!', 'active_tab' => 'chatbot']);
     }
 }
