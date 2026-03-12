@@ -226,4 +226,10 @@ class AdminController extends Controller
         $lead->save();
         return back()->with(['success' => 'Status follow up diperbarui!', 'active_tab' => 'chatbot']);
     }
+
+    public function getLeadHistory($id)
+    {
+        $lead = \App\Models\ChatbotLead::findOrFail($id);
+        return response()->json(json_decode($lead->chat_history, true) ?? []);
+    }
 }

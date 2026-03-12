@@ -84,6 +84,20 @@ class ChatbotSeeder extends Seeder
                 'intent_name' => 'kendala_error',
                 'keywords' => ['error', 'gagal', 'bug', 'macet', 'berhenti', 'stack', 'kosong', 'rusak', 'tidak bisa'],
                 'response' => 'Maaf atas kendalanya! Jika macet, pastikan format gambar PNG/JPG, hapus background rumit, atau turunkan ukuran file. Cobalah refresh halaman Anda.'
+            ],
+
+            // ================= TOPIK UMUM (GLOBAL) =================
+            [
+                'topic' => 'Umum',
+                'intent_name' => 'sapaan',
+                'keywords' => ['halo', 'hai', 'pagi', 'siang', 'sore', 'malam', 'ping', 'hei', 'helo'],
+                'response' => 'Halo kembali! Silakan tanyakan hal yang ingin Anda ketahui, Mimin siap membantu.'
+            ],
+            [
+                'topic' => 'Umum',
+                'intent_name' => 'terima_kasih',
+                'keywords' => ['terimakasih', 'makasih', 'terima kasih', 'makasi', 'tq', 'thanks', 'thank you', 'nuhun', 'oke', 'sip', 'mantap', 'baik', 'oke min'],
+                'response' => 'Sama-sama! Senang bisa membantu Anda. Jika tidak ada yang ditanyakan lagi, silakan klik "Akhiri Chat & Hubungi CS" agar tim kami punya data Anda, atau klik tombol New Chat di atas untuk membahas topik lain.'
             ]
         ];
 

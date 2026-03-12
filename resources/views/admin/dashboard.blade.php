@@ -602,16 +602,32 @@
             </div>
         </div>
 
-        <div x-show="botTab === 'leads'" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" x-data="{ showChatModal: false, activeChat: [] }">
+        <div x-show="botTab === 'leads'" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" 
+             x-data="{ showChatModal: false, activeChat: [], activeLeadId: null, pollInterval: null,
+                       openModal(id, history) {
+                           this.activeLeadId = id;
+                           this.activeChat = history || [];
+                           this.showChatModal = true;
+                           // Polling AJAX tiap 3 detik untuk realtime
+                           this.pollInterval = setInterval(async () => {
+                               let res = await fetch(`/admin/chatbot/leads/${id}/history`);
+                               this.activeChat = await res.json();
+                           }, 3000);
+                       },
+                       closeModal() {
+                           this.showChatModal = false;
+                           clearInterval(this.pollInterval);
+                       }
+             }">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-600">
                     <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
                         <tr>
-                            <th class="px-6 py-4 whitespace-nowrap">Pengguna (IP / Akun)</th>
+                            <th class="px-6 py-4 whitespace-nowrap">Pengguna</th>
                             <th class="px-6 py-4 whitespace-nowrap">Topik</th>
-                            <th class="px-6 py-4">Kontak Diberikan (Email/No)</th>
+                            <th class="px-6 py-4">Status & Kontak Diberikan</th>
                             <th class="px-6 py-4 whitespace-nowrap">Waktu</th>
-                            <th class="px-6 py-4 text-center whitespace-nowrap">Status & Aksi</th>
+                            <th class="px-6 py-4 text-center whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
@@ -622,29 +638,38 @@
                                     <div class="font-bold text-teal-700 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" /></svg> {{ $lead->user->name }}</div>
                                     <div class="text-xs text-slate-500">{{ $lead->user->email }}</div>
                                 @else
-                                    <div class="font-bold text-slate-700">Guest Visitor</div>
+                                    <div class="font-bold text-slate-700 flex items-center gap-1">👤 Guest / Visitor</div>
                                     <div class="text-xs text-slate-400">IP: {{ $lead->ip_address }}</div>
                                 @endif
                             </td>
                             <td class="px-6 py-4 font-semibold text-slate-800">{{ $lead->topic_context }}</td>
-                            <td class="px-6 py-4 font-bold text-indigo-600 bg-indigo-50/50">{{ $lead->contact_info }}</td>
+                            <td class="px-6 py-4">
+                                @if($lead->contact_info === '-')
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 text-blue-600 font-bold text-xs rounded-lg border border-blue-200">
+                                        <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span> Chat Masih Aktif
+                                    </span>
+                                @else
+                                    <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 text-emerald-700 font-bold text-xs rounded-lg border border-emerald-200 mb-1">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg> Chat Diakhiri
+                                    </div><br>
+                                    <span class="text-xs font-bold text-slate-700">Follow up via: <span class="text-indigo-600">{{ $lead->contact_info }}</span></span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4 text-xs text-slate-500">{{ $lead->created_at->format('d M Y, H:i') }}</td>
                             <td class="px-6 py-4 text-center space-y-2">
                                 <form action="{{ route('admin.chatbot.lead.status', $lead->id) }}" method="POST">
                                     @csrf @method('PATCH')
-                                    <button type="submit" class="text-[10px] font-bold px-2 py-1 rounded border w-full {{ $lead->status === 'contacted' ? 'bg-green-50 text-green-600 border-green-200' : 'bg-amber-50 text-amber-600 border-amber-200' }}">
-                                        {{ $lead->status === 'contacted' ? '✅ Selesai Dihubungi' : 'Menunggu Dihubungi' }}
+                                    <button type="submit" class="text-[10px] font-bold px-2 py-1.5 rounded-lg border w-full transition-colors {{ $lead->status === 'contacted' ? 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100' : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100' }}">
+                                        {{ $lead->status === 'contacted' ? '✅ Selesai Dihubungi' : '⚠️ Belum Dihubungi' }}
                                     </button>
                                 </form>
-                                @if($lead->chat_history)
-                                    <button @click="activeChat = {{ $lead->chat_history }}; showChatModal = true" class="text-xs text-white bg-slate-800 hover:bg-slate-900 px-3 py-1.5 rounded-lg w-full font-semibold transition-colors flex items-center justify-center gap-1">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg> Lihat History Chat
-                                    </button>
-                                @endif
+                                <button @click="openModal({{ $lead->id }}, {{ $lead->chat_history ?? '[]' }})" class="text-xs text-white bg-slate-800 hover:bg-slate-900 px-3 py-1.5 rounded-lg w-full font-semibold transition-colors flex items-center justify-center gap-1 shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg> Pantau Chat
+                                </button>
                             </td>
                         </tr>
                         @empty
-                        <tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">Belum ada user yang meminta follow-up chat.</td></tr>
+                        <tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">Belum ada user yang berinteraksi.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
@@ -654,17 +679,20 @@
             </div>
 
             <div x-show="showChatModal" style="display: none;" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
-                <div x-show="showChatModal" x-transition.opacity class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showChatModal = false"></div>
-                <div x-show="showChatModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col h-[600px] max-h-[90vh]">
-                    <div class="bg-slate-800 p-4 flex items-center justify-between text-white flex-shrink-0">
-                        <h3 class="font-bold text-sm">📜 Riwayat Percakapan</h3>
-                        <button @click="showChatModal = false" class="hover:text-red-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                <div x-show="showChatModal" x-transition.opacity class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="closeModal()"></div>
+                <div x-show="showChatModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100" class="relative bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden flex flex-col h-[600px] max-h-[90vh]">
+                    <div class="bg-gradient-to-r from-slate-800 to-slate-900 p-4 flex items-center justify-between text-white flex-shrink-0 shadow-md">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-sm">📡 Pantau Chat Langsung</h3>
+                            <span class="flex h-2 w-2 relative"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span></span>
+                        </div>
+                        <button @click="closeModal()" class="hover:text-red-400 bg-white/10 p-1.5 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
                     </div>
-                    <div class="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-4">
+                    <div id="admin-chat-scroll" class="flex-1 overflow-y-auto p-5 bg-slate-50 space-y-4" x-init="$watch('activeChat', () => { setTimeout(() => { $el.scrollTop = $el.scrollHeight }, 50) })">
                         <template x-for="(msg, i) in activeChat" :key="i">
                             <div class="flex flex-col" :class="msg.sender === 'user' ? 'items-end' : 'items-start'">
                                 <span class="text-[9px] text-slate-400 mb-1 px-1 font-bold" x-text="msg.sender === 'user' ? 'User' : 'Bot AI'"></span>
-                                <div class="max-w-[85%] px-3 py-2 rounded-2xl text-sm shadow-sm" :class="msg.sender === 'user' ? 'bg-indigo-500 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'" x-html="msg.text"></div>
+                                <div class="max-w-[85%] px-4 py-2.5 rounded-2xl text-sm shadow-sm" :class="msg.sender === 'user' ? 'bg-indigo-500 text-white rounded-tr-sm' : 'bg-white border border-slate-200 text-slate-700 rounded-tl-sm'" x-html="msg.text"></div>
                             </div>
                         </template>
                     </div>

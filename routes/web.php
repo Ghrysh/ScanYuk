@@ -114,6 +114,7 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/admin/chatbot/knowledge/{id}', [\App\Http\Controllers\AdminController::class, 'updateChatbotKnowledge'])->name('admin.chatbot.update');
         Route::delete('/admin/chatbot/knowledge/{id}', [\App\Http\Controllers\AdminController::class, 'destroyChatbotKnowledge'])->name('admin.chatbot.destroy');
         Route::patch('/admin/chatbot/leads/{id}/status', [\App\Http\Controllers\AdminController::class, 'toggleLeadStatus'])->name('admin.chatbot.lead.status');
+        Route::get('/admin/chatbot/leads/{id}/history', [\App\Http\Controllers\AdminController::class, 'getLeadHistory'])->name('admin.chatbot.lead.history');
     });
 
     Route::middleware(['auth', 'role:free,starter,professional,business'])->group(function () {

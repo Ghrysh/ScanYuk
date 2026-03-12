@@ -103,6 +103,7 @@ function chatbot() {
         isFinished: false,
         selectedTopic: null,
         lastUserMessage: '',
+        leadId: null,
         
         topics: [
             'Akun & Login',
@@ -127,6 +128,7 @@ function chatbot() {
                 this.selectedTopic = data.selectedTopic || null;
                 this.followUpMode = data.followUpMode || false;
                 this.isFinished = data.isFinished || false;
+                this.leadId = data.leadId || null;
                 
                 if (this.isOpen) this.scrollToBottom();
             } else {
@@ -143,6 +145,7 @@ function chatbot() {
                 selectedTopic: this.selectedTopic,
                 followUpMode: this.followUpMode,
                 isFinished: this.isFinished
+                leadId: this.leadId
             }));
         },
 
@@ -185,6 +188,7 @@ function chatbot() {
             this.inputText = '';
             this.unread = 1;
             this.sendWelcome();
+            this.leadId = null;
         },
 
         setTopic(topic) {
@@ -253,10 +257,13 @@ function chatbot() {
                         topic: this.selectedTopic, 
                         is_followup: this.followUpMode,
                         last_chat: this.lastUserMessage,
-                        chat_history: this.messages
+                        chat_history: this.messages,
+                        lead_id: this.leadId
                     })
                 });
                 let data = await res.json();
+
+                if(data.lead_id) this.leadId = data.lead_id;
 
                 setTimeout(() => {
                     this.isTyping = false;
