@@ -586,6 +586,8 @@
             </div>
         </div>
 
+    </div>
+    
     <div x-show="activeTab === 'chatbot'" style="display: none;" x-transition.opacity.duration.300ms x-data="{ botTab: 'leads' }">
         
         <div class="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">

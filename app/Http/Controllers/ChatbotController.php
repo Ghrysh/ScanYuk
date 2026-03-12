@@ -10,23 +10,25 @@ class ChatbotController extends Controller
 {
     public function processChat(Request $request)
     {
-        $message = strtolower(trim($request->message));
-        $topic = $request->topic;
-
+        $topic = $request->topic; 
+        
         if ($request->is_followup) {
             ChatbotLead::create([
                 'user_id' => auth()->id(),
                 'ip_address' => $request->ip(),
-                'contact_info' => $message,
+                'contact_info' => trim($request->message),
                 'topic_context' => $topic ?? 'Umum',
                 'last_message' => $request->last_chat ?? '-',
                 'chat_history' => json_encode($request->chat_history)
             ]);
             return response()->json([
-                'reply' => 'Terima kasih banyak! Tim ScanYuk akan segera menghubungi Anda melalui kontak tersebut. Sesi chat ini Mimin tutup ya! 👋',
+                'reply' => 'Terima kasih banyak! Tim teknis ScanYuk akan segera menghubungi Anda melalui kontak tersebut. Sesi chat ini Mimin tutup ya! 👋',
                 'is_finished' => true
             ]);
         }
+
+        $message = strtolower(trim($request->message));
+        $cleanMessage = preg_replace('/[^\w\s]/', '', $message); 
 
         $knowledges = ChatbotKnowledge::where('topic', $topic)->get();
         
@@ -38,8 +40,8 @@ class ChatbotController extends Controller
             $score = 0;
 
             foreach ($keywords as $kw) {
-
-                if (str_contains($message, $kw)) {
+                $kw = strtolower(trim($kw));
+                if (str_contains($cleanMessage, $kw)) {
                     $score += strlen($kw); 
                 }
             }
@@ -53,7 +55,7 @@ class ChatbotController extends Controller
         if ($highestScore > 0) {
             $reply = $bestMatch->response;
         } else {
-            $reply = "Maaf, Mimin kurang menangkap maksud Anda terkait topik <b>" . $topic . "</b> ini. Coba gunakan kata kunci lain, atau klik tombol 'Akhiri & Hubungi CS' di bawah jika butuh bantuan langsung dari tim teknis.";
+            $reply = "Maaf, Mimin kurang menangkap maksud Anda terkait topik <b>" . $topic . "</b>. Coba gunakan kata kunci yang lebih singkat, atau klik tombol 'Akhiri Chat & Hubungi CS' di bawah jika butuh bantuan langsung.";
         }
 
         return response()->json(['reply' => $reply]);
