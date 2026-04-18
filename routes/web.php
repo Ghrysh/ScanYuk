@@ -40,6 +40,10 @@ Route::get('/pricing', function () {
 
 Route::get('/ar-demo', [App\Http\Controllers\Controller::class, 'showDemo'])->name('demo');
 
+Route::get('/scanner/{id}', function ($id) {
+    return view('scanner', ['id' => $id]);
+})->name('scanner');
+
 Route::get('/how-it-works', function () {
     return view('how-it-works');
 })->name('how-it-works');
