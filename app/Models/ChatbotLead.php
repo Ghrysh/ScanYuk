@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ChatbotLead extends Model
 {
-    protected $fillable = ['user_id', 'ip_address', 'topic_context', 'contact_info', 'last_message', 'chat_history', 'status'];
+    protected $fillable = ['user_id', 'ip_address', 'topic_context', 'contact_info', 'last_message', 'chat_history', 'status', 'admin_id', 'live_chat_status'];
 
     public function user()
     {

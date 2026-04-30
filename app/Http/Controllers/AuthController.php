@@ -211,7 +211,10 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
+        $userCheck = \App\Models\User::where('email', $request->email)->first();
+        $isLiveChatAdmin = $userCheck && in_array($userCheck->role, ['live_chat_admin', 'admin']);
+        
+        if (Auth::attempt($credentials, $isLiveChatAdmin)) {
             $user = Auth::user();
 
             if ($user->status === 'suspended') {
@@ -228,6 +231,7 @@ class AuthController extends Controller
             
             $dashboards = [
                 'admin'        => '/admin/dashboard',
+                'live_chat_admin' => '/admin/dashboard',
                 'free'         => '/dashboard',
                 'starter'      => '/dashboard',
                 'professional' => '/dashboard',

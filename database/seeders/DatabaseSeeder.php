@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             PricingPackageSeeder::class,
             AdminUserSeeder::class,
             ArTemplateSeeder::class,
+            ChatbotSeeder::class,
         ]);
     }
 }

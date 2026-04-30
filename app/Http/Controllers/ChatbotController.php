@@ -22,6 +22,8 @@ class ChatbotController extends Controller
             'pw' => 'password', 'pass' => 'password', 'loginnya' => 'login'
         ];
 
+        $knowledges = ChatbotKnowledge::whereIn('topic', [$topic, 'Umum'])->get();
+
         $cleanMessage = preg_replace('/[^\w\s]/', '', $message);
         $words = explode(' ', $cleanMessage);
         foreach($words as &$w) {
@@ -38,6 +40,22 @@ class ChatbotController extends Controller
         $lead = null;
         if ($request->lead_id) {
             $lead = ChatbotLead::find($request->lead_id);
+        }
+
+        if ($lead && in_array($lead->live_chat_status, ['pending', 'active']) && !$request->is_autoclose) {
+            $history = json_decode($lead->chat_history, true) ?? [];
+            $history[] = ['sender' => 'user', 'text' => $message, 'time' => now()->format('d M, H:i')];
+            
+            $lead->update([
+                'chat_history' => json_encode($history),
+                'last_message' => $message
+            ]);
+            
+            return response()->json([
+                'reply' => null,
+                'lead_id' => $lead->id,
+                'show_live_chat_btn' => false
+            ]);
         }
 
         if ($request->is_autoclose) {
@@ -108,13 +126,73 @@ class ChatbotController extends Controller
             }
         }
 
-        $reply = $highestScore > 0 
-            ? $bestMatch->response 
-            : "Maaf, kata tersebut sedikit kurang jelas untuk topik <b>".$topic."</b> ini. Bisa dijelaskan dengan kata kunci yang lebih sederhana?";
+        $showLiveChatBtn = false;
+        if ($highestScore > 0) {
+            $reply = $bestMatch->response;
+        } else {
+            $reply = "Maaf, Mimin kurang menangkap maksud Anda terkait topik <b>".$topic."</b> ini. Ingin saya hubungkan dengan Tim CS / Admin (Live Chat)?";
+            $showLiveChatBtn = true;
+        }
 
         return response()->json([
             'reply' => $reply,
-            'lead_id' => $lead->id
+            'lead_id' => $lead->id,
+            'show_live_chat_btn' => $showLiveChatBtn
         ]);
+    }
+
+    public function requestLiveChat(Request $request) {
+        $lead = null;
+        if ($request->lead_id) {
+            $lead = ChatbotLead::find($request->lead_id);
+        }
+
+        $autoMsg = ['sender' => 'bot', 'text' => 'Meneruskan permintaan ke tim Live Chat. Mohon tunggu sebentar...', 'time' => now()->format('d M, H:i')];
+
+        if (!$lead) {
+            $realIp = $request->ip();
+            if ($request->hasHeader('X-Forwarded-For')) {
+                $ips = explode(',', $request->header('X-Forwarded-For'));
+                $realIp = trim($ips[0]);
+            }
+
+            $lead = ChatbotLead::create([
+                'user_id' => auth()->id(),
+                'ip_address' => $realIp,
+                'topic_context' => 'Bantuan Live Chat (Langsung)',
+                'contact_info' => '-',
+                'chat_history' => json_encode([$autoMsg]),
+                'last_message' => 'Meminta terhubung ke Live Chat',
+                'live_chat_status' => 'pending'
+            ]);
+        } else {
+            $history = json_decode($lead->chat_history, true) ?? [];
+            $history[] = $autoMsg;
+            $lead->update([
+                'live_chat_status' => 'pending',
+                'chat_history' => json_encode($history)
+            ]);
+        }
+
+        return response()->json(['success' => true, 'lead_id' => $lead->id]);
+    }
+
+    public function pollLiveChat($leadId) {
+        $lead = ChatbotLead::find($leadId);
+        return response()->json([
+            'status' => $lead ? $lead->live_chat_status : 'none',
+            'history' => $lead ? json_decode($lead->chat_history) : [],
+            'admin_name' => ($lead && $lead->admin_id) ? \App\Models\User::find($lead->admin_id)->name : null
+        ]);
+    }
+
+    public function sendLiveChatMessage(Request $request) {
+        $lead = ChatbotLead::find($request->lead_id);
+        if ($lead) {
+            $history = json_decode($lead->chat_history, true) ?? [];
+            $history[] = ['sender' => 'user', 'text' => $request->message, 'time' => now()->format('d M, H:i')];
+            $lead->update(['chat_history' => json_encode($history)]);
+        }
+        return response()->json(['success' => true]);
     }
 }

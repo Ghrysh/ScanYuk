@@ -326,6 +326,9 @@
         </div>
     </div>
 
-    @include('components.chatbot')
+    @if(!request()->is('admin*'))
+        @include('components.chatbot')
+    @endif
+
 </body>
 </html>

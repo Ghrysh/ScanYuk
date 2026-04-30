@@ -37,35 +37,41 @@
             </div>
         </div>
 
-        <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 scroll-smooth relative">
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 scroll-smooth">
             
             <template x-for="(msg, index) in messages" :key="index">
                 <div class="flex flex-col" :class="msg.sender === 'user' ? 'items-end' : 'items-start'">
-                    <span class="text-[9px] text-slate-400 mb-1 px-1 font-medium" x-text="msg.sender === 'user' ? 'Anda' : 'ScanYuk Bot'"></span>
+                    <div class="flex items-baseline gap-1 mb-1 px-1">
+                        <span class="text-[9px] text-slate-400 font-bold" x-text="msg.sender === 'user' ? 'Anda' : (msg.sender === 'admin' ? liveAdminName : 'Mimin')"></span>
+                        <span class="text-[8px] text-slate-400/70 font-medium" x-show="msg.time" x-text="msg.time"></span>
+                    </div>
                     <div class="max-w-[85%] px-4 py-2.5 rounded-2xl text-xs sm:text-sm shadow-sm"
                          :class="msg.sender === 'user' ? 'bg-indigo-500 text-white rounded-tr-sm' : 'bg-white text-slate-700 border border-slate-200 rounded-tl-sm leading-relaxed'"
                          x-html="msg.text"></div>
                 </div>
             </template>
 
-            <div x-show="!selectedTopic" class="flex flex-col gap-2 mt-2" style="display: none;">
-                <p class="text-xs font-bold text-slate-500 text-center mb-1">Silakan pilih topik pertanyaan Anda:</p>
-                <template x-for="topic in topics" :key="topic">
-                    <button @click="setTopic(topic)" class="w-full text-left px-4 py-3 bg-white border border-teal-200 hover:border-teal-500 hover:bg-teal-50 rounded-xl text-xs sm:text-sm font-bold text-teal-700 transition-all shadow-sm flex items-center justify-between group">
-                        <span x-text="topic"></span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-teal-400 group-hover:text-teal-600 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-                    </button>
-                </template>
-            </div>
+            <div x-show="!selectedTopic && !isLiveChat" class="flex flex-col gap-3 mt-2" style="display: none;">
+                <p class="text-xs font-bold text-slate-500 text-center mb-1">Silakan pilih topik atau hubungi admin:</p>
+                
+                <div class="grid grid-cols-1 gap-2">
+                    <template x-for="topic in topics" :key="topic">
+                        <button @click="setTopic(topic)" class="w-full text-left px-4 py-3 bg-white border border-teal-200 hover:border-teal-500 hover:bg-teal-50 rounded-xl text-xs sm:text-sm font-bold text-teal-700 transition-all shadow-sm flex items-center justify-between group">
+                            <span x-text="topic"></span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-teal-400 group-hover:text-teal-600 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
+                        </button>
+                    </template>
+                </div>
 
-            <div x-show="selectedTopic && !isTyping && !isFinished" class="flex flex-wrap gap-2 mt-4 pb-2" style="display: none;">
-                <button @click="reselectTopic()" class="px-3 py-1.5 bg-white border border-slate-200 hover:border-teal-500 hover:bg-teal-50 text-slate-600 hover:text-teal-600 text-[10px] sm:text-xs font-bold rounded-full transition-colors shadow-sm flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                    Pilih Topik Lain
-                </button>
-                <button x-show="!followUpMode" @click="triggerFollowUp()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-[10px] sm:text-xs font-bold rounded-full transition-colors shadow-sm flex items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                    Akhiri & Hubungi CS
+                <div class="flex items-center gap-3 my-1">
+                    <div class="h-px bg-slate-200 flex-1"></div>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Atau</span>
+                    <div class="h-px bg-slate-200 flex-1"></div>
+                </div>
+
+                <button @click="requestLiveChat()" class="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 group transform hover:scale-[1.02] active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
+                    Live Chat
                 </button>
             </div>
 
@@ -78,23 +84,42 @@
             </div>
         </div>
 
-        <div class="p-2 sm:p-3 bg-white border-t border-slate-100 z-10" x-show="selectedTopic">
+        <div x-show="selectedTopic && liveChatStatus !== 'pending' && liveChatStatus !== 'active' && !isFinished" class="shrink-0 bg-slate-100/90 backdrop-blur-sm p-2.5 border-t border-slate-200 flex flex-wrap justify-center gap-2 z-10" style="display: none;">
+            
+            <button @click="reselectTopic()" class="px-4 py-2 bg-white border border-slate-300 hover:border-teal-500 hover:bg-teal-50 text-slate-600 hover:text-teal-600 text-[10px] sm:text-xs font-bold rounded-full transition-colors shadow-sm flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                Pilih Topik Lain
+            </button>
+            
+            <button @click="requestLiveChat()" class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white text-[10px] sm:text-xs font-bold rounded-full transition-all shadow-md flex items-center gap-1.5 transform hover:scale-105">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
+                Live Chat
+            </button>
+
+            <button x-show="!followUpMode" @click="triggerFollowUp()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-[10px] sm:text-xs font-bold rounded-full transition-colors shadow-sm flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                Akhiri Sesi
+            </button>
+
+        </div>
+
+        <div class="shrink-0 p-2 sm:p-3 bg-white border-t border-slate-200 shadow-[0_-4px_15px_rgba(0,0,0,0.03)] z-20" x-show="selectedTopic || isLiveChat || liveChatStatus !== 'none'">
             <form @submit.prevent="sendMessage()" class="relative flex items-center">
                 <input x-model="inputText" type="text" :placeholder="followUpMode ? 'Ketik Email / No WA Anda...' : 'Ketik pesan Anda...'" 
                        :disabled="isFinished || isTyping"
-                       class="w-full bg-slate-100 text-slate-800 text-xs sm:text-sm px-3 py-2.5 sm:px-4 sm:py-3 pr-12 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all disabled:opacity-50">
+                       class="w-full bg-slate-100 text-slate-800 text-xs sm:text-sm px-3 py-2.5 sm:px-4 sm:py-3 pr-12 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-50 border border-transparent">
                 
                 <button type="submit" :disabled="!inputText.trim() || isFinished || isTyping" 
-                        class="absolute right-1 sm:right-2 p-1.5 sm:p-2 bg-teal-500 text-white rounded-lg hover:bg-teal-600 disabled:opacity-50 disabled:bg-slate-300 transition-colors shadow-sm">
+                        class="absolute right-1 sm:right-2 p-1.5 sm:p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:bg-slate-300 transition-colors shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                 </button>
             </form>
             <div class="text-center mt-1.5" x-show="!isFinished">
-                <span class="text-[8px] sm:text-[9px] text-slate-400">Powered by ScanYuk AI</span>
+                <span class="text-[8px] sm:text-[9px] text-slate-400 font-medium">Powered by ScanYuk AI</span>
             </div>
         </div>
-    </div>
-</div>
+
+    </div> </div> ```
 
 <script>
 function chatbot() {
@@ -112,13 +137,27 @@ function chatbot() {
         lastActivity: Date.now(),
         hasNudged: false,
         activityTimer: null,
-        
-        topics: [
-            'Akun & Login',
-            'Paket & Pembayaran',
-            'Pembuatan AR & 3D',
-            'Cara Scan & Kendala'
-        ],
+
+        showLiveChatBtn: false,
+        isLiveChat: false,
+        liveChatStatus: 'none',
+        liveAdminName: 'Admin',
+        livePollInterval: null,
+
+        topics: @php
+            try {
+                $dbTopics = \App\Models\ChatbotKnowledge::select('topic')
+                            ->whereNotNull('topic')
+                            ->where('topic', '!=', '')
+                            ->where('topic', '!=', 'Umum')
+                            ->distinct()
+                            ->pluck('topic')
+                            ->toArray();
+                echo json_encode($dbTopics);
+            } catch (\Exception $e) {
+                echo json_encode(['Akun & Login', 'Paket & Pembayaran', 'Pembuatan AR & 3D', 'Kendala']);
+            }
+        @endphp,
 
         messages: [],
 
@@ -169,6 +208,11 @@ function chatbot() {
             
             const checkTimeout = () => {
                 if (!this.selectedTopic || this.isFinished) return;
+
+                if (this.liveChatStatus === 'pending' || this.liveChatStatus === 'active') {
+                    this.updateActivity(); 
+                    return; 
+                }
                 
                 let elapsed = Date.now() - this.lastActivity;
                 
@@ -249,6 +293,8 @@ function chatbot() {
             this.inputText = '';
             this.unread = 1;
             this.leadId = null;
+            this.isLiveChat = false;
+            this.showLiveChatBtn = false;
             this.updateActivity();
             this.sendWelcome();
         },
@@ -309,26 +355,24 @@ function chatbot() {
             if (!this.inputText.trim()) return;
             
             const msgText = this.inputText;
-            this.messages.push({ sender: 'user', text: msgText });
+            let timeNow = new Date().toLocaleTimeString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'});
+            this.messages.push({ sender: 'user', text: msgText, time: timeNow });
             this.inputText = '';
             
             this.updateActivity();
             this.saveState();
+            if (!this.followUpMode) this.lastUserMessage = msgText; 
             
-            if (!this.followUpMode) {
-                this.lastUserMessage = msgText; 
-            }
-
             this.scrollToBottom();
             this.isTyping = true;
 
             try {
-                let res = await fetch('/api/chatbot/send', {
+                let isLive = (this.liveChatStatus === 'pending' || this.liveChatStatus === 'active');
+                let endpoint = isLive ? '/api/chatbot/live/send' : '/api/chatbot/send';
+                
+                let res = await fetch(endpoint, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                     body: JSON.stringify({ 
                         message: msgText, 
                         topic: this.selectedTopic, 
@@ -344,27 +388,83 @@ function chatbot() {
 
                 setTimeout(() => {
                     this.isTyping = false;
-                    this.messages.push({ sender: 'bot', text: data.reply });
-                    this.playNotification();
 
-                    if (data.is_finished) {
-                        this.isFinished = true;
-                        this.followUpMode = false;
+                    if(!isLive && data.reply) {
+                        this.messages.push({ sender: 'bot', text: data.reply, time: timeNow });
+                        this.playNotification();
                     }
-                    
+
+                    if (data.is_finished) { this.isFinished = true; this.followUpMode = false; }
+                    if (data.show_live_chat_btn) this.showLiveChatBtn = true;
                     if (!this.isOpen) this.unread++;
                     
-                    this.saveState();
-                    this.scrollToBottom();
+                    this.saveState(); this.scrollToBottom();
                 }, 800);
 
             } catch (e) {
                 this.isTyping = false;
-                this.messages.push({ sender: 'bot', text: 'Maaf, Mimin sedang gangguan jaringan. Coba lagi ya.' });
-                this.saveState();
-                this.scrollToBottom();
+                this.messages.push({ sender: 'bot', text: 'Maaf, sedang gangguan jaringan. Coba lagi ya.' });
+                this.saveState(); this.scrollToBottom();
             }
+        },
+
+        async requestLiveChat() {
+            this.selectedTopic = 'Live Chat'; 
+            this.showLiveChatBtn = false;
+            this.liveChatStatus = 'pending';
+            
+            this.messages.push({ sender: 'bot', text: 'Meneruskan permintaan ke tim Live Chat. Mohon tunggu sebentar...' });
+            this.saveState(); 
+            this.scrollToBottom();
+
+            try {
+                let res = await fetch('/api/chatbot/live/request', {
+                    method: 'POST', 
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content 
+                    },
+                    body: JSON.stringify({ lead_id: this.leadId })
+                });
+                let data = await res.json();
+                
+                if (data.lead_id) {
+                    this.leadId = data.lead_id;
+                    this.saveState();
+                }
+
+                this.startLivePolling();
+            } catch(e) {
+                this.messages.push({ sender: 'bot', text: 'Gagal menghubungkan. Pastikan koneksi internet Anda stabil.' });
+            }
+        },
+
+        startLivePolling() {
+            if(this.livePollInterval) clearInterval(this.livePollInterval);
+            this.livePollInterval = setInterval(async () => {
+                if(!this.leadId) return;
+                let res = await fetch(`/api/chatbot/live/poll/${this.leadId}`);
+                let data = await res.json();
+                
+                this.liveChatStatus = data.status;
+                if(data.admin_name) this.liveAdminName = data.admin_name;
+                
+                if(data.status === 'active') this.isLiveChat = true;
+                if(data.status === 'ended') {
+                    this.isLiveChat = false; 
+                    clearInterval(this.livePollInterval);
+                }
+                
+                if(data.history && data.history.length > 0) {
+                    if (JSON.stringify(data.history) !== JSON.stringify(this.messages)) {
+                        this.messages = data.history;
+                        this.playNotification();
+                        this.scrollToBottom();
+                        this.saveState();
+                    }
+                }
+            }, 3000);
         }
-    }
+    };
 }
 </script>

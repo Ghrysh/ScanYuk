@@ -107,7 +107,6 @@ Route::get('/checkout/register/{refId}', [\App\Http\Controllers\PaymentControlle
 Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['role:admin'])->group(function () {
-        Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
         Route::post('/admin/users', [AdminController::class, 'storeUser'])->name('admin.users.store');
         Route::delete('/admin/users/{user}', [AdminController::class, 'destroyUser'])->name('admin.users.destroy');
         Route::patch('/admin/users/{user}/toggle-status', [AdminController::class, 'toggleStatus'])->name('admin.users.toggle-status');
@@ -119,6 +118,14 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/admin/chatbot/knowledge/{id}', [\App\Http\Controllers\AdminController::class, 'destroyChatbotKnowledge'])->name('admin.chatbot.destroy');
         Route::patch('/admin/chatbot/leads/{id}/status', [\App\Http\Controllers\AdminController::class, 'toggleLeadStatus'])->name('admin.chatbot.lead.status');
         Route::get('/admin/chatbot/leads/{id}/history', [\App\Http\Controllers\AdminController::class, 'getLeadHistory'])->name('admin.chatbot.lead.history');
+    });
+
+    Route::middleware(['role:admin,live_chat_admin'])->group(function () {
+        Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard'); 
+        
+        Route::get('/admin/live-chat/poll', [\App\Http\Controllers\AdminController::class, 'pollLiveChats']);
+        Route::post('/admin/live-chat/action', [\App\Http\Controllers\AdminController::class, 'actionLiveChat']);
+        Route::post('/admin/live-chat/send', [\App\Http\Controllers\AdminController::class, 'sendLiveChatMessage']);
     });
 
     Route::middleware(['auth', 'role:free,starter,professional,business'])->group(function () {
@@ -216,5 +223,9 @@ Route::post('/api/convert-3d/start', [\App\Http\Controllers\UserDashboardControl
 Route::get('/api/convert-3d/status/{id}', [\App\Http\Controllers\UserDashboardController::class, 'checkStatus']);
 
 Route::post('/api/chatbot/send', [\App\Http\Controllers\ChatbotController::class, 'processChat']);
+
+Route::post('/api/chatbot/live/request', [\App\Http\Controllers\ChatbotController::class, 'requestLiveChat']);
+Route::post('/api/chatbot/live/send', [\App\Http\Controllers\ChatbotController::class, 'sendLiveChatMessage']);
+Route::get('/api/chatbot/live/poll/{leadId}', [\App\Http\Controllers\ChatbotController::class, 'pollLiveChat']);
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');

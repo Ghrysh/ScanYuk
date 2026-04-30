@@ -17,6 +17,12 @@ class AdminUserSeeder extends Seeder
                 'password' => 'password123'
             ],
             [
+                'name' => 'CS ScanYuk',
+                'email' => 'cs@scanyuk.com',
+                'role' => 'live_chat_admin', 
+                'password' => 'password123'
+            ],
+            [
                 'name' => 'User Free',
                 'email' => 'free@scanyuk.com',
                 'role' => User::ROLE_FREE,
