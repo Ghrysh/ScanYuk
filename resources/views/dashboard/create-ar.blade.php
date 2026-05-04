@@ -715,51 +715,49 @@
                     img.src = URL.createObjectURL(this.currentFile);
                 },
 
-                async removeBackground() {
+                async executeProcess() {
                     this.isProcessing = true;
-                    this.progress = 0;
-                    this.timeRemaining = 'Menghapus latar belakang... (Estimasi 5-10 detik)';
+                    this.progress = 5;
+                    this.timeRemaining = 'Mengunggah gambar ke server ScanYuk...';
 
-                    let progressInterval = setInterval(() => {
-                        if (this.progress < 85) {
-                            this.progress += Math.floor(Math.random() * 5) + 2;
+                    let uploadSim = setInterval(() => {
+                        if (this.progress < 25) {
+                            this.progress += 2;
                         }
-                    }, 500);
+                    }, 400);
 
                     let formData = new FormData();
                     formData.append('image', this.currentFile);
+                    formData.append('mode', this.mode);
                     formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
 
                     try {
-                        let res = await fetch('/api/remove-bg', { 
+                        let res = await fetch('/api/convert-3d/start', { 
                             method: 'POST', 
                             headers: { 'Accept': 'application/json' },
                             body: formData 
                         });
                         let data = await res.json();
 
-                        clearInterval(progressInterval);
+                        clearInterval(uploadSim);
 
                         if (data.success) {
-                            this.progress = 100;
-                            this.timeRemaining = 'Background berhasil dihapus! Menyiapkan jaring 3D...';
+                            this.jobId = data.job_id;
+                            this.progress = 30;
+                            this.timeRemaining = 'Berhasil masuk antrean. Menunggu giliran render...';
                             
-                            let imgRes = await fetch(data.image_url);
-                            let imgBlob = await imgRes.blob();
-                            this.currentFile = new File([imgBlob], "nobg_image.png", { type: "image/png" });
-
-                            setTimeout(() => {
-                                this.executeProcess(); 
-                            }, 1000);
-
+                            this.saveState();
+                            this.pollStatus();
                         } else {
-                            Alpine.store('toast').show(data.message || 'Gagal menghapus background.', 'error');
+                            Alpine.store('toast').show(data.message || 'Gagal memulai proses AI.', 'error');
                             this.isProcessing = false;
+                            this.showModal = false;
                         }
                     } catch (e) {
-                        clearInterval(progressInterval);
+                        clearInterval(uploadSim);
                         Alpine.store('toast').show('Terjadi kesalahan jaringan atau server.', 'error');
                         this.isProcessing = false;
+                        this.showModal = false;
                     }
                 },
 
