@@ -25,9 +25,10 @@
             margin-left: -125px; 
             margin-top: -125px;
             left: 0; top: 0;
-            display: none;
-            pointer-events: auto; 
+            opacity: 0;
+            pointer-events: none; 
             will-change: transform; 
+            transform: translate3d(-9999px, -9999px, 0);
         }
 
         model-viewer::part(default-progress-bar) { display: none; }
@@ -38,27 +39,28 @@
     <video id="qr-video" playsinline webkit-playsinline muted autoplay></video>
     <canvas id="qr-canvas" style="display: none;"></canvas>
     
-    <div id="ar-overlay-container">
-        <div x-show="isLoading" class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/90 backdrop-blur-sm">
-            <div class="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p class="text-white font-bold mb-2">Mempersiapkan AR Experience...</p>
-            <div class="w-64 bg-slate-700 rounded-full h-2.5 overflow-hidden">
-                <div class="bg-teal-500 h-2.5 rounded-full transition-all duration-200" :style="`width: ${loadingProgress}%`"></div>
-            </div>
-            <p class="text-teal-400 text-sm font-bold mt-2" x-text="`${loadingProgress}%`"></p>
-            <p class="text-slate-400 text-xs mt-1" x-text="loadingStatusText"></p>
+    <div x-show="isLoading" style="display: none;" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/90 backdrop-blur-sm">
+        <div class="w-16 h-16 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p class="text-white font-bold mb-2">Mempersiapkan AR Experience...</p>
+        <div class="w-64 bg-slate-700 rounded-full h-2.5 overflow-hidden">
+            <div class="bg-teal-500 h-2.5 rounded-full transition-all duration-200" :style="`width: ${loadingProgress}%`"></div>
         </div>
+        <p class="text-teal-400 text-sm font-bold mt-2" x-text="`${loadingProgress}%`"></p>
+        <p class="text-slate-400 text-xs mt-1" x-text="loadingStatusText"></p>
+    </div>
+
+    <div id="ar-overlay-container">
         <img x-show="arData.type === '2d'" :src="arData.src" class="w-full h-full object-contain filter drop-shadow(0 25px 25px rgba(0,0,0,0.8))">
-        <template x-if="arData.type === '3d'">
-            <model-viewer 
-                id="main-ar-viewer"
-                :src="arData.src" 
-                camera-controls 
-                interaction-prompt="none"
-                shadow-intensity="1" 
-                class="w-full h-full bg-transparent">
-            </model-viewer>
-        </template>
+        <model-viewer 
+            x-show="arData.type === '3d'" 
+            id="main-ar-viewer"
+            :src="arData.src" 
+            camera-controls 
+            interaction-prompt="none"
+            shadow-intensity="1" 
+            loading="eager"
+            class="w-full h-full bg-transparent">
+        </model-viewer>
     </div>
 
     <div class="fixed top-6 left-6 z-40">
@@ -166,7 +168,9 @@
                             }
                         } else {
                             if (Date.now() - this.lastFoundTime > 500) { 
-                                this.arOverlayContainer.style.display = 'none';
+                                this.arOverlayContainer.style.opacity = '0';
+                                this.arOverlayContainer.style.pointerEvents = 'none';
+                                this.arOverlayContainer.style.transform = 'translate3d(-9999px, -9999px, 0)';
                                 this.arActive = false;
                                 this.hasSnaped = false;
                                 this.stopAllAudio();
@@ -221,10 +225,13 @@
                             this.curScale = this.targetScale;
                             this.curYaw = this.targetYaw;
                             this.curPitch = this.targetPitch;
-                            this.arOverlayContainer.style.display = 'block';
+                            this.arOverlayContainer.style.opacity = '1';
+                            this.arOverlayContainer.style.pointerEvents = 'auto';
                             this.hasSnaped = true;
                         } else {
-                            let ease = 0.25;
+                            let dist = Math.hypot(this.targetX - this.curX, this.targetY - this.curY);
+                            let ease = Math.min(1.0, 0.25 + (dist / 100)); 
+                            
                             this.curX += (this.targetX - this.curX) * ease;
                             this.curY += (this.targetY - this.curY) * ease;
                             this.curScale += (this.targetScale - this.curScale) * 0.15;
@@ -238,11 +245,14 @@
                             this.curPitch += (this.targetPitch - this.curPitch) * ease;
                         }
 
-                        this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
-
-                        const viewer = document.getElementById('main-ar-viewer');
-                        if (viewer) {
-                            viewer.setAttribute('orientation', `${-this.curPitch}deg ${this.curYaw}deg 0deg`);
+                        if (this.arData.type === '3d') {
+                            this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) scale(${this.curScale})`;
+                            const viewer = document.getElementById('main-ar-viewer');
+                            if (viewer) {
+                                viewer.setAttribute('orientation', `${-this.curPitch}deg ${this.curYaw}deg ${-this.curAngle}deg`);
+                            }
+                        } else {
+                            this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
                         }
                     }
                     requestAnimationFrame(() => this.renderLoop());
