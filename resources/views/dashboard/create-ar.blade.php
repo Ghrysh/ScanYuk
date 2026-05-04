@@ -716,6 +716,8 @@
                 },
 
                 async removeBackground() {
+                    this.needsBgRemoval = false;
+                    this.bgRemoving = true;
                     this.isProcessing = true;
                     this.progress = 0;
                     this.timeRemaining = 'Menghapus latar belakang... (Estimasi 5-10 detik)';
@@ -749,17 +751,20 @@
                             this.currentFile = new File([imgBlob], "nobg_image.png", { type: "image/png" });
                             
                             setTimeout(() => {
+                                this.bgRemoving = false;
                                 this.executeProcess(); 
                             }, 1000);
 
                         } else {
                             Alpine.store('toast').show(data.message || 'Gagal menghapus background.', 'error');
                             this.isProcessing = false;
+                            this.bgRemoving = false;
                         }
                     } catch (e) {
                         clearInterval(progressInterval);
                         Alpine.store('toast').show('Terjadi kesalahan jaringan atau server.', 'error');
                         this.isProcessing = false;
+                        this.bgRemoving = false;
                     }
                 },
 
