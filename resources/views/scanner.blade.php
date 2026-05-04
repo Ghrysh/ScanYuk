@@ -97,8 +97,8 @@
                 bgmPlayer: null,
                 narrationPlayer: null,
                 
-                curX: 0, curY: 0, curScale: 0, curAngle: 0,
-                targetX: 0, targetY: 0, targetScale: 0, targetAngle: 0,
+                curX: 0, curY: 0, curScale: 0, curAngle: 0, curYaw: 0, curPitch: 0,
+                targetX: 0, targetY: 0, targetScale: 0, targetAngle: 0, targetYaw: 0, targetPitch: 0,
                 hasSnaped: false,
 
                 isLoading: false,
@@ -182,6 +182,17 @@
                     const qrWidth = (Math.hypot(tr.x - tl.x, tr.y - tl.y) + Math.hypot(br.x - bl.x, br.y - bl.y)) / 2;
                     let angle = Math.atan2(tr.y - tl.y, tr.x - tl.x) * (180 / Math.PI);
 
+                    const leftHeight = Math.hypot(tl.x - bl.x, tl.y - bl.y);
+                    const rightHeight = Math.hypot(tr.x - br.x, tr.y - br.y);
+                    const topWidth = Math.hypot(tl.x - tr.x, tl.y - tr.y);
+                    const bottomWidth = Math.hypot(bl.x - br.x, bl.y - br.y);
+
+                    const avgHeight = (leftHeight + rightHeight) / 2;
+                    const avgWidth = (topWidth + bottomWidth) / 2;
+
+                    let yaw = ((leftHeight - rightHeight) / avgHeight) * 60;
+                    let pitch = ((topWidth - bottomWidth) / avgWidth) * 60;
+
                     const vw = window.innerWidth, vh = window.innerHeight;
                     const videoRatio = this.video.videoWidth / this.video.videoHeight;
                     const screenRatio = vw / vh;
@@ -201,6 +212,9 @@
                     const imageSize = (qrWidth * scale) * 2;
                     this.targetScale = imageSize / 250; 
                     this.targetAngle = angle;
+                    
+                    this.targetYaw = yaw;
+                    this.targetPitch = pitch;
                 },
 
                 renderLoop() {
@@ -209,7 +223,9 @@
                             this.curX = this.targetX; 
                             this.curY = this.targetY;
                             this.curAngle = this.targetAngle;
-                            this.curScale = 0; 
+                            this.curScale = this.targetScale;
+                            this.curYaw = this.targetYaw;
+                            this.curPitch = this.targetPitch;
                             this.arOverlayContainer.style.display = 'block';
                             this.hasSnaped = true;
                         } else {
@@ -224,9 +240,19 @@
                             if (dAngle > 180) dAngle -= 360;
                             if (dAngle < -180) dAngle += 360;
                             this.curAngle += dAngle * ease;
+
+                            this.curYaw += (this.targetYaw - this.curYaw) * ease;
+                            this.curPitch += (this.targetPitch - this.curPitch) * ease;
                         }
 
                         this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
+
+                        if (this.arData.type === '3d') {
+                            const viewer = document.querySelector('#ar-overlay-container model-viewer');
+                            if (viewer) {
+                                viewer.setAttribute('orientation', `0deg ${this.curPitch}deg ${-this.curYaw}deg`);
+                            }
+                        }
                     }
                     requestAnimationFrame(() => this.renderLoop());
                 },

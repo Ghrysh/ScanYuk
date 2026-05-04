@@ -1693,7 +1693,7 @@
                     </div>
                 </button>
 
-                <button @click="$store.ai3d.startProcess($store.ai3d.currentFile, 'ai')" class="text-left p-4 border-2 border-slate-200 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 hover:shadow-md transition-all group relative overflow-hidden">
+                <button style="display: none;" @click="$store.ai3d.startProcess($store.ai3d.currentFile, 'ai')" class="text-left p-4 border-2 border-slate-200 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 hover:shadow-md transition-all group relative overflow-hidden">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" /></svg></div>
                         <div>
