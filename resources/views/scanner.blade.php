@@ -49,15 +49,16 @@
             <p class="text-slate-400 text-xs mt-1" x-text="loadingStatusText"></p>
         </div>
         <img x-show="arData.type === '2d'" :src="arData.src" class="w-full h-full object-contain filter drop-shadow(0 25px 25px rgba(0,0,0,0.8))">
-        <model-viewer 
-            x-show="arData.type === '3d'" 
-            :src="arData.src" 
-            class="w-full h-full" 
-            camera-controls 
-            shadow-intensity="1" 
-            exposure="1.2"
-            loading="eager">
-        </model-viewer>
+        <template x-if="arData.type === '3d'">
+            <model-viewer 
+                id="main-ar-viewer"
+                :src="arData.src" 
+                camera-controls 
+                interaction-prompt="none"
+                shadow-intensity="1" 
+                class="w-full h-full bg-transparent">
+            </model-viewer>
+        </template>
     </div>
 
     <div class="fixed top-6 left-6 z-40">
@@ -182,16 +183,13 @@
                     const qrWidth = (Math.hypot(tr.x - tl.x, tr.y - tl.y) + Math.hypot(br.x - bl.x, br.y - bl.y)) / 2;
                     let angle = Math.atan2(tr.y - tl.y, tr.x - tl.x) * (180 / Math.PI);
 
-                    const leftHeight = Math.hypot(tl.x - bl.x, tl.y - bl.y);
-                    const rightHeight = Math.hypot(tr.x - br.x, tr.y - br.y);
-                    const topWidth = Math.hypot(tl.x - tr.x, tl.y - tr.y);
-                    const bottomWidth = Math.hypot(bl.x - br.x, bl.y - br.y);
+                    const sideL = Math.hypot(tl.x - bl.x, tl.y - bl.y);
+                    const sideR = Math.hypot(tr.x - br.x, tr.y - br.y);
+                    const sideT = Math.hypot(tl.x - tr.x, tl.y - tr.y);
+                    const sideB = Math.hypot(bl.x - br.x, bl.y - br.y);
 
-                    const avgHeight = (leftHeight + rightHeight) / 2;
-                    const avgWidth = (topWidth + bottomWidth) / 2;
-
-                    let yaw = ((leftHeight - rightHeight) / avgHeight) * 60;
-                    let pitch = ((topWidth - bottomWidth) / avgWidth) * 60;
+                    let yaw = ((sideL - sideR) / ((sideL + sideR) / 2)) * 75;
+                    let pitch = ((sideT - sideB) / ((sideT + sideB) / 2)) * 75;
 
                     const vw = window.innerWidth, vh = window.innerHeight;
                     const videoRatio = this.video.videoWidth / this.video.videoHeight;
@@ -208,11 +206,8 @@
 
                     this.targetX = (centerX * scale) + offsetX;
                     this.targetY = (centerY * scale) + offsetY;
-                    
-                    const imageSize = (qrWidth * scale) * 2;
-                    this.targetScale = imageSize / 250; 
+                    this.targetScale = ((qrWidth * scale) * 2) / 250;
                     this.targetAngle = angle;
-                    
                     this.targetYaw = yaw;
                     this.targetPitch = pitch;
                 },
@@ -229,9 +224,7 @@
                             this.arOverlayContainer.style.display = 'block';
                             this.hasSnaped = true;
                         } else {
-                            let dist = Math.hypot(this.targetX - this.curX, this.targetY - this.curY);
-                            let ease = Math.min(1.0, 0.2 + (dist / 80)); 
-                            
+                            let ease = 0.25;
                             this.curX += (this.targetX - this.curX) * ease;
                             this.curY += (this.targetY - this.curY) * ease;
                             this.curScale += (this.targetScale - this.curScale) * 0.15;
@@ -247,11 +240,9 @@
 
                         this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
 
-                        if (this.arData.type === '3d') {
-                            const viewer = document.querySelector('#ar-overlay-container model-viewer');
-                            if (viewer) {
-                                viewer.setAttribute('orientation', `0deg ${this.curPitch}deg ${-this.curYaw}deg`);
-                            }
+                        const viewer = document.getElementById('main-ar-viewer');
+                        if (viewer) {
+                            viewer.setAttribute('orientation', `${-this.curPitch}deg ${this.curYaw}deg 0deg`);
                         }
                     }
                     requestAnimationFrame(() => this.renderLoop());
