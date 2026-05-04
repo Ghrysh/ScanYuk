@@ -696,14 +696,19 @@
                     const img = new Image();
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
-                        const pad = 4;
-                        canvas.width = img.width + pad;
-                        canvas.height = img.height + pad;
+                        const padding = 40; 
+                        canvas.width = img.width + padding;
+                        canvas.height = img.height + padding;
                         const ctx = canvas.getContext('2d');
+                        
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(img, pad/2, pad/2);
+                        
+                        ctx.imageSmoothingEnabled = false;
+                        
+                        ctx.drawImage(img, padding / 2, padding / 2);
+                        
                         canvas.toBlob((blob) => {
-                            this.currentFile = new File([blob], "padded_" + this.currentFile.name, { type: "image/png" });
+                            this.currentFile = new File([blob], "fixed_" + this.currentFile.name, { type: "image/png" });
                             this.executeProcess();
                         }, "image/png");
                     };
