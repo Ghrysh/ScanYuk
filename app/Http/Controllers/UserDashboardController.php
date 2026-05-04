@@ -148,4 +148,37 @@ class UserDashboardController extends Controller
             'time_remaining' => $sisaWaktuFormat
         ]);
     }
+
+    public function removeBackground(Request $request)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+        ]);
+
+        $imagePath = $request->file('image')->store('bg_inputs', 'public');
+        $fullInputPath = storage_path('app/public/' . $imagePath);
+
+        $outputDir = storage_path('app/public/bg_outputs');
+        if (!file_exists($outputDir)) mkdir($outputDir, 0777, true);
+
+        $outputFilename = 'nobg_' . uniqid() . '.png';
+        $fullOutputPath = $outputDir . '/' . $outputFilename;
+
+        $scriptDir = base_path('TripoSR');
+        $scriptPath = $scriptDir . '/remove_bg.py';
+        $hfHome = storage_path('app/public/ai_models');
+
+        $command = "export U2NET_HOME=" . escapeshellarg($hfHome) . " && export HF_HOME=" . escapeshellarg($hfHome) . " && cd " . escapeshellarg($scriptDir) . " && python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath);
+        
+        exec($command);
+
+        if (file_exists($fullOutputPath)) {
+            return response()->json([
+                'success' => true,
+                'image_url' => asset('storage/bg_outputs/' . $outputFilename)
+            ]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Gagal menghapus background'], 500);
+    }
 }

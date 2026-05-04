@@ -11,6 +11,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\Api\ScanController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\UserDashboardController;
 
 Route::get('/', function () {
     return view('home');
@@ -134,6 +135,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/dashboard/ar/store', [\App\Http\Controllers\QrCodeController::class, 'store'])->name('user.ar.store');
         Route::patch('/dashboard/ar/{qrCode}/toggle-status', [\App\Http\Controllers\QrCodeController::class, 'toggleStatus'])->name('user.ar.toggle-status');
         Route::get('/dashboard/ar/{qrCode}/download', [\App\Http\Controllers\QrCodeController::class, 'download'])->name('user.ar.download');
+        Route::post('/remove-bg', [UserDashboardController::class, 'removeBackground']);
     });
 
     Route::post('/checkout', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
