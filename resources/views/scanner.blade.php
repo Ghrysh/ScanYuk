@@ -192,8 +192,8 @@
                     const sideT = Math.hypot(tl.x - tr.x, tl.y - tr.y);
                     const sideB = Math.hypot(bl.x - br.x, bl.y - br.y);
 
-                    let yaw = ((sideL - sideR) / ((sideL + sideR) / 2)) * 140;
-                    let pitch = ((sideB - sideT) / ((sideT + sideB) / 2)) * 140;
+                    let yaw = ((sideR - sideL) / ((sideL + sideR) / 2)) * 120;
+                    let pitch = ((sideT - sideB) / ((sideT + sideB) / 2)) * 120;
 
                     const vw = window.innerWidth, vh = window.innerHeight;
                     const videoRatio = this.video.videoWidth / this.video.videoHeight;
@@ -245,14 +245,13 @@
                             this.curPitch += (this.targetPitch - this.curPitch) * ease;
                         }
 
+                        this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
+
                         if (this.arData.type === '3d') {
-                            this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) scale(${this.curScale})`;
                             const viewer = document.getElementById('main-ar-viewer');
                             if (viewer) {
-                                viewer.orientation = `${this.curPitch}deg ${this.curYaw}deg ${-this.curAngle}deg`;
+                                viewer.orientation = `${this.curPitch}deg ${this.curYaw}deg 0deg`;
                             }
-                        } else {
-                            this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
                         }
                     }
                     requestAnimationFrame(() => this.renderLoop());
