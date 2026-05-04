@@ -39,7 +39,7 @@ try:
         scene_codes = model(image_nobg, device=device)
         
         report(80, "Mengekstrak jaring 3D (Mesh)...")
-        meshes = model.extract_mesh(scene_codes, resolution=128)
+        meshes = model.extract_mesh(scene_codes, resolution=224)
 
         report(95, "Menyimpan model hasil Imajinasi AI...")
         meshes[0].export(output_glb_path)
