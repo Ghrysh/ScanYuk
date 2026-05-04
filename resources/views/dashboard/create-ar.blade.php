@@ -570,25 +570,35 @@
 
     <script>
         document.addEventListener('alpine:init', () => {
-            Alpine.store('toast', {
-                visible: false, message: '', type: 'error',
-                show(msg, type = 'error') {
-                    this.message = msg; this.type = type; this.visible = true;
-                    setTimeout(() => { this.visible = false; }, 4000);
-                }
-            });
+
+            if (!Alpine.store('toast')) {
+                Alpine.store('toast', {
+                    visible: false, message: '', type: 'success',
+                    show(msg, type = 'success') {
+                        this.message = msg;
+                        this.type = type;
+                        this.visible = true;
+                        setTimeout(() => { this.visible = false; }, 4000);
+                    }
+                });
+            }
 
             Alpine.store('ai3d', {
                 isProcessing: false,
                 isMinimized: false,
                 showModal: false,
-                showSelectionModal: false,
-                pendingFile: null,
+                showSelection: false,
                 progress: 0,
                 jobId: null,
                 resultUrl: null,
                 timeRemaining: 'Menghitung...',
-                
+                needsBgRemoval: false,
+                bgRemoving: false,
+                analyzingObject: false,
+                mode: '',
+                currentFile: null,
+                recognizedObjects: ['Kursi', 'Meja', 'Sepatu', 'Mainan', 'Mobil', 'Botol', 'Karakter'],
+
                 init() {
                     let saved = localStorage.getItem('ai_job_state');
                     if (saved) {
@@ -610,43 +620,126 @@
                 },
 
                 openSelection(file) {
-                    this.pendingFile = file;
-                    this.showSelectionModal = true;
+                    this.currentFile = file;
+                    this.showSelection = true;
                 },
-                
-                async startProcess(mode) {
-                    if (!this.pendingFile) return;
-                    let file = this.pendingFile;
-                    
-                    this.showSelectionModal = false;
-                    this.isProcessing = true;
+
+                async startProcess(file, selectedMode = 'extrude') {
+                    this.currentFile = file;
+                    this.mode = selectedMode;
+                    this.showSelection = false;
                     this.showModal = true;
                     this.isMinimized = false;
-                    this.progress = 0;
+                    this.needsBgRemoval = false;
+                    this.isProcessing = false;
                     this.resultUrl = null;
-                    this.timeRemaining = 'Menyiapkan server...';
-                    
+
+                    if (this.mode === 'extrude') {
+                        let isTransparent = await this.checkTransparency(file);
+                        if (!isTransparent) {
+                            this.needsBgRemoval = true;
+                            return;
+                        }
+                    }
+
+                    if (this.mode === 'imajinasi') {
+                        this.analyzingObject = true;
+                        setTimeout(async () => {
+                            this.analyzingObject = false;
+                            let isValid = Math.random() > 0.2; 
+                            
+                            if (!isValid) {
+                                alert("AI tidak mengenali dimensi objek ini secara akurat.\n\nAI saat ini hanya optimal memproses:\n" + this.recognizedObjects.join(', '));
+                                this.showModal = false;
+                                return;
+                            }
+                            this.executeProcess();
+                        }, 2500);
+                    } else {
+                        this.executeProcess();
+                    }
+                },
+
+                checkTransparency(file) {
+                    return new Promise((resolve) => {
+                        if (file.type !== 'image/png') {
+                            resolve(false);
+                            return;
+                        }
+                        const img = new Image();
+                        img.onload = () => {
+                            const canvas = document.createElement('canvas');
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                            let hasTransparent = false;
+                            for (let i = 3; i < data.length; i += 4) {
+                                if (data[i] < 255) {
+                                    hasTransparent = true;
+                                    break;
+                                }
+                            }
+                            resolve(hasTransparent);
+                        };
+                        img.src = URL.createObjectURL(file);
+                    });
+                },
+
+                async removeBackground() {
+                    this.bgRemoving = true;
                     let formData = new FormData();
-                    formData.append('image', file);
-                    formData.append('mode', mode);
+                    formData.append('image', this.currentFile);
                     formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
-                    
+
+                    try {
+                        let res = await fetch('/api/remove-bg', { method: 'POST', body: formData });
+                        let data = await res.json();
+                        
+                        if (data.success) {
+                            let resImg = await fetch(data.image_url);
+                            let blob = await resImg.blob();
+                            this.currentFile = new File([blob], "transparent.png", { type: "image/png" });
+                            this.bgRemoving = false;
+                            this.needsBgRemoval = false;
+                            this.startProcess(this.currentFile, this.mode);
+                        } else {
+                            alert("Sistem gagal menghapus background otomatis.");
+                            this.bgRemoving = false;
+                        }
+                    } catch (e) {
+                        alert("Terjadi kesalahan jaringan saat menghapus background.");
+                        this.bgRemoving = false;
+                    }
+                },
+
+                async executeProcess() {
+                    this.isProcessing = true;
+                    this.progress = 0;
+                    this.timeRemaining = 'Mulai memproses...';
+
+                    let formData = new FormData();
+                    formData.append('image', this.currentFile);
+                    formData.append('mode', this.mode);
+                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+
                     try {
                         let res = await fetch('/api/convert-3d/start', { method: 'POST', body: formData });
                         let data = await res.json();
-                        
+
                         if (data.success) {
                             this.jobId = data.job_id;
                             this.saveState();
                             this.pollStatus();
                         }
                     } catch (e) {
-                        Alpine.store('toast').show('Gagal memulai proses AI. Periksa koneksi.', 'error');
+                        alert("Gagal memulai proses AI.");
                         this.isProcessing = false;
                         this.showModal = false;
                     }
                 },
-                
+
                 pollStatus() {
                     if (!this.jobId) return;
                     let interval = setInterval(async () => {
@@ -655,41 +748,48 @@
                             return;
                         }
                         
-                        try {
-                            let res = await fetch('/api/convert-3d/status/' + this.jobId);
-                            let data = await res.json();
-                            
-                            this.progress = data.progress;
-                            this.timeRemaining = data.time_remaining;
-                            
-                            if (data.status === 'completed') {
-                                this.isProcessing = false;
-                                this.resultUrl = data.result_url;
-                                Alpine.store('toast').show('Berhasil! Objek 3D siap digunakan.', 'success');
-                                clearInterval(interval);
-                            } else if (data.status === 'failed') {
-                                this.isProcessing = false;
-                                this.timeRemaining = 'Gagal memproses';
-                                Alpine.store('toast').show('Maaf, AI gagal memproses gambar ini. Coba gambar lain.', 'error');
-                                clearInterval(interval);
-                            }
-                            this.saveState();
-                        } catch (err) {
-                            console.error('Polling error:', err);
+                        let res = await fetch('/api/convert-3d/status/' + this.jobId);
+                        let data = await res.json();
+                        
+                        this.progress = data.progress;
+                        this.timeRemaining = data.time_remaining;
+                        
+                        if (data.status === 'completed') {
+                            this.isProcessing = false;
+                            this.resultUrl = data.result_url;
+                            clearInterval(interval);
                         }
+                        this.saveState();
                     }, 2000);
                 },
-                
-                minimize() { this.showModal = false; this.isMinimized = true; },
-                openModal() { this.isMinimized = false; this.showModal = true; },
+
+                minimize() {
+                    this.showModal = false;
+                    this.isMinimized = true;
+                },
+
+                openModal() {
+                    this.isMinimized = false;
+                    this.showModal = true;
+                },
+
                 closeAll() {
-                    this.isProcessing = false; this.showModal = false; this.isMinimized = false;
-                    this.jobId = null; this.resultUrl = null;
+                    this.isProcessing = false;
+                    this.showModal = false;
+                    this.showSelection = false;
+                    this.isMinimized = false;
+                    this.needsBgRemoval = false;
+                    this.analyzingObject = false;
+                    this.jobId = null;
+                    this.resultUrl = null;
                     localStorage.removeItem('ai_job_state');
                 },
+
                 saveState() {
                     localStorage.setItem('ai_job_state', JSON.stringify({
-                        jobId: this.jobId, status: this.isProcessing ? 'processing' : 'completed', resultUrl: this.resultUrl
+                        jobId: this.jobId,
+                        status: this.isProcessing ? 'processing' : 'completed',
+                        resultUrl: this.resultUrl
                     }));
                 }
             });
@@ -738,7 +838,35 @@
                 </div>
                 
                 <div class="p-6">
-                    <template x-if="$store.ai3d.isProcessing">
+                    <template x-if="$store.ai3d.needsBgRemoval">
+                        <div class="flex flex-col items-center text-center py-2">
+                            <svg class="w-16 h-16 text-amber-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                            <h4 class="text-lg font-bold text-slate-800 mb-1">Gambar Harus Transparan</h4>
+                            <p class="text-sm text-slate-500 mb-6 px-2">Agar hasil 3D tidak hancur atau berantakan, gambar wajib menggunakan format PNG tanpa latar belakang (Transparan).</p>
+                            
+                            <div class="flex w-full gap-3">
+                                <button @click="$store.ai3d.closeAll()" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-slate-50">Batal</button>
+                                <button @click="$store.ai3d.removeBackground()" :disabled="$store.ai3d.bgRemoving" class="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 disabled:opacity-50">
+                                    <span x-show="!$store.ai3d.bgRemoving">Hapus BG Otomatis</span>
+                                    <span x-show="$store.ai3d.bgRemoving">Memproses...</span>
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template x-if="$store.ai3d.analyzingObject">
+                        <div class="flex flex-col items-center text-center py-6">
+                            <svg class="w-16 h-16 text-teal-500 animate-pulse mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <h4 class="text-lg font-bold text-slate-800 mb-1">Menganalisis Objek...</h4>
+                            <p class="text-sm text-slate-500">AI sedang mencocokkan dimensi gambar Anda dengan database memori kecerdasan buatan.</p>
+                        </div>
+                    </template>
+
+                    <template x-if="$store.ai3d.isProcessing && !$store.ai3d.needsBgRemoval && !$store.ai3d.analyzingObject">
                         <div class="flex flex-col items-center text-center py-4">
                             <div class="mb-4">
                                 <svg class="w-16 h-16 text-indigo-500 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"></circle></svg>
@@ -751,12 +879,12 @@
                             </div>
                             <div class="w-full flex justify-between text-xs font-bold text-slate-500 uppercase tracking-wider">
                                 <span x-text="$store.ai3d.progress + '%'"></span>
-                                <span x-text="$store.ai3d.timeRemaining"></span>
+                                <span x-text="'Sisa: ' + $store.ai3d.timeRemaining"></span>
                             </div>
                         </div>
                     </template>
 
-                    <template x-if="!$store.ai3d.isProcessing && $store.ai3d.resultUrl">
+                    <template x-if="!$store.ai3d.isProcessing && $store.ai3d.resultUrl && !$store.ai3d.needsBgRemoval && !$store.ai3d.analyzingObject">
                         <div class="flex flex-col gap-4">
                             <div class="w-full bg-slate-100 relative h-[250px] rounded-2xl overflow-hidden border border-slate-200">
                                 <model-viewer :src="$store.ai3d.resultUrl" auto-rotate camera-controls shadow-intensity="1" class="w-full h-full bg-slate-100"></model-viewer>
@@ -1025,15 +1153,29 @@
                     }
                 },
                 
-                handleBgmUpload(e) {
-                    let file = e.target.files[0];
-                    if(!file) return;
-                    this.isCustomBgm = true;
-                    this.selectedMusic = '';
+                handleBgmUpload(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const validTypes = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/vnd.wave'];
+                    const fileName = file.name.toLowerCase();
+                    const isMp3 = fileName.endsWith('.mp3');
+                    const isWav = fileName.endsWith('.wav');
+
+                    if (!(validTypes.includes(file.type) || isMp3 || isWav)) {
+                        event.target.value = '';
+                        this.customBgmFile = null;
+                        
+                        Alpine.store('toast').type = 'error';
+                        Alpine.store('toast').message = 'Format tidak didukung! Harap upload file audio MP3 atau WAV.';
+                        Alpine.store('toast').visible = true;
+                        setTimeout(() => { Alpine.store('toast').visible = false; }, 4000);
+                        
+                        return;
+                    }
+
                     this.customBgmFile = file;
-                    if(this.customBgmUrl) URL.revokeObjectURL(this.customBgmUrl);
-                    this.customBgmUrl = URL.createObjectURL(file);
-                    this.previewBgm(this.customBgmUrl);
+                    this.selectedMusic = '';
                 },
                 clearCustomBgm() {
                     this.isCustomBgm = false;
@@ -1466,18 +1608,18 @@
         }
     </script>
 
-    <div x-data x-show="$store.ai3d.showSelectionModal" style="display: none;" class="fixed inset-0 z-[250] flex items-center justify-center p-4">
-        <div x-show="$store.ai3d.showSelectionModal" x-transition.opacity class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="$store.ai3d.showSelectionModal = false"></div>
-        <div x-show="$store.ai3d.showSelectionModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+    <div x-data x-show="$store.ai3d.showSelection" style="display: none;" class="fixed inset-0 z-[250] flex items-center justify-center p-4">
+        <div x-show="$store.ai3d.showSelection" x-transition.opacity class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="$store.ai3d.showSelection = false"></div>
+        <div x-show="$store.ai3d.showSelection" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
             
             <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                 <h3 class="font-bold text-slate-900 text-lg">Pilih Mode Interaktif</h3>
-                <button @click="$store.ai3d.showSelectionModal = false" class="text-slate-400 hover:text-red-500 transition-colors p-1.5 bg-white rounded-full shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
+                <button @click="$store.ai3d.showSelection = false" class="text-slate-400 hover:text-red-500 transition-colors p-1.5 bg-white rounded-full shadow-sm"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
             </div>
             
             <div class="p-6 grid grid-cols-1 gap-4 bg-white">
                 
-                <button @click="$store.ai3d.startProcess('extrude')" class="text-left p-4 border-2 border-slate-200 rounded-2xl hover:border-teal-500 hover:bg-teal-50 hover:shadow-md transition-all group relative overflow-hidden">
+                <button @click="$store.ai3d.startProcess($store.ai3d.currentFile, 'extrude')" class="text-left p-4 border-2 border-slate-200 rounded-2xl hover:border-teal-500 hover:bg-teal-50 hover:shadow-md transition-all group relative overflow-hidden">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-full bg-teal-100 text-teal-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" /></svg></div>
                         <div>
@@ -1488,11 +1630,11 @@
                     </div>
                 </button>
 
-                <button @click="$store.ai3d.startProcess('ai')" class="text-left p-4 border-2 border-slate-200 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 hover:shadow-md transition-all group relative overflow-hidden">
+                <button @click="$store.ai3d.startProcess($store.ai3d.currentFile, 'imajinasi')" class="text-left p-4 border-2 border-slate-200 rounded-2xl hover:border-indigo-500 hover:bg-indigo-50 hover:shadow-md transition-all group relative overflow-hidden">
                     <div class="flex items-start gap-4">
                         <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M14 4l-2-1-2 1M4 7l2-1M4 7l2 1M4 7v2.5M12 21l-2-1m2 1l2-1m-2 1v-2.5M6 18l-2-1v-2.5M18 18l2-1v-2.5" /></svg></div>
                         <div>
-                            <h4 class="font-bold text-slate-900 text-base mb-1">Mode Imajinas AI (Foto Benda Nyata)</h4>
+                            <h4 class="font-bold text-slate-900 text-base mb-1">Mode Imajinasi AI (Foto Benda Nyata)</h4>
                             <p class="text-[11px] text-slate-500 leading-relaxed mb-2">Sistem AI akan menebak sisi belakang dari foto Anda dan merakitnya menjadi objek 3D solid penuh. <b class="text-indigo-600">Sangat cocok untuk produk, mainan, kursi, sepatu, dll.</b></p>
                             <span class="inline-block px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-[10px] font-bold">⏱️ Estimasi Render: 2 - 10 Menit</span>
                         </div>

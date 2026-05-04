@@ -72,7 +72,7 @@
                     <span class="text-sm font-medium text-slate-600">
                         Hi, {{ Auth::user()->name }}
                     </span>
-                    <a href="{{ Auth::user()->role === 'admin' ? route('admin.dashboard') : route('user.dashboard') }}" class="px-4 py-2 rounded-lg bg-teal-50 text-teal-600 text-sm font-bold hover:bg-teal-100 transition-colors">
+                    <a href="{{ in_array(Auth::user()->role, ['admin', 'live_chat_admin']) ? route('admin.dashboard') : route('user.dashboard') }}" class="px-4 py-2 rounded-lg bg-teal-50 text-teal-600 text-sm font-bold hover:bg-teal-100 transition-colors">
                         Dashboard
                     </a>
                     <form action="{{ route('logout') }}" method="POST" class="inline">
@@ -172,7 +172,7 @@
                         </div>
                         
                         <div class="flex items-center gap-3">
-                            <a href="{{ Auth::user()->role === 'admin' ? route('admin.dashboard') : route('user.dashboard') }}" class="w-full text-center py-3 rounded-xl btn-gradient text-white text-sm font-bold shadow-md shadow-teal-200/50 hover:opacity-90 transition-opacity">
+                            <a href="{{ in_array(Auth::user()->role, ['admin', 'live_chat_admin']) ? route('admin.dashboard') : route('user.dashboard') }}" class="w-full text-center py-3 rounded-xl btn-gradient text-white text-sm font-bold shadow-md shadow-teal-200/50 hover:opacity-90 transition-opacity">
                                 Dashboard
                             </a>
                             <form action="{{ route('logout') }}" method="POST" class="w-full m-0">
