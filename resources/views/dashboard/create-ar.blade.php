@@ -911,8 +911,8 @@
 
                     <template x-if="$store.ai3d.analyzingObject">
                         <div class="flex flex-col items-center text-center py-6">
-                            <svg class="w-16 h-16 text-teal-500 animate-pulse mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <svg class="w-16 h-16 text-teal-500 animate-spin mb-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"></circle>
                             </svg>
                             <h4 class="text-lg font-bold text-slate-800 mb-1">Menganalisis Objek...</h4>
                             <p class="text-sm text-slate-500">AI sedang mencocokkan dimensi gambar Anda dengan database memori kecerdasan buatan.</p>
