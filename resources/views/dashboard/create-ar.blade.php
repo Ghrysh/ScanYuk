@@ -595,6 +595,7 @@
                 needsBgRemoval: false,
                 bgRemoving: false,
                 analyzingObject: false,
+                unrecognizedObject: false,
                 mode: '',
                 currentFile: null,
                 recognizedObjects: ['Kursi', 'Meja', 'Sepatu', 'Mainan', 'Mobil', 'Botol', 'Karakter'],
@@ -627,10 +628,11 @@
                 async startProcess(file, selectedMode = 'extrude') {
                     this.currentFile = file;
                     this.mode = selectedMode;
-                    this.showSelection = false;
-                    this.showModal = true;
+                    this.showSelection = false; 
+                    this.showModal = true;      
                     this.isMinimized = false;
                     this.needsBgRemoval = false;
+                    this.unrecognizedObject = false;
                     this.isProcessing = false;
                     this.resultUrl = null;
 
@@ -638,6 +640,9 @@
                         let isTransparent = await this.checkTransparency(file);
                         if (!isTransparent) {
                             this.needsBgRemoval = true;
+                            return; 
+                        } else {
+                            this.processWithPadding();
                             return;
                         }
                     }
@@ -649,8 +654,7 @@
                             let isValid = Math.random() > 0.2; 
                             
                             if (!isValid) {
-                                alert("AI tidak mengenali dimensi objek ini secara akurat.\n\nAI saat ini hanya optimal memproses:\n" + this.recognizedObjects.join(', '));
-                                this.showModal = false;
+                                this.unrecognizedObject = true;
                                 return;
                             }
                             this.executeProcess();
@@ -687,6 +691,25 @@
                     });
                 },
 
+                processWithPadding() {
+                    this.needsBgRemoval = false;
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const pad = 4;
+                        canvas.width = img.width + pad;
+                        canvas.height = img.height + pad;
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, pad/2, pad/2);
+                        canvas.toBlob((blob) => {
+                            this.currentFile = new File([blob], "padded_" + this.currentFile.name, { type: "image/png" });
+                            this.executeProcess();
+                        }, "image/png");
+                    };
+                    img.src = URL.createObjectURL(this.currentFile);
+                },
+
                 async removeBackground() {
                     this.bgRemoving = true;
                     let formData = new FormData();
@@ -703,7 +726,7 @@
                             this.currentFile = new File([blob], "transparent.png", { type: "image/png" });
                             this.bgRemoving = false;
                             this.needsBgRemoval = false;
-                            this.startProcess(this.currentFile, this.mode);
+                            this.processWithPadding();
                         } else {
                             alert("Sistem gagal menghapus background otomatis.");
                             this.bgRemoving = false;
@@ -734,7 +757,7 @@
                             this.pollStatus();
                         }
                     } catch (e) {
-                        alert("Gagal memulai proses AI.");
+                        Alpine.store('toast').show('Gagal memulai proses AI.', 'error');
                         this.isProcessing = false;
                         this.showModal = false;
                     }
@@ -747,32 +770,30 @@
                             clearInterval(interval);
                             return;
                         }
-                        
-                        let res = await fetch('/api/convert-3d/status/' + this.jobId);
-                        let data = await res.json();
-                        
-                        this.progress = data.progress;
-                        this.timeRemaining = data.time_remaining;
-                        
-                        if (data.status === 'completed') {
-                            this.isProcessing = false;
-                            this.resultUrl = data.result_url;
-                            clearInterval(interval);
-                        }
-                        this.saveState();
+                        try {
+                            let res = await fetch('/api/convert-3d/status/' + this.jobId);
+                            let data = await res.json();
+                            
+                            this.progress = data.progress;
+                            this.timeRemaining = data.time_remaining;
+                            
+                            if (data.status === 'completed') {
+                                this.isProcessing = false;
+                                this.resultUrl = data.result_url;
+                                clearInterval(interval);
+                            } else if (data.status === 'failed') {
+                                this.isProcessing = false;
+                                this.timeRemaining = 'Gagal memproses';
+                                Alpine.store('toast').show('Maaf, AI gagal memproses gambar ini.', 'error');
+                                clearInterval(interval);
+                            }
+                            this.saveState();
+                        } catch (err) { }
                     }, 2000);
                 },
 
-                minimize() {
-                    this.showModal = false;
-                    this.isMinimized = true;
-                },
-
-                openModal() {
-                    this.isMinimized = false;
-                    this.showModal = true;
-                },
-
+                minimize() { this.showModal = false; this.isMinimized = true; },
+                openModal() { this.isMinimized = false; this.showModal = true; },
                 closeAll() {
                     this.isProcessing = false;
                     this.showModal = false;
@@ -780,6 +801,7 @@
                     this.isMinimized = false;
                     this.needsBgRemoval = false;
                     this.analyzingObject = false;
+                    this.unrecognizedObject = false;
                     this.jobId = null;
                     this.resultUrl = null;
                     localStorage.removeItem('ai_job_state');
@@ -787,9 +809,7 @@
 
                 saveState() {
                     localStorage.setItem('ai_job_state', JSON.stringify({
-                        jobId: this.jobId,
-                        status: this.isProcessing ? 'processing' : 'completed',
-                        resultUrl: this.resultUrl
+                        jobId: this.jobId, status: this.isProcessing ? 'processing' : 'completed', resultUrl: this.resultUrl
                     }));
                 }
             });
@@ -838,21 +858,49 @@
                 </div>
                 
                 <div class="p-6">
+                    
                     <template x-if="$store.ai3d.needsBgRemoval">
                         <div class="flex flex-col items-center text-center py-2">
                             <svg class="w-16 h-16 text-amber-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            <h4 class="text-lg font-bold text-slate-800 mb-1">Gambar Harus Transparan</h4>
-                            <p class="text-sm text-slate-500 mb-6 px-2">Agar hasil 3D tidak hancur atau berantakan, gambar wajib menggunakan format PNG tanpa latar belakang (Transparan).</p>
+                            <h4 class="text-lg font-bold text-slate-800 mb-1">Pilih Mode Cetak Timbul</h4>
+                            <p class="text-sm text-slate-500 mb-5 px-2">Gambar Anda memiliki latar belakang (tidak transparan). Bagaimana Anda ingin mencetaknya ke 3D?</p>
                             
-                            <div class="flex w-full gap-3">
-                                <button @click="$store.ai3d.closeAll()" class="flex-1 py-2.5 rounded-xl border border-slate-300 text-slate-600 font-bold text-sm hover:bg-slate-50">Batal</button>
-                                <button @click="$store.ai3d.removeBackground()" :disabled="$store.ai3d.bgRemoving" class="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 disabled:opacity-50">
-                                    <span x-show="!$store.ai3d.bgRemoving">Hapus BG Otomatis</span>
-                                    <span x-show="$store.ai3d.bgRemoving">Memproses...</span>
+                            <div class="flex flex-col w-full gap-2.5">
+                                <button @click="$store.ai3d.removeBackground()" :disabled="$store.ai3d.bgRemoving" class="w-full py-3 px-4 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50">
+                                    <span x-show="!$store.ai3d.bgRemoving">Hapus BG Otomatis & Ikuti Pola Objek</span>
+                                    <span x-show="$store.ai3d.bgRemoving" class="flex items-center justify-center gap-2">
+                                        <svg class="w-4 h-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Memproses...
+                                    </span>
                                 </button>
+                                
+                                <button @click="$store.ai3d.processWithPadding()" :disabled="$store.ai3d.bgRemoving" class="w-full py-3 px-4 rounded-xl bg-teal-500 text-white font-bold text-sm hover:bg-teal-600 transition-colors disabled:opacity-50" title="Akan ditambahkan trik anti-blur di sekeliling gambar">
+                                    Cetak Papan (Tetap Bentuk Persegi/Asli)
+                                </button>
+
+                                <button @click="$store.ai3d.closeAll()" :disabled="$store.ai3d.bgRemoving" class="w-full py-2.5 rounded-xl border-2 border-slate-200 text-slate-500 font-bold text-sm hover:bg-slate-50 mt-1">Batal</button>
                             </div>
+                        </div>
+                    </template>
+
+                    <template x-if="$store.ai3d.unrecognizedObject">
+                        <div class="flex flex-col items-center text-center py-4">
+                            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4 border-[6px] border-red-50/50">
+                                <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-800 mb-2">Objek Tidak Dikenali AI</h4>
+                            <p class="text-sm text-slate-500 mb-5 px-2">AI kami kesulitan menebak dimensi 3D dari foto ini secara akurat. Saat ini AI kami hanya optimal memproses objek tunggal seperti:</p>
+                            
+                            <div class="flex flex-wrap justify-center gap-1.5 mb-6">
+                                <template x-for="obj in $store.ai3d.recognizedObjects">
+                                    <span class="px-2.5 py-1 bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-bold rounded-md" x-text="obj"></span>
+                                </template>
+                            </div>
+                            
+                            <button @click="$store.ai3d.closeAll()" class="w-full py-3 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-colors shadow-md">Tutup & Pilih Gambar Lain</button>
                         </div>
                     </template>
 
@@ -866,7 +914,7 @@
                         </div>
                     </template>
 
-                    <template x-if="$store.ai3d.isProcessing && !$store.ai3d.needsBgRemoval && !$store.ai3d.analyzingObject">
+                    <template x-if="$store.ai3d.isProcessing && !$store.ai3d.needsBgRemoval && !$store.ai3d.unrecognizedObject && !$store.ai3d.analyzingObject">
                         <div class="flex flex-col items-center text-center py-4">
                             <div class="mb-4">
                                 <svg class="w-16 h-16 text-indigo-500 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10" stroke-dasharray="60" stroke-dashoffset="20"></circle></svg>
@@ -884,7 +932,7 @@
                         </div>
                     </template>
 
-                    <template x-if="!$store.ai3d.isProcessing && $store.ai3d.resultUrl && !$store.ai3d.needsBgRemoval && !$store.ai3d.analyzingObject">
+                    <template x-if="!$store.ai3d.isProcessing && $store.ai3d.resultUrl && !$store.ai3d.needsBgRemoval && !$store.ai3d.unrecognizedObject && !$store.ai3d.analyzingObject">
                         <div class="flex flex-col gap-4">
                             <div class="w-full bg-slate-100 relative h-[250px] rounded-2xl overflow-hidden border border-slate-200">
                                 <model-viewer :src="$store.ai3d.resultUrl" auto-rotate camera-controls shadow-intensity="1" class="w-full h-full bg-slate-100"></model-viewer>
