@@ -716,29 +716,50 @@
                 },
 
                 async removeBackground() {
-                    this.bgRemoving = true;
+                    this.isProcessing = true;
+                    this.progress = 0;
+                    this.timeRemaining = 'Menghapus latar belakang... (Estimasi 5-10 detik)';
+
+                    let progressInterval = setInterval(() => {
+                        if (this.progress < 85) {
+                            this.progress += Math.floor(Math.random() * 5) + 2;
+                        }
+                    }, 500);
+
                     let formData = new FormData();
                     formData.append('image', this.currentFile);
                     formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
 
                     try {
-                        let res = await fetch('/api/remove-bg', { method: 'POST', body: formData });
+                        let res = await fetch('/api/remove-bg', { 
+                            method: 'POST', 
+                            headers: { 'Accept': 'application/json' },
+                            body: formData 
+                        });
                         let data = await res.json();
-                        
+
+                        clearInterval(progressInterval);
+
                         if (data.success) {
-                            let resImg = await fetch(data.image_url);
-                            let blob = await resImg.blob();
-                            this.currentFile = new File([blob], "transparent.png", { type: "image/png" });
-                            this.bgRemoving = false;
-                            this.needsBgRemoval = false;
-                            this.processWithPadding();
+                            this.progress = 100;
+                            this.timeRemaining = 'Background berhasil dihapus! Menyiapkan jaring 3D...';
+                            
+                            let imgRes = await fetch(data.image_url);
+                            let imgBlob = await imgRes.blob();
+                            this.currentFile = new File([imgBlob], "nobg_image.png", { type: "image/png" });
+
+                            setTimeout(() => {
+                                this.executeProcess(); 
+                            }, 1000);
+
                         } else {
-                            alert("Sistem gagal menghapus background otomatis.");
-                            this.bgRemoving = false;
+                            Alpine.store('toast').show(data.message || 'Gagal menghapus background.', 'error');
+                            this.isProcessing = false;
                         }
                     } catch (e) {
-                        alert("Terjadi kesalahan jaringan saat menghapus background.");
-                        this.bgRemoving = false;
+                        clearInterval(progressInterval);
+                        Alpine.store('toast').show('Terjadi kesalahan jaringan atau server.', 'error');
+                        this.isProcessing = false;
                     }
                 },
 
