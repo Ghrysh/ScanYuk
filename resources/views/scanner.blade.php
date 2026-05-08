@@ -55,7 +55,9 @@
             x-show="arData.type === '3d'" 
             id="main-ar-viewer"
             :src="arData.src" 
-            camera-controls 
+            disable-zoom 
+            disable-pan
+            camera-orbit="0deg 0deg auto"
             interaction-prompt="none"
             shadow-intensity="1" 
             loading="eager"
@@ -100,8 +102,8 @@
                 bgmPlayer: null,
                 narrationPlayer: null,
                 
-                curX: 0, curY: 0, curScale: 0, curAngle: 0, curYaw: 0, curPitch: 0,
-                targetX: 0, targetY: 0, targetScale: 0, targetAngle: 0, targetYaw: 0, targetPitch: 0,
+                curX: 0, curY: 0, curScale: 0, curAngle: 0, curYaw: 0, curPitch: 0, curRoll: 0,
+                targetX: 0, targetY: 0, targetScale: 0, targetAngle: 0, targetYaw: 0, targetPitch: 0, targetRoll: 0,
                 hasSnaped: false,
 
                 isLoading: false,
@@ -185,31 +187,38 @@
                     const centerX = (tl.x + tr.x + br.x + bl.x) / 4;
                     const centerY = (tl.y + tr.y + br.y + bl.y) / 4;
                     
-                    const sideL = Math.hypot(tl.x - bl.x, tl.y - bl.y);
-                    const sideR = Math.hypot(tr.x - br.x, tr.y - br.y);
-                    const sideT = Math.hypot(tl.x - tr.x, tl.y - tr.y);
-                    const sideB = Math.hypot(bl.x - br.x, bl.y - br.y);
+                    const sideT = Math.hypot(tl.x - tr.x, tl.y - tr.y); // Atas
+                    const sideB = Math.hypot(bl.x - br.x, bl.y - br.y); // Bawah
+                    const sideL = Math.hypot(tl.x - bl.x, tl.y - bl.y); // Kiri
+                    const sideR = Math.hypot(tr.x - br.x, tr.y - br.y); // Kanan
 
-                    // --- BAGIAN YANG DIUBAH MULAI DARI SINI ---
-                    let yawRatio = (sideL - sideR) / Math.max(sideL, sideR);
-                    let pitchRatio = (sideT - sideB) / Math.max(sideT, sideB);
-
-                    // 1. TINGKATKAN SENSITIVITAS (Coba angka antara 150 sampai 250)
-                    // Semakin besar angkanya, semakin responsif putarannya mengikuti kamera
-                    const sensitivity = 200; 
+                    // 1. KOMPENSASI JARAK (Kamera jauh vs dekat)
+                    const avgW = (sideT + sideB) / 2;
+                    const avgH = (sideL + sideR) / 2;
+                    const qrSize = (avgW + avgH) / 2;
+                    const canvasMin = Math.min(window.innerWidth, window.innerHeight);
                     
-                    let rawYaw = yawRatio * sensitivity;
-                    let rawPitch = pitchRatio * sensitivity;
+                    const relativeSize = qrSize / canvasMin; 
+                    // Jika QR kecil (jauh), distanceFactor akan membesar agar AR tetap responsif
+                    const distanceFactor = Math.min(4.0, Math.max(0.5, 0.2 / relativeSize));
 
-                    // 2. BATASI MAKSIMAL ROTASI (Clamping)
-                    // Batasi di -85 hingga 85 derajat agar objek tidak berputar sampai terbalik ke bawah lantai
-                    this.targetYaw = Math.max(-85, Math.min(85, rawYaw));
+                    // 2. PEMISAHAN SUMBU INTRINSIK (Minus agar sesuai sumbu 3D)
+                    let pitchRatio = -(sideT - sideB) / Math.max(sideT, sideB); 
+                    let rollRatio = -(sideL - sideR) / Math.max(sideL, sideR);
+
+                    const sensitivity = 200; 
+                    let rawPitch = pitchRatio * sensitivity * distanceFactor;
+                    let rawRoll = rollRatio * sensitivity * distanceFactor;
+
                     this.targetPitch = Math.max(-85, Math.min(85, rawPitch));
-                    // --- BAGIAN YANG DIUBAH SELESAI ---
+                    this.targetRoll = Math.max(-85, Math.min(85, rawRoll));
 
-                    const qrWidth = (sideT + sideB + sideL + sideR) / 4;
+                    // 3. YAW (Putaran QR layaknya di atas meja)
                     let angle = Math.atan2(tr.y - tl.y, tr.x - tl.x) * (180 / Math.PI);
+                    this.targetAngle = angle;  // Untuk rotasi CSS 2D
+                    this.targetYaw = -angle;   // Untuk rotasi Sumbu Y pada 3D
 
+                    // 4. POSISI & SKALA LAYAR
                     const vw = window.innerWidth, vh = window.innerHeight;
                     const videoRatio = this.video.videoWidth / this.video.videoHeight;
                     const screenRatio = vw / vh;
@@ -225,8 +234,7 @@
 
                     this.targetX = (centerX * scale) + offsetX;
                     this.targetY = (centerY * scale) + offsetY;
-                    this.targetScale = ((qrWidth * scale) * 2) / 250;
-                    this.targetAngle = angle;
+                    this.targetScale = ((qrSize * scale) * 2) / 250; 
                 },
 
                 renderLoop() {
@@ -238,6 +246,7 @@
                             this.curScale = this.targetScale;
                             this.curYaw = this.targetYaw;
                             this.curPitch = this.targetPitch;
+                            this.curRoll = this.targetRoll;
                             this.arOverlayContainer.style.opacity = '1';
                             this.arOverlayContainer.style.pointerEvents = 'auto';
                             this.hasSnaped = true;
@@ -254,19 +263,28 @@
                             if (dAngle < -180) dAngle += 360;
                             this.curAngle += dAngle * ease;
 
-                            this.curYaw += (this.targetYaw - this.curYaw) * ease;
+                            let dYaw = this.targetYaw - this.curYaw;
+                            if (dYaw > 180) dYaw -= 360;
+                            if (dYaw < -180) dYaw += 360;
+                            this.curYaw += dYaw * ease;
+
                             this.curPitch += (this.targetPitch - this.curPitch) * ease;
+                            this.curRoll += (this.targetRoll - this.curRoll) * ease;
                         }
 
-                        // 1. Terapkan Translasi, Rotasi layar 2D (angle), dan Skala untuk KEDUANYA (2D dan 3D)
-                        // Ini memastikan jika HP dimiringkan, AR ikut miring selayaknya menempel di lantai/kertas
-                        this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
-
                         if (this.arData.type === '3d') {
+                            // Untuk 3D: Hilangkan rotasi CSS. Cukup translasi dan skala layar.
+                            this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) scale(${this.curScale})`;
+                            
                             const viewer = document.getElementById('main-ar-viewer');
                             if (viewer) {
-                                viewer.setAttribute('orientation', `0deg ${this.curPitch}deg ${this.curYaw}deg`);
+                                // Masukkan 3 Sumbu 3D murni! 
+                                // Urutan mutlak Model-Viewer: Roll(Z) Pitch(X) Yaw(Y)
+                                viewer.setAttribute('orientation', `${this.curRoll}deg ${this.curPitch}deg ${this.curYaw}deg`);
                             }
+                        } else {
+                            // Untuk mode foto 2D: Tetap jalankan rotasi CSS karena foto bersifat datar
+                            this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
                         }
                     }
                     requestAnimationFrame(() => this.renderLoop());
