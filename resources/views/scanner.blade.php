@@ -55,7 +55,8 @@
             x-show="arData.type === '3d'" 
             id="main-ar-viewer"
             :src="arData.src" 
-            camera-controls 
+            disable-zoom 
+            disable-pan
             interaction-prompt="none"
             shadow-intensity="1" 
             loading="eager"
@@ -248,18 +249,27 @@
                             this.curPitch += (this.targetPitch - this.curPitch) * ease;
                         }
 
+                        // 1. Terapkan Translasi, Rotasi layar 2D (angle), dan Skala untuk KEDUANYA (2D dan 3D)
+                        // Ini memastikan jika HP dimiringkan, AR ikut miring selayaknya menempel di lantai/kertas
+                        this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
+
                         if (this.arData.type === '3d') {
-                            this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) scale(${this.curScale})`;
                             const viewer = document.getElementById('main-ar-viewer');
                             if (viewer) {
-                                viewer.setAttribute('orientation', `${-this.curPitch}deg ${-this.curYaw}deg 0deg`);
+                                // 2. Format urutan model-viewer: "Roll Pitch Yaw"
+                                // Roll (Z-axis)     = 0deg (Karena sudah ditangani oleh rotasi CSS di atas)
+                                // Pitch (X-axis)    = -this.curPitch (Mendongak/Menunduk untuk POV atas/bawah)
+                                // Yaw (Y-axis)      = this.curYaw (Putaran koin untuk POV kiri/kanan)
+                                
+                                viewer.setAttribute('orientation', `0deg ${-this.curPitch}deg ${this.curYaw}deg`);
+                                
+                                // Catatan: Jika saat Anda bergerak ke kiri/kanan namun objek memutar ke arah yang terbalik, 
+                                // cukup tambahkan tanda minus pada this.curYaw menjadi ${-this.curYaw}deg
                             }
-                        } else {
-                            this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
                         }
                     }
                     requestAnimationFrame(() => this.renderLoop());
-                },
+                }
 
                 async fetchArData(url) {
                     this.isFetching = true;
