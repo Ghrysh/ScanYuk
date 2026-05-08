@@ -195,8 +195,8 @@
                     const avgW = (sideT + sideB) / 2;
                     const avgH = (sideL + sideR) / 2;
 
-                    let yaw = ((sideR - sideL) / avgH) * 80;
-                    let pitch = ((sideB - sideT) / avgW) * 80;
+                    let yaw = ((sideL - sideR) / avgH) * 150; 
+                    let pitch = ((sideT - sideB) / avgW) * 150;
 
                     const vw = window.innerWidth, vh = window.innerHeight;
                     const videoRatio = this.video.videoWidth / this.video.videoHeight;
@@ -215,8 +215,8 @@
                     this.targetY = (centerY * scale) + offsetY;
                     this.targetScale = ((qrWidth * scale) * 2) / 250;
                     this.targetAngle = angle;
-                    this.targetYaw = yaw;
-                    this.targetPitch = pitch;
+                    this.targetYaw = Math.max(-75, Math.min(75, yaw));
+                    this.targetPitch = Math.max(-75, Math.min(75, pitch));
                 },
 
                 renderLoop() {
@@ -253,7 +253,7 @@
                         if (this.arData.type === '3d') {
                             const viewer = document.getElementById('main-ar-viewer');
                             if (viewer) {
-                                viewer.orientation = `0deg ${this.curPitch}deg ${this.curYaw}deg`;
+                                viewer.setAttribute('orientation', `${this.curPitch}deg ${this.curYaw}deg 0deg`);
                             }
                         }
                     }
