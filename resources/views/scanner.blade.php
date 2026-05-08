@@ -263,7 +263,7 @@
                         } else if (this.arData.type === '2d') {
                             const img2d = document.getElementById('main-ar-2d');
                             if (img2d) {
-                                img2d.style.transform = `perspective(600px) rotateX(${-this.curPitch}deg) rotateY(${-this.curYaw}deg)`;
+                                img2d.style.transform = `perspective(600px) rotateX(${-this.curPitch}deg) rotateY(${this.curYaw}deg)`;
                             }
                         }
                     }
