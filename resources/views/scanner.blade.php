@@ -104,6 +104,7 @@
                 
                 curX: 0, curY: 0, curScale: 0, curAngle: 0, curYaw: 0, curPitch: 0, curRoll: 0,
                 targetX: 0, targetY: 0, targetScale: 0, targetAngle: 0, targetYaw: 0, targetPitch: 0, targetRoll: 0,
+                deviceTilt: 90,
                 hasSnaped: false,
 
                 isLoading: false,
@@ -124,7 +125,17 @@
                         this.video.srcObject = stream;
                         this.video.setAttribute("playsinline", true);
                         this.video.play();
-                        
+
+                        window.addEventListener("deviceorientation", (event) => {
+                            if (event.beta !== null) {
+                                let tilt = event.beta;
+                                if (window.innerWidth > window.innerHeight) { 
+                                    tilt = Math.abs(event.gamma);
+                                }
+                                this.deviceTilt = tilt;
+                            }
+                        });
+
                         requestAnimationFrame(() => this.logicLoop());
                         requestAnimationFrame(() => this.renderLoop());
                         
@@ -273,17 +284,16 @@
                         }
 
                         if (this.arData.type === '3d') {
-                            // Untuk 3D: Hilangkan rotasi CSS. Cukup translasi dan skala layar.
                             this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) scale(${this.curScale})`;
                             
                             const viewer = document.getElementById('main-ar-viewer');
                             if (viewer) {
-                                // Masukkan 3 Sumbu 3D murni! 
-                                // Urutan mutlak Model-Viewer: Roll(Z) Pitch(X) Yaw(Y)
-                                viewer.setAttribute('orientation', `${this.curRoll}deg ${this.curPitch}deg ${this.curYaw}deg`);
+                                let tilt = Math.max(0, Math.min(90, this.deviceTilt));
+                                let pitchOffset = 90 - tilt; 
+
+                                viewer.setAttribute('orientation', `${this.curRoll}deg ${this.curPitch + pitchOffset}deg ${this.curYaw}deg`);
                             }
                         } else {
-                            // Untuk mode foto 2D: Tetap jalankan rotasi CSS karena foto bersifat datar
                             this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
                         }
                     }
