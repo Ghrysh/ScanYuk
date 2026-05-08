@@ -185,19 +185,28 @@
                     const tl = loc.topLeftCorner, tr = loc.topRightCorner, br = loc.bottomRightCorner, bl = loc.bottomLeftCorner;
                     const centerX = (tl.x + tr.x + br.x + bl.x) / 4;
                     const centerY = (tl.y + tr.y + br.y + bl.y) / 4;
-                    const qrWidth = (Math.hypot(tr.x - tl.x, tr.y - tl.y) + Math.hypot(br.x - bl.x, br.y - bl.y)) / 2;
-                    let angle = Math.atan2(tr.y - tl.y, tr.x - tl.x) * (180 / Math.PI);
-
+                    
+                    // 1. MENGHITUNG PANJANG KEEMPAT SISI QR CODE
                     const sideL = Math.hypot(tl.x - bl.x, tl.y - bl.y);
                     const sideR = Math.hypot(tr.x - br.x, tr.y - br.y);
                     const sideT = Math.hypot(tl.x - tr.x, tl.y - tr.y);
                     const sideB = Math.hypot(bl.x - br.x, bl.y - br.y);
 
-                    const avgW = (sideT + sideB) / 2;
-                    const avgH = (sideL + sideR) / 2;
+                    // 2. LOGIKA 3D PERSPEKTIF (YAW & PITCH)
+                    // Jika dilihat dari Kiri, sisi kiri (sideL) tampak lebih panjang dari kanan (sideR)
+                    let yawRatio = (sideL - sideR) / Math.max(sideL, sideR);
+                    
+                    // Jika dilihat dari Atas, sisi atas (sideT) tampak lebih panjang dari bawah (sideB)
+                    let pitchRatio = (sideT - sideB) / Math.max(sideT, sideB);
 
-                    let yaw = ((sideL - sideR) / avgH) * 100;
-                    let pitch = ((sideT - sideB) / avgW) * 100;
+                    // Kalikan dengan sudut kemiringan maksimal yang diinginkan (misal 75 derajat)
+                    const maxTilt = 75; 
+                    this.targetYaw = yawRatio * maxTilt;
+                    this.targetPitch = pitchRatio * maxTilt;
+
+                    // 3. POSISI & ROTASI 2D LAYAR
+                    const qrWidth = (sideT + sideB + sideL + sideR) / 4;
+                    let angle = Math.atan2(tr.y - tl.y, tr.x - tl.x) * (180 / Math.PI);
 
                     const vw = window.innerWidth, vh = window.innerHeight;
                     const videoRatio = this.video.videoWidth / this.video.videoHeight;
@@ -216,8 +225,6 @@
                     this.targetY = (centerY * scale) + offsetY;
                     this.targetScale = ((qrWidth * scale) * 2) / 250;
                     this.targetAngle = angle;
-                    this.targetYaw = yaw;
-                    this.targetPitch = pitch;
                 },
 
                 renderLoop() {
@@ -256,15 +263,7 @@
                         if (this.arData.type === '3d') {
                             const viewer = document.getElementById('main-ar-viewer');
                             if (viewer) {
-                                // 2. Format urutan model-viewer: "Roll Pitch Yaw"
-                                // Roll (Z-axis)     = 0deg (Karena sudah ditangani oleh rotasi CSS di atas)
-                                // Pitch (X-axis)    = -this.curPitch (Mendongak/Menunduk untuk POV atas/bawah)
-                                // Yaw (Y-axis)      = this.curYaw (Putaran koin untuk POV kiri/kanan)
-                                
-                                viewer.setAttribute('orientation', `0deg ${-this.curPitch}deg ${this.curYaw}deg`);
-                                
-                                // Catatan: Jika saat Anda bergerak ke kiri/kanan namun objek memutar ke arah yang terbalik, 
-                                // cukup tambahkan tanda minus pada this.curYaw menjadi ${-this.curYaw}deg
+                                viewer.setAttribute('orientation', `0deg ${this.curPitch}deg ${this.curYaw}deg`);
                             }
                         }
                     }
