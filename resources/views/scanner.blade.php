@@ -269,7 +269,7 @@
                         }
                     }
                     requestAnimationFrame(() => this.renderLoop());
-                }
+                },
 
                 async fetchArData(url) {
                     this.isFetching = true;
