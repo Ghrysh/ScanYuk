@@ -191,22 +191,20 @@
                     const sideT = Math.hypot(tl.x - tr.x, tl.y - tr.y);
                     const sideB = Math.hypot(bl.x - br.x, bl.y - br.y);
 
-                    // --- BAGIAN YANG DIUBAH MULAI DARI SINI ---
                     let yawRatio = (sideL - sideR) / Math.max(sideL, sideR);
                     let pitchRatio = (sideT - sideB) / Math.max(sideT, sideB);
 
-                    // 1. TINGKATKAN SENSITIVITAS (Coba angka antara 150 sampai 250)
-                    // Semakin besar angkanya, semakin responsif putarannya mengikuti kamera
                     const sensitivity = 200; 
                     
                     let rawYaw = yawRatio * sensitivity;
                     let rawPitch = pitchRatio * sensitivity;
 
-                    // 2. BATASI MAKSIMAL ROTASI (Clamping)
-                    // Batasi di -85 hingga 85 derajat agar objek tidak berputar sampai terbalik ke bawah lantai
+                    const pitchOffset = -25; 
+
+                    // Terapkan pitchOffset ke rawPitch
                     this.targetYaw = Math.max(-85, Math.min(85, rawYaw));
-                    this.targetPitch = Math.max(-85, Math.min(85, rawPitch));
-                    // --- BAGIAN YANG DIUBAH SELESAI ---
+                    this.targetPitch = Math.max(-85, Math.min(85, rawPitch + pitchOffset));
+                    // --- SELESAI ---
 
                     const qrWidth = (sideT + sideB + sideL + sideR) / 4;
                     let angle = Math.atan2(tr.y - tl.y, tr.x - tl.x) * (180 / Math.PI);
