@@ -57,7 +57,6 @@
             :src="arData.src" 
             disable-zoom 
             disable-pan
-            camera-orbit="0deg 0deg auto"
             interaction-prompt="none"
             shadow-intensity="1" 
             loading="eager"
@@ -288,10 +287,9 @@
                             
                             const viewer = document.getElementById('main-ar-viewer');
                             if (viewer) {
-                                let tilt = Math.max(0, Math.min(90, this.deviceTilt));
-                                let pitchOffset = 90 - tilt; 
-
-                                viewer.setAttribute('orientation', `${this.curRoll}deg ${this.curPitch + pitchOffset}deg ${this.curYaw}deg`);
+                                
+                                let rotasiHologram = this.curYaw + this.curRoll;
+                                viewer.setAttribute('orientation', `0deg ${this.curPitch}deg ${rotasiHologram}deg`);
                             }
                         } else {
                             this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
