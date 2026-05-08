@@ -186,25 +186,28 @@
                     const centerX = (tl.x + tr.x + br.x + bl.x) / 4;
                     const centerY = (tl.y + tr.y + br.y + bl.y) / 4;
                     
-                    // 1. MENGHITUNG PANJANG KEEMPAT SISI QR CODE
                     const sideL = Math.hypot(tl.x - bl.x, tl.y - bl.y);
                     const sideR = Math.hypot(tr.x - br.x, tr.y - br.y);
                     const sideT = Math.hypot(tl.x - tr.x, tl.y - tr.y);
                     const sideB = Math.hypot(bl.x - br.x, bl.y - br.y);
 
-                    // 2. LOGIKA 3D PERSPEKTIF (YAW & PITCH)
-                    // Jika dilihat dari Kiri, sisi kiri (sideL) tampak lebih panjang dari kanan (sideR)
+                    // --- BAGIAN YANG DIUBAH MULAI DARI SINI ---
                     let yawRatio = (sideL - sideR) / Math.max(sideL, sideR);
-                    
-                    // Jika dilihat dari Atas, sisi atas (sideT) tampak lebih panjang dari bawah (sideB)
                     let pitchRatio = (sideT - sideB) / Math.max(sideT, sideB);
 
-                    // Kalikan dengan sudut kemiringan maksimal yang diinginkan (misal 75 derajat)
-                    const maxTilt = 75; 
-                    this.targetYaw = yawRatio * maxTilt;
-                    this.targetPitch = pitchRatio * maxTilt;
+                    // 1. TINGKATKAN SENSITIVITAS (Coba angka antara 150 sampai 250)
+                    // Semakin besar angkanya, semakin responsif putarannya mengikuti kamera
+                    const sensitivity = 200; 
+                    
+                    let rawYaw = yawRatio * sensitivity;
+                    let rawPitch = pitchRatio * sensitivity;
 
-                    // 3. POSISI & ROTASI 2D LAYAR
+                    // 2. BATASI MAKSIMAL ROTASI (Clamping)
+                    // Batasi di -85 hingga 85 derajat agar objek tidak berputar sampai terbalik ke bawah lantai
+                    this.targetYaw = Math.max(-85, Math.min(85, rawYaw));
+                    this.targetPitch = Math.max(-85, Math.min(85, rawPitch));
+                    // --- BAGIAN YANG DIUBAH SELESAI ---
+
                     const qrWidth = (sideT + sideB + sideL + sideR) / 4;
                     let angle = Math.atan2(tr.y - tl.y, tr.x - tl.x) * (180 / Math.PI);
 
