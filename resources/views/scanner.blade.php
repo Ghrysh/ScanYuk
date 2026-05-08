@@ -50,7 +50,7 @@
     </div>
 
     <div id="ar-overlay-container">
-        <img x-show="arData.type === '2d'" :src="arData.src" class="w-full h-full object-contain filter drop-shadow(0 25px 25px rgba(0,0,0,0.8))">
+        <img x-show="arData.type === '2d'" id="main-ar-2d" :src="arData.src" class="w-full h-full object-contain filter drop-shadow(0 25px 25px rgba(0,0,0,0.8))">
         <model-viewer 
             x-show="arData.type === '3d'" 
             id="main-ar-viewer"
@@ -191,22 +191,16 @@
                     const sideT = Math.hypot(tl.x - tr.x, tl.y - tr.y);
                     const sideB = Math.hypot(bl.x - br.x, bl.y - br.y);
 
-                    // --- BAGIAN YANG DIUBAH MULAI DARI SINI ---
                     let yawRatio = (sideL - sideR) / Math.max(sideL, sideR);
                     let pitchRatio = (sideT - sideB) / Math.max(sideT, sideB);
 
-                    // 1. TINGKATKAN SENSITIVITAS (Coba angka antara 150 sampai 250)
-                    // Semakin besar angkanya, semakin responsif putarannya mengikuti kamera
                     const sensitivity = 200; 
                     
                     let rawYaw = yawRatio * sensitivity;
                     let rawPitch = pitchRatio * sensitivity;
 
-                    // 2. BATASI MAKSIMAL ROTASI (Clamping)
-                    // Batasi di -85 hingga 85 derajat agar objek tidak berputar sampai terbalik ke bawah lantai
                     this.targetYaw = Math.max(-85, Math.min(85, rawYaw));
                     this.targetPitch = Math.max(-85, Math.min(85, rawPitch));
-                    // --- BAGIAN YANG DIUBAH SELESAI ---
 
                     const qrWidth = (sideT + sideB + sideL + sideR) / 4;
                     let angle = Math.atan2(tr.y - tl.y, tr.x - tl.x) * (180 / Math.PI);
@@ -259,14 +253,17 @@
                             this.curPitch += (this.targetPitch - this.curPitch) * ease;
                         }
 
-                        // 1. Terapkan Translasi, Rotasi layar 2D (angle), dan Skala untuk KEDUANYA (2D dan 3D)
-                        // Ini memastikan jika HP dimiringkan, AR ikut miring selayaknya menempel di lantai/kertas
                         this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
 
                         if (this.arData.type === '3d') {
                             const viewer = document.getElementById('main-ar-viewer');
                             if (viewer) {
                                 viewer.setAttribute('orientation', `0deg ${this.curPitch}deg ${this.curYaw}deg`);
+                            }
+                        } else if (this.arData.type === '2d') {
+                            const img2d = document.getElementById('main-ar-2d');
+                            if (img2d) {
+                                img2d.style.transform = `perspective(600px) rotateX(${-this.curPitch}deg) rotateY(${-this.curYaw}deg)`;
                             }
                         }
                     }
