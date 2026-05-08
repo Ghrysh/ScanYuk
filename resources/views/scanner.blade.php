@@ -185,7 +185,14 @@
                     const centerX = (tl.x + tr.x + br.x + bl.x) / 4;
                     const centerY = (tl.y + tr.y + br.y + bl.y) / 4;
                     const qrWidth = (Math.hypot(tr.x - tl.x, tr.y - tl.y) + Math.hypot(br.x - bl.x, br.y - bl.y)) / 2;
-                    let angle = Math.atan2(tr.y - tl.y, tr.x - tl.x) * (180 / Math.PI);
+                    
+                    let angleTop = Math.atan2(tr.y - tl.y, tr.x - tl.x) * (180 / Math.PI);
+                    let angleBottom = Math.atan2(br.y - bl.y, br.x - bl.x) * (180 / Math.PI);
+                    
+                    let angleDiff = angleBottom - angleTop;
+                    if (angleDiff > 180) angleBottom -= 360;
+                    if (angleDiff < -180) angleBottom += 360;
+                    let angle = (angleTop + angleBottom) / 2;
 
                     const sideL = Math.hypot(tl.x - bl.x, tl.y - bl.y);
                     const sideR = Math.hypot(tr.x - br.x, tr.y - br.y);
@@ -195,8 +202,8 @@
                     const avgW = (sideT + sideB) / 2;
                     const avgH = (sideL + sideR) / 2;
 
-                    let yaw = ((sideL - sideR) / avgH) * 120;
-                    let pitch = ((sideB - sideT) / avgW) * 120;
+                    let yaw = ((sideL - sideR) / avgH) * 110;
+                    let pitch = ((sideT - sideB) / avgW) * 110;
 
                     const vw = window.innerWidth, vh = window.innerHeight;
                     const videoRatio = this.video.videoWidth / this.video.videoHeight;
