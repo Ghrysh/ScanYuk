@@ -9,7 +9,11 @@
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <style>
-        body { background-color: #000; margin: 0; overflow: hidden; touch-action: none; }
+        body { 
+            background-color: #000; margin: 0; overflow: hidden; touch-action: none; 
+            /* Memberikan efek kedalaman 3D pada seluruh halaman */
+            perspective: 1000px; 
+        }
         
         #qr-video {
             position: absolute; top: 0; left: 0;
@@ -27,7 +31,9 @@
             left: 0; top: 0;
             opacity: 0;
             pointer-events: none; 
-            will-change: transform; 
+            will-change: transform;
+            /* Penting: Agar anak elemen (model-viewer) tetap berada dalam ruang 3D */
+            transform-style: preserve-3d;
             transform: translate3d(-9999px, -9999px, 0);
         }
 
@@ -184,9 +190,12 @@
                     const tl = loc.topLeftCorner, tr = loc.topRightCorner, br = loc.bottomRightCorner, bl = loc.bottomLeftCorner;
                     const centerX = (tl.x + tr.x + br.x + bl.x) / 4;
                     const centerY = (tl.y + tr.y + br.y + bl.y) / 4;
+                    
+                    // 1. Hitung Skala & Rotasi Z (Putaran datar di kertas)
                     const qrWidth = (Math.hypot(tr.x - tl.x, tr.y - tl.y) + Math.hypot(br.x - bl.x, br.y - bl.y)) / 2;
-                    let angle = Math.atan2(tr.y - tl.y, tr.x - tl.x) * (180 / Math.PI);
+                    let angleZ = Math.atan2(tr.y - tl.y, tr.x - tl.x) * (180 / Math.PI);
 
+                    // 2. Hitung Kemiringan (Pitch & Yaw) berdasarkan perspektif trapezoid
                     const sideL = Math.hypot(tl.x - bl.x, tl.y - bl.y);
                     const sideR = Math.hypot(tr.x - br.x, tr.y - br.y);
                     const sideT = Math.hypot(tl.x - tr.x, tl.y - tr.y);
@@ -195,9 +204,13 @@
                     const avgW = (sideT + sideB) / 2;
                     const avgH = (sideL + sideR) / 2;
 
-                    let yaw = ((sideL - sideR) / avgH) * 150; 
-                    let pitch = ((sideT - sideB) / avgW) * 150;
+                    // Menghitung seberapa miring QR Code (dalam derajat)
+                    // Jika sisi kiri lebih panjang dari kanan, berarti sisi kanan menjauh (Yaw)
+                    let yaw = ((sideL - sideR) / avgH) * 75; 
+                    // Jika sisi atas lebih lebar dari bawah, berarti sisi bawah menjauh (Pitch)
+                    let pitch = ((sideB - sideT) / avgW) * 75;
 
+                    // 3. Konversi Koordinat Kamera ke Koordinat Layar (Screen Space)
                     const vw = window.innerWidth, vh = window.innerHeight;
                     const videoRatio = this.video.videoWidth / this.video.videoHeight;
                     const screenRatio = vw / vh;
@@ -214,9 +227,11 @@
                     this.targetX = (centerX * scale) + offsetX;
                     this.targetY = (centerY * scale) + offsetY;
                     this.targetScale = ((qrWidth * scale) * 2) / 250;
-                    this.targetAngle = angle;
-                    this.targetYaw = Math.max(-75, Math.min(75, yaw));
-                    this.targetPitch = Math.max(-75, Math.min(75, pitch));
+                    this.targetAngle = angleZ;
+                    
+                    // Batasi sudut rotasi agar tidak glitching saat tracking kurang stabil
+                    this.targetYaw = Math.max(-80, Math.min(80, yaw));
+                    this.targetPitch = Math.max(-80, Math.min(80, pitch));
                 },
 
                 renderLoop() {
@@ -232,12 +247,12 @@
                             this.arOverlayContainer.style.pointerEvents = 'auto';
                             this.hasSnaped = true;
                         } else {
-                            let dist = Math.hypot(this.targetX - this.curX, this.targetY - this.curY);
-                            let ease = Math.min(1.0, 0.25 + (dist / 100)); 
+                            // Smoothing (Lerp) agar gerakan objek tidak patah-patah
+                            let ease = 0.25; 
                             
                             this.curX += (this.targetX - this.curX) * ease;
                             this.curY += (this.targetY - this.curY) * ease;
-                            this.curScale += (this.targetScale - this.curScale) * 0.15;
+                            this.curScale += (this.targetScale - this.curScale) * ease;
 
                             let dAngle = this.targetAngle - this.curAngle;
                             if (dAngle > 180) dAngle -= 360;
@@ -248,14 +263,21 @@
                             this.curPitch += (this.targetPitch - this.curPitch) * ease;
                         }
 
-                        this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
+                        /**
+                         * KUNCI UTAMA:
+                         * Gunakan rotateX untuk pitch, rotateY untuk yaw, dan rotateZ untuk orientasi kertas.
+                         * Urutan transformasi sangat penting: Translate -> Rotate -> Scale.
+                         */
+                        this.arOverlayContainer.style.transform = `
+                            translate3d(${this.curX}px, ${this.curY}px, 0) 
+                            rotateZ(${this.curAngle}deg) 
+                            rotateX(${this.curPitch}deg) 
+                            rotateY(${this.curYaw}deg) 
+                            scale(${this.curScale})
+                        `;
 
-                        if (this.arData.type === '3d') {
-                            const viewer = document.getElementById('main-ar-viewer');
-                            if (viewer) {
-                                viewer.setAttribute('orientation', `${this.curPitch}deg ${this.curYaw}deg 0deg`);
-                            }
-                        }
+                        // Kita tidak lagi mengubah 'orientation' pada model-viewer secara manual 
+                        // agar pencahayaan model tetap konsisten dengan lingkungan.
                     }
                     requestAnimationFrame(() => this.renderLoop());
                 },
