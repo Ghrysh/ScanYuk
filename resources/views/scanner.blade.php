@@ -192,8 +192,11 @@
                     const sideT = Math.hypot(tl.x - tr.x, tl.y - tr.y);
                     const sideB = Math.hypot(bl.x - br.x, bl.y - br.y);
 
-                    let pitch = ((sideB - sideT) / Math.max(sideB, sideT)) * 60; 
-                    let yaw = ((sideR - sideL) / Math.max(sideR, sideL)) * 60; 
+                    const avgW = (sideT + sideB) / 2;
+                    const avgH = (sideL + sideR) / 2;
+
+                    let yaw = ((sideL - sideR) / avgH) * 120;
+                    let pitch = ((sideB - sideT) / avgW) * 120;
 
                     const vw = window.innerWidth, vh = window.innerHeight;
                     const videoRatio = this.video.videoWidth / this.video.videoHeight;
@@ -230,11 +233,11 @@
                             this.hasSnaped = true;
                         } else {
                             let dist = Math.hypot(this.targetX - this.curX, this.targetY - this.curY);
-                            let ease = Math.min(1.0, 0.3 + (dist / 100)); 
+                            let ease = Math.min(1.0, 0.25 + (dist / 100)); 
                             
                             this.curX += (this.targetX - this.curX) * ease;
                             this.curY += (this.targetY - this.curY) * ease;
-                            this.curScale += (this.targetScale - this.curScale) * 0.2;
+                            this.curScale += (this.targetScale - this.curScale) * 0.15;
 
                             let dAngle = this.targetAngle - this.curAngle;
                             if (dAngle > 180) dAngle -= 360;
@@ -245,7 +248,14 @@
                             this.curPitch += (this.targetPitch - this.curPitch) * ease;
                         }
 
-                        this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) scale(${this.curScale}) perspective(800px) rotateZ(${this.curAngle}deg) rotateX(${this.curPitch}deg) rotateY(${this.curYaw}deg)`;
+                        this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
+
+                        if (this.arData.type === '3d') {
+                            const viewer = document.getElementById('main-ar-viewer');
+                            if (viewer) {
+                                viewer.setAttribute('orientation', `${this.curPitch}deg ${-this.curYaw}deg 0deg`);
+                            }
+                        }
                     }
                     requestAnimationFrame(() => this.renderLoop());
                 },
