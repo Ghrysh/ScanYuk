@@ -12,8 +12,38 @@ class ChatbotController extends Controller
 {
     public function processChat(Request $request)
     {
-        $topic = $request->topic ?? 'Umum';
-        $message = strtolower(trim($request->message));
+        $topic = $request->topic ?? 'Umum'; 
+        $rawMessage = strtolower(trim($request->message));
+
+        $slangDict = [
+            'gmn' => 'bagaimana', 'gimana' => 'bagaimana', 'bgmn' => 'bagaimana', 'gmna' => 'bagaimana',
+            'brp' => 'berapa', 'brapa' => 'berapa', 'brpa' => 'berapa', 'brap' => 'berapa', 'piro' => 'berapa',
+            'klo' => 'kalau', 'kalo' => 'kalau', 'klau' => 'kalau',
+            'bikin' => 'buat', 'bs' => 'bisa', 'gk' => 'tidak', 'ga' => 'tidak', 'gak' => 'tidak', 'ngga' => 'tidak', 'nggak' => 'tidak',
+            'tdk' => 'tidak', 'dgn' => 'dengan', 'yg' => 'yang', 'utk' => 'untuk',
+            'makasih' => 'terimakasih', 'trims' => 'terimakasih', 'thx' => 'terimakasih', 'mksh' => 'terimakasih',
+            'pw' => 'password', 'pass' => 'password', 'loginnya' => 'login',
+            
+            'hrga' => 'harga', 'hrg' => 'harga', 'haarga' => 'harga', 'harg' => 'harga',
+            'pket' => 'paket', 'pkt' => 'paket', 'pakat' => 'paket', 'pakt' => 'paket',
+            'dpt' => 'dapat', 'dapet' => 'dapat', 'dapetnya' => 'dapat', 'dptnya' => 'dapat',
+            'aja' => 'saja', 'sja' => 'saja', 'doang' => 'saja',
+            
+            'gartis' => 'gratis', 'grts' => 'gratis', 'free' => 'gratis', 'gratisan' => 'gratis', 'gretong' => 'gratis',
+            'pmoela' => 'pemula', 'pmula' => 'pemula', 'pemola' => 'pemula', 'pmla' => 'pemula', 'pemulaa' => 'pemula', 'mula' => 'pemula',
+            'propesional' => 'profesional', 'pro' => 'profesional', 'profesinal' => 'profesional', 'prfessional' => 'profesional', 'ptofesional' => 'profesional',
+            'bisns' => 'bisnis', 'bsnis' => 'bisnis', 'bsns' => 'bisnis', 'bussines' => 'bisnis', 'business' => 'bisnis', 'biznis' => 'bisnis',
+            
+            'ftr' => 'fitur', 'isinya' => 'fitur', 'fasilitas' => 'fitur',
+            'bda' => 'beda', 'bdanya' => 'beda', 'bedanya' => 'beda', 'perbedaan' => 'beda'
+        ];
+
+        $cleanMessage = preg_replace('/[^\w\s]/', '', $rawMessage);
+        $words = explode(' ', $cleanMessage);
+        foreach($words as &$w) {
+            if(isset($slangDict[$w])) $w = $slangDict[$w];
+        }
+        $message = implode(' ', $words);
 
         $realIp = $request->ip();
         if ($request->hasHeader('X-Forwarded-For')) {
@@ -28,13 +58,13 @@ class ChatbotController extends Controller
 
         if ($lead && in_array($lead->live_chat_status, ['pending', 'active']) && !$request->is_autoclose) {
             $history = json_decode($lead->chat_history, true) ?? [];
-            $history[] = ['sender' => 'user', 'text' => $message, 'time' => now()->format('d M, H:i')];
-
+            $history[] = ['sender' => 'user', 'text' => $rawMessage, 'time' => now()->format('d M, H:i')];
+            
             $lead->update([
                 'chat_history' => json_encode($history),
-                'last_message' => $message
+                'last_message' => $rawMessage
             ]);
-
+            
             return response()->json([
                 'reply' => null,
                 'lead_id' => $lead->id,
@@ -56,21 +86,21 @@ class ChatbotController extends Controller
         if (!$lead) {
             $lead = ChatbotLead::create([
                 'user_id' => auth()->id(),
-                'ip_address' => $realIp,
+                'ip_address' => $realIp, 
                 'topic_context' => $topic,
-                'contact_info' => '-',
+                'contact_info' => '-', 
                 'chat_history' => json_encode($request->chat_history),
-                'last_message' => $message
+                'last_message' => $rawMessage
             ]);
         } else {
             $lead->update([
                 'chat_history' => json_encode($request->chat_history),
-                'last_message' => $message
+                'last_message' => $rawMessage
             ]);
         }
 
         if ($request->is_followup) {
-            $lead->update(['contact_info' => $message]);
+            $lead->update(['contact_info' => $rawMessage]);
             return response()->json([
                 'reply' => 'Terima kasih! Tim ScanYuk akan segera menindaklanjuti kendala Anda melalui kontak tersebut. Sesi chat ini Mimin tutup ya! 👋',
                 'is_finished' => true,
@@ -81,10 +111,17 @@ class ChatbotController extends Controller
         $reply = "";
         $showLiveChatBtn = false;
 
-        if ($topic === 'Paket & Pembayaran' || str_contains($message, 'paket') || str_contains($message, 'harga') || str_contains($message, 'bayar') || str_contains($message, 'fitur') || str_contains($message, 'beda')) {
-
-            $prompt = "Extract user intent regarding pricing packages. Return JSON ONLY. Keys must be 'intent' (values: check_price, check_features, compare, unknown) and 'package_name' (string or null). Message: \"$message\"";
-
+        if (
+            $topic === 'Paket & Pembayaran' || 
+            str_contains($message, 'paket') || str_contains($message, 'harga') || 
+            str_contains($message, 'bayar') || str_contains($message, 'fitur') || 
+            str_contains($message, 'beda') || str_contains($message, 'gratis') || 
+            str_contains($message, 'pemula') || str_contains($message, 'profesional') || 
+            str_contains($message, 'bisnis')
+        ) {
+            
+            $prompt = "Analyze this Indonesian message: \"$message\". Return ONLY a valid JSON object without any markdown. Keys must be 'intent' (values: check_price, check_features, compare, unknown) and 'package_name' (must be exactly one of: Gratis, Pemula, Profesional, Bisnis, or null).";
+            
             $ollamaUrl = env('OLLAMA_URL', 'http://ollama:11434/api/generate');
 
             try {
@@ -100,6 +137,18 @@ class ChatbotController extends Controller
                     $intent = $extracted['intent'] ?? 'unknown';
                     $pkgName = $extracted['package_name'] ?? null;
 
+                    if (strtolower((string)$pkgName) === 'unknown') $pkgName = null;
+
+                    if (!$pkgName && $intent !== 'compare') {
+                        $guessPkg = PricingPackage::whereRaw("? % name", [$message])
+                                    ->orWhereRaw("similarity(name, ?) > 0.15", [$message])
+                                    ->orderByRaw("similarity(name, ?) DESC", [$message])
+                                    ->first();
+                        if ($guessPkg) {
+                            $pkgName = $guessPkg->name;
+                        }
+                    }
+
                     if ($intent === 'compare' || str_contains($message, 'beda') || str_contains($message, 'semua')) {
                         $packages = PricingPackage::orderBy('price', 'asc')->get();
                         $reply = "Tentu! Berikut adalah perbandingan singkat paket kami:<br><br>";
@@ -110,19 +159,19 @@ class ChatbotController extends Controller
                         $reply .= "Mana yang kira-kira paling pas untuk kebutuhan Anda saat ini?";
                     } elseif ($pkgName) {
                         $package = PricingPackage::whereRaw("name ILIKE ?", ['%'.$pkgName.'%'])
-                                    ->orWhereRaw("similarity(name, ?) > 0.2", [$pkgName])
+                                    ->orWhereRaw("similarity(name, ?) > 0.1", [$pkgName])
                                     ->orderByRaw("similarity(name, ?) DESC", [$pkgName])
                                     ->first();
 
                         if ($package) {
                             $features = is_array($package->features) ? implode(', ', $package->features) : (json_decode($package->features, true) ? implode(', ', json_decode($package->features, true)) : $package->features);
-                            if ($intent === 'check_features') {
+                            if ($intent === 'check_features' || str_contains($message, 'dapat') || str_contains($message, 'fitur')) {
                                 $reply = "Untuk <b>Paket {$package->name}</b>, fitur utama yang akan Anda dapatkan antara lain: {$features}. Harganya sendiri hanya Rp" . number_format($package->price, 0, ',', '.') . ".";
                             } else {
                                 $reply = "Harga <b>Paket {$package->name}</b> saat ini adalah Rp" . number_format($package->price, 0, ',', '.') . ". Paket ini sudah mencakup {$features}. Ingin lanjut mendaftar paket ini?";
                             }
                         } else {
-                            $reply = "Mimin kurang yakin dengan paket '$pkgName' yang Anda maksud. Kami menyediakan paket Gratis, Pemula, Profesional, dan Bisnis. Boleh diperjelas paket mana yang ingin dicek?";
+                            $reply = "Mimin kurang yakin dengan paket yang Anda maksud. Kami menyediakan paket Gratis, Pemula, Profesional, dan Bisnis. Boleh diperjelas paket mana yang ingin dicek?";
                         }
                     } else {
                         $packages = PricingPackage::orderBy('price', 'asc')->get();
@@ -151,22 +200,6 @@ class ChatbotController extends Controller
             }
 
         } else {
-            $slangDict = [
-                'gmn' => 'bagaimana', 'gimana' => 'bagaimana', 'bgmn' => 'bagaimana',
-                'brp' => 'berapa', 'klo' => 'kalau', 'kalo' => 'kalau',
-                'bikin' => 'buat', 'bs' => 'bisa', 'gk' => 'tidak', 'ga' => 'tidak',
-                'tdk' => 'tidak', 'dgn' => 'dengan', 'yg' => 'yang', 'utk' => 'untuk',
-                'makasih' => 'terimakasih', 'trims' => 'terimakasih', 'thx' => 'terimakasih',
-                'pw' => 'password', 'pass' => 'password', 'loginnya' => 'login'
-            ];
-
-            $cleanMessage = preg_replace('/[^\w\s]/', '', $message);
-            $words = explode(' ', $cleanMessage);
-            foreach($words as &$w) {
-                if(isset($slangDict[$w])) $w = $slangDict[$w];
-            }
-            $cleanMessage = implode(' ', $words);
-
             $knowledges = ChatbotKnowledge::whereIn('topic', [$topic, 'Umum'])->get();
             $bestMatch = null;
             $highestScore = 0;
@@ -177,9 +210,9 @@ class ChatbotController extends Controller
 
                 foreach ($keywords as $kw) {
                     $kw = strtolower(trim($kw));
-
-                    if (str_contains($cleanMessage, $kw)) {
-                        $score += strlen($kw) * 2;
+                    
+                    if (str_contains($message, $kw)) {
+                        $score += strlen($kw) * 2; 
                     } else {
                         $kwWords = explode(' ', $kw);
                         foreach($kwWords as $kww) {
