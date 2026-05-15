@@ -60,9 +60,21 @@ services:
     networks:
       - scanyuk-network
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: scanyuk-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - scanyuk-network
+
 networks:
   scanyuk-network:
     driver: bridge
 
 volumes:
   scanyuk-db-data:
+  ollama-data:
