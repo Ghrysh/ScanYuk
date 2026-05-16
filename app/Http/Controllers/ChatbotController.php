@@ -103,7 +103,7 @@ class ChatbotController extends Controller
             }
         }
 
-        // PENYUSUNAN PROMPT UNTUK AI BERDASARKAN TOPIK
+        // PENYUSUNAN PROMPT UNTUK AI BERDASARKAN TOPIK (DIPERKETAT)
         if ($isPricingTopic) {
             $dataPaketContext = "";
             foreach($dbPackages as $p) {
@@ -111,11 +111,40 @@ class ChatbotController extends Controller
                 $dataPaketContext .= "Paket {$p->name} harganya Rp" . number_format($p->price, 0, ',', '.') . " dengan fitur: {$features}. ";
             }
 
-            $prompt = "Kamu adalah 'Mimin', CS ScanYuk. User bertanya: \"{$originalMessage}\".
-            Ini adalah data paket resmi kami: {$dataPaketContext}
-            Tugasmu: Jawab dengan RAMAH dan LUWES menggunakan data resmi di atas. DILARANG mengarang angka atau fitur.";
+            $prompt = "
+Kamu adalah Mimin, customer service resmi ScanYuk.
+
+TUGAS:
+Jawab pertanyaan user HANYA berdasarkan data yang diberikan.
+Jangan menambahkan informasi yang tidak ada.
+Jangan berimprovisasi.
+Jangan membuat nama orang.
+Jangan membuat harga, fitur, atau promo palsu.
+
+DATA PAKET:
+{$dataPaketContext}
+
+PERTANYAAN USER:
+{$originalMessage}
+
+ATURAN WAJIB:
+- Panggil user dengan 'Kak'
+- Jawaban maksimal 2 kalimat
+- Gunakan bahasa santai dan natural
+- Jika informasi tidak tersedia di data, jawab:
+  'Maaf Kak, untuk detail itu belum tersedia ya.'
+- Fokus langsung ke inti pertanyaan
+- Jangan menjelaskan hal lain di luar pertanyaan user
+- Jangan menggunakan format markdown
+- Jangan membuat asumsi
+
+CONTOH STYLE JAWABAN:
+- 'Halo Kak, paket Pemula harganya Rp99.000 dengan fitur ...'
+- 'Halo Kak, perbedaan paket Bisnis dan Profesional ada di fitur ...'
+
+JAWABAN:
+";
         } else {
-            // Pencarian data SOP dari tabel chatbot_knowledges
             $knowledges = ChatbotKnowledge::all();
             $bestMatch = null;
             $highestScore = 0;
@@ -145,14 +174,58 @@ class ChatbotController extends Controller
             }
 
             if ($bestMatch) {
-                // Jika ketemu panduannya, suruh AI merangkumnya jadi luwes
-                $prompt = "Kamu adalah 'Mimin', CS ScanYuk. User berkata: \"{$originalMessage}\".
-                Ini adalah panduan SOP kami terkait hal itu: \"{$bestMatch->response}\".
-                Tugasmu: Gunakan panduan SOP tersebut sebagai dasar jawabanmu. Ubah bahasanya menjadi sangat RAMAH, SANTAI, dan LUWES layaknya manusia yang sedang mengobrol. Jangan ubah inti informasi dari SOP tersebut.";
+                $prompt = "
+Kamu adalah Mimin, customer service resmi ScanYuk.
+
+TUGAS:
+Jawab user berdasarkan panduan jawaban yang sudah disediakan.
+Jangan menambahkan informasi sendiri.
+Jangan berimprovisasi.
+Jangan membuat nama orang random.
+
+PESAN USER:
+{$originalMessage}
+
+PANDUAN JAWABAN:
+{$bestMatch->response}
+
+ATURAN WAJIB:
+- Gunakan sapaan 'Kak'
+- Maksimal 2 kalimat
+- Bahasa santai dan ramah
+- Fokus menjawab pertanyaan user
+- Jangan keluar dari panduan jawaban
+- Jika panduan tidak relevan, jawab:
+  'Maaf Kak, Mimin kurang paham. Mau dibantu CS langsung?'
+- Jangan menggunakan markdown
+- Jangan membuat asumsi tambahan
+
+CONTOH STYLE:
+- 'Halo Kak, untuk reset password bisa lewat menu login ya.'
+- 'Halo Kak, fitur ini tersedia di paket Profesional.'
+
+JAWABAN:
+";
             } else {
-                // Jika tidak ketemu di database, suruh AI menjawab sopan & mengarahkan ke CS
-                $prompt = "Kamu adalah 'Mimin', CS ScanYuk. User berkata: \"{$originalMessage}\".
-                Tugasmu: Karena ini di luar topik teknismu, balas dengan sangat ramah dan sopan bahwa kamu kurang paham, dan tawarkan untuk disambungkan ke tim CS Manusia (Live Chat).";
+                $prompt = "
+Kamu adalah Mimin, customer service resmi ScanYuk.
+
+PESAN USER:
+{$originalMessage}
+
+ATURAN:
+- Jawab maksimal 1 kalimat
+- Gunakan sapaan 'Kak'
+- Katakan bahwa pertanyaan belum dipahami
+- Tawarkan bantuan CS manusia
+- Jangan membuat jawaban sendiri
+- Jangan berimprovisasi
+
+FORMAT JAWABAN:
+'Maaf Kak, Mimin belum paham pertanyaannya. Mau dibantu CS langsung?'
+
+JAWABAN:
+";
                 $showLiveChatBtn = true;
             }
         }
@@ -172,7 +245,6 @@ class ChatbotController extends Controller
                 }
             }
         } catch (\Exception $e) {
-            // Fallback Murni Jika AI Mati/Timeout
             if ($isPricingTopic) {
                 $reply = "AI Mimin sedang sibuk kak. Silakan cek detail paket langsung di menu 'Pricing' ya!";
             } else {
