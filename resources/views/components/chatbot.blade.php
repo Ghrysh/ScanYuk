@@ -44,7 +44,7 @@
                         <span class="text-[9px] text-slate-400 font-bold" x-text="msg.sender === 'user' ? 'Anda' : (msg.sender === 'admin' ? liveAdminName : 'Mimin')"></span>
                         <span class="text-[8px] text-slate-400/70 font-medium" x-show="msg.time" x-text="msg.time"></span>
                     </div>
-                    <div class="max-w-[85%] px-4 py-2.5 rounded-2xl text-xs sm:text-sm shadow-sm"
+                    <div class="max-w-[85%] px-4 py-2.5 rounded-2xl text-xs sm:text-sm shadow-sm whitespace-pre-line"
                          :class="msg.sender === 'user' ? 'bg-indigo-500 text-white rounded-tr-sm' : 'bg-white text-slate-700 border border-slate-200 rounded-tl-sm leading-relaxed'"
                          x-html="msg.text"></div>
                 </div>
@@ -61,7 +61,7 @@
 
         <div x-show="liveChatStatus !== 'pending' && liveChatStatus !== 'active' && !isFinished" class="shrink-0 bg-slate-100/90 backdrop-blur-sm p-2.5 border-t border-slate-200 flex flex-wrap justify-center gap-2 z-10" style="display: none;">
             <button @click="requestLiveChat()" class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white text-[10px] sm:text-xs font-bold rounded-full transition-all shadow-md flex items-center gap-1.5 transform hover:scale-105">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
                 Live Chat CS
             </button>
 
@@ -72,18 +72,28 @@
         </div>
 
         <div class="shrink-0 p-2 sm:p-3 bg-white border-t border-slate-200 shadow-[0_-4px_15px_rgba(0,0,0,0.03)] z-20">
-            <form @submit.prevent="sendMessage()" class="relative flex items-center">
-                <input x-model="inputText" type="text" :placeholder="followUpMode ? 'Ketik Email / No WA Anda...' : 'Ketik pertanyaan Anda di sini...'" 
-                       :disabled="isFinished || isTyping"
-                       class="w-full bg-slate-100 text-slate-800 text-xs sm:text-sm px-3 py-2.5 sm:px-4 sm:py-3 pr-12 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-50 border border-transparent">
+            <form @submit.prevent="sendMessage()" class="relative flex items-end">
+                <textarea 
+                    x-ref="chatInput"
+                    x-model="inputText" 
+                    @input="resizeInput()"
+                    @keydown.enter.exact.prevent="if(inputText.trim() && !isFinished && !isTyping) sendMessage()"
+                    :placeholder="followUpMode ? 'Ketik Email / No WA Anda...' : 'Ketik pertanyaan Anda di sini...'" 
+                    :disabled="isFinished || isTyping"
+                    rows="1"
+                    class="w-full bg-slate-100 text-slate-800 text-xs sm:text-sm px-3.5 py-2.5 pr-14 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow disabled:opacity-50 border border-transparent resize-none overflow-y-auto max-h-[120px] leading-normal shadow-inner"
+                    style="min-height: 40px; height: 40px;"
+                ></textarea>
                 
                 <button type="submit" :disabled="!inputText.trim() || isFinished || isTyping" 
-                        class="absolute right-1 sm:right-2 p-1.5 sm:p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:bg-slate-300 transition-colors shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
+                        class="absolute bottom-1 right-1 sm:bottom-1.5 sm:right-1.5 w-8 h-8 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:bg-slate-300 transition-all shadow-sm flex items-center justify-center transform active:scale-95">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-0 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                 </button>
             </form>
-            <div class="text-center mt-1.5" x-show="!isFinished">
+            <div class="text-center mt-1.5 flex justify-center items-center gap-1" x-show="!isFinished">
                 <span class="text-[8px] sm:text-[9px] text-slate-400 font-medium">Powered by ScanYuk AI</span>
+                <span class="hidden sm:inline text-[8px] text-slate-300">|</span>
+                <span class="hidden sm:inline text-[8px] text-slate-400">Enter ↵ untuk kirim, Shift+Enter untuk baris baru</span>
             </div>
         </div>
 
@@ -99,7 +109,7 @@ function chatbot() {
         isTyping: false,
         followUpMode: false,
         isFinished: false,
-        selectedTopic: 'Umum', // Set default topic agar selalu aktif
+        selectedTopic: 'Umum',
         lastUserMessage: '',
         leadId: null,
         
@@ -117,6 +127,16 @@ function chatbot() {
 
         init() {
             this.loadState();
+        },
+
+        // Fungsi Cerdas Pengatur Tinggi Otomatis Textarea
+        resizeInput() {
+            let el = this.$refs.chatInput;
+            if (el) {
+                el.style.height = 'auto'; // Reset tinggi dasar
+                // Mengikuti tinggi scroll internal, dibatasi maksimal 120px (seperempat tinggi chatbox)
+                el.style.height = Math.min(el.scrollHeight, 120) + 'px'; 
+            }
         },
 
         loadState() {
@@ -246,6 +266,7 @@ function chatbot() {
             this.followUpMode = false;
             this.isFinished = false;
             this.inputText = '';
+            this.$nextTick(() => { this.resizeInput(); }); // Paksa input kembali ke tinggi semula (40px)
             this.unread = 1;
             this.leadId = null;
             this.isLiveChat = false;
@@ -288,6 +309,9 @@ function chatbot() {
             this.messages.push({ sender: 'user', text: msgText, time: timeNow });
             this.inputText = '';
             
+            // Kembalikan ukuran tinggi textarea ke 40px setelah dikirim
+            this.$nextTick(() => { this.resizeInput(); });
+            
             this.updateActivity();
             this.saveState();
             if (!this.followUpMode) this.lastUserMessage = msgText; 
@@ -328,7 +352,7 @@ function chatbot() {
                     if (!this.isOpen) this.unread++;
                     
                     this.saveState(); this.scrollToBottom();
-                }, 800);
+                }, 400);
 
             } catch (e) {
                 this.isTyping = false;
