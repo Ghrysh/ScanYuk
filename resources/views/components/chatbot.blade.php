@@ -38,7 +38,6 @@
         </div>
 
         <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 scroll-smooth">
-            
             <template x-for="(msg, index) in messages" :key="index">
                 <div class="flex flex-col" :class="msg.sender === 'user' ? 'items-end' : 'items-start'">
                     <div class="flex items-baseline gap-1 mb-1 px-1">
@@ -51,30 +50,6 @@
                 </div>
             </template>
 
-            <div x-show="!selectedTopic && !isLiveChat" class="flex flex-col gap-3 mt-2" style="display: none;">
-                <p class="text-xs font-bold text-slate-500 text-center mb-1">Silakan pilih topik atau hubungi admin:</p>
-                
-                <div class="grid grid-cols-1 gap-2">
-                    <template x-for="topic in topics" :key="topic">
-                        <button @click="setTopic(topic)" class="w-full text-left px-4 py-3 bg-white border border-teal-200 hover:border-teal-500 hover:bg-teal-50 rounded-xl text-xs sm:text-sm font-bold text-teal-700 transition-all shadow-sm flex items-center justify-between group">
-                            <span x-text="topic"></span>
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-teal-400 group-hover:text-teal-600 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" /></svg>
-                        </button>
-                    </template>
-                </div>
-
-                <div class="flex items-center gap-3 my-1">
-                    <div class="h-px bg-slate-200 flex-1"></div>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Atau</span>
-                    <div class="h-px bg-slate-200 flex-1"></div>
-                </div>
-
-                <button @click="requestLiveChat()" class="w-full px-4 py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white rounded-xl text-xs sm:text-sm font-bold transition-all shadow-md flex items-center justify-center gap-2 group transform hover:scale-[1.02] active:scale-95">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
-                    Live Chat
-                </button>
-            </div>
-
             <div x-show="isTyping" class="flex items-start" style="display: none;">
                 <div class="bg-white border border-slate-200 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1.5">
                     <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
@@ -84,28 +59,21 @@
             </div>
         </div>
 
-        <div x-show="selectedTopic && liveChatStatus !== 'pending' && liveChatStatus !== 'active' && !isFinished" class="shrink-0 bg-slate-100/90 backdrop-blur-sm p-2.5 border-t border-slate-200 flex flex-wrap justify-center gap-2 z-10" style="display: none;">
-            
-            <button @click="reselectTopic()" class="px-4 py-2 bg-white border border-slate-300 hover:border-teal-500 hover:bg-teal-50 text-slate-600 hover:text-teal-600 text-[10px] sm:text-xs font-bold rounded-full transition-colors shadow-sm flex items-center gap-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                Pilih Topik Lain
-            </button>
-            
+        <div x-show="liveChatStatus !== 'pending' && liveChatStatus !== 'active' && !isFinished" class="shrink-0 bg-slate-100/90 backdrop-blur-sm p-2.5 border-t border-slate-200 flex flex-wrap justify-center gap-2 z-10" style="display: none;">
             <button @click="requestLiveChat()" class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white text-[10px] sm:text-xs font-bold rounded-full transition-all shadow-md flex items-center gap-1.5 transform hover:scale-105">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>
-                Live Chat
+                Live Chat CS
             </button>
 
             <button x-show="!followUpMode" @click="triggerFollowUp()" class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white text-[10px] sm:text-xs font-bold rounded-full transition-colors shadow-sm flex items-center gap-1.5">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                 Akhiri Sesi
             </button>
-
         </div>
 
-        <div class="shrink-0 p-2 sm:p-3 bg-white border-t border-slate-200 shadow-[0_-4px_15px_rgba(0,0,0,0.03)] z-20" x-show="selectedTopic || isLiveChat || liveChatStatus !== 'none'">
+        <div class="shrink-0 p-2 sm:p-3 bg-white border-t border-slate-200 shadow-[0_-4px_15px_rgba(0,0,0,0.03)] z-20">
             <form @submit.prevent="sendMessage()" class="relative flex items-center">
-                <input x-model="inputText" type="text" :placeholder="followUpMode ? 'Ketik Email / No WA Anda...' : 'Ketik pesan Anda...'" 
+                <input x-model="inputText" type="text" :placeholder="followUpMode ? 'Ketik Email / No WA Anda...' : 'Ketik pertanyaan Anda di sini...'" 
                        :disabled="isFinished || isTyping"
                        class="w-full bg-slate-100 text-slate-800 text-xs sm:text-sm px-3 py-2.5 sm:px-4 sm:py-3 pr-12 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all disabled:opacity-50 border border-transparent">
                 
@@ -119,7 +87,8 @@
             </div>
         </div>
 
-    </div> </div> ```
+    </div> 
+</div>
 
 <script>
 function chatbot() {
@@ -130,7 +99,7 @@ function chatbot() {
         isTyping: false,
         followUpMode: false,
         isFinished: false,
-        selectedTopic: null,
+        selectedTopic: 'Umum', // Set default topic agar selalu aktif
         lastUserMessage: '',
         leadId: null,
         
@@ -143,21 +112,6 @@ function chatbot() {
         liveChatStatus: 'none',
         liveAdminName: 'Admin',
         livePollInterval: null,
-
-        topics: @php
-            try {
-                $dbTopics = \App\Models\ChatbotKnowledge::select('topic')
-                            ->whereNotNull('topic')
-                            ->where('topic', '!=', '')
-                            ->where('topic', '!=', 'Umum')
-                            ->distinct()
-                            ->pluck('topic')
-                            ->toArray();
-                echo json_encode($dbTopics);
-            } catch (\Exception $e) {
-                echo json_encode(['Akun & Login', 'Paket & Pembayaran', 'Pembuatan AR & 3D', 'Kendala']);
-            }
-        @endphp,
 
         messages: [],
 
@@ -172,7 +126,7 @@ function chatbot() {
                 this.isOpen = data.isOpen || false;
                 this.unread = data.unread || 0;
                 this.messages = data.messages || [];
-                this.selectedTopic = data.selectedTopic || null;
+                this.selectedTopic = data.selectedTopic || 'Umum';
                 this.followUpMode = data.followUpMode || false;
                 this.isFinished = data.isFinished || false;
                 this.leadId = data.leadId || null;
@@ -207,7 +161,7 @@ function chatbot() {
             if(this.activityTimer) clearInterval(this.activityTimer);
             
             const checkTimeout = () => {
-                if (!this.selectedTopic || this.isFinished) return;
+                if (this.isFinished) return;
 
                 if (this.liveChatStatus === 'pending' || this.liveChatStatus === 'active') {
                     this.updateActivity(); 
@@ -282,12 +236,13 @@ function chatbot() {
         },
 
         sendWelcome() {
-            this.messages = [{ sender: 'bot', text: 'Halo 👋! Selamat datang di pusat bantuan ScanYuk. Agar lebih akurat, topik apa yang ingin Anda tanyakan hari ini?' }];
+            this.selectedTopic = 'Umum';
+            this.messages = [{ sender: 'bot', text: 'Halo 👋! Selamat datang di pusat bantuan ScanYuk. Ada yang bisa Mimin bantu hari ini?' }];
             this.saveState();
         },
 
         resetChat() {
-            this.selectedTopic = null;
+            this.selectedTopic = 'Umum';
             this.followUpMode = false;
             this.isFinished = false;
             this.inputText = '';
@@ -297,32 +252,6 @@ function chatbot() {
             this.showLiveChatBtn = false;
             this.updateActivity();
             this.sendWelcome();
-        },
-
-        reselectTopic() {
-            this.selectedTopic = null;
-            this.messages.push({ sender: 'bot', text: 'Topik apa lagi yang ingin Anda bahas?' });
-            this.updateActivity();
-            this.saveState();
-            this.scrollToBottom();
-        },
-
-        setTopic(topic) {
-            this.selectedTopic = topic;
-            this.messages.push({ sender: 'user', text: `Saya ingin bertanya seputar <b>${topic}</b>` });
-            this.updateActivity();
-            this.saveState();
-            
-            this.isTyping = true;
-            this.scrollToBottom();
-
-            setTimeout(() => {
-                this.isTyping = false;
-                this.messages.push({ sender: 'bot', text: `Baik, mari kita bahas tentang <b>${topic}</b>. Ada hal spesifik yang bisa Mimin jelaskan?` });
-                this.playNotification();
-                this.saveState();
-                this.scrollToBottom();
-            }, 800);
         },
 
         toggleChat() {
