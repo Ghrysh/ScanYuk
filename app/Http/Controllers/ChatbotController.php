@@ -16,6 +16,7 @@ class ChatbotController extends Controller
         $rawMessage = strtolower(trim($request->message));
         $originalMessage = trim($request->message);
 
+        // 1. DICTIONARY SLANG
         $slangDict = [
             'gmn' => 'bagaimana', 'gimana' => 'bagaimana', 'bgmn' => 'bagaimana', 'gmna' => 'bagaimana',
             'brp' => 'berapa', 'brapa' => 'berapa', 'brpa' => 'berapa', 'brap' => 'berapa', 'piro' => 'berapa',
@@ -36,6 +37,7 @@ class ChatbotController extends Controller
             'bda' => 'beda', 'bdanya' => 'beda', 'bedanya' => 'beda', 'perbedaan' => 'beda'
         ];
 
+        // 2. CLEANSING PESAN UNTUK PENCOCOKAN KEYWORD (Pesan asli tetap disimpan di $originalMessage)
         $cleanMessage = preg_replace('/[^\w\s]/', '', $rawMessage);
         $words = explode(' ', $cleanMessage);
         foreach($words as &$w) {
@@ -43,6 +45,7 @@ class ChatbotController extends Controller
         }
         $message = implode(' ', $words);
 
+        // 3. GET IP & IDENTIFIKASI LEAD
         $realIp = $request->ip();
         if ($request->hasHeader('X-Forwarded-For')) {
             $ips = explode(',', $request->header('X-Forwarded-For'));
@@ -54,6 +57,7 @@ class ChatbotController extends Controller
             $lead = ChatbotLead::find($request->lead_id);
         }
 
+        // Jika Sedang Live Chat
         if ($lead && in_array($lead->live_chat_status, ['pending', 'active']) && !$request->is_autoclose) {
             $history = json_decode($lead->chat_history, true) ?? [];
             $history[] = ['sender' => 'user', 'text' => $originalMessage, 'time' => now()->format('d M, H:i')];
@@ -86,26 +90,35 @@ class ChatbotController extends Controller
             ]);
         }
 
-        if (preg_match('/^(halo|hallo|hai|p|ping|pagi|siang|sore|malam|test|tes)$/i', $cleanMessage)) {
+        // =========================================================================
+        // 4. RULE-BASED FAST RESPONSE (Menangani Sapaan & Terima Kasih Tanpa AI)
+        // =========================================================================
+        
+        // Cek Sapaan (Lebih fleksibel, tidak harus persis 1 kata. Max 4 kata agar "Halo mimin pagi" tetap masuk)
+        if (preg_match('/\b(halo|hallo|hai|p|ping|pagi|siang|sore|malam|test|tes)\b/i', $cleanMessage) && str_word_count($cleanMessage) <= 4) {
             return response()->json([
-                'reply' => 'Halo Kak! 👋 Ada yang bisa Mimin bantu terkait ScanYuk?',
+                'reply' => 'Halo Kak! 👋 Mimin di sini. Ada yang bisa Mimin bantu terkait ScanYuk?',
                 'lead_id' => $lead->id,
                 'show_live_chat_btn' => false
             ]);
         }
 
-        $reply = "";
-        $showLiveChatBtn = false;
-        $ollamaUrl = env('OLLAMA_URL', 'http://ollama:11434/api/generate');
-
-        $chatHistoryArr = json_decode($lead->chat_history, true) ?? [];
-        $recentHistory = array_slice($chatHistoryArr, -4, 3); 
-        $historyContext = "";
-        foreach ($recentHistory as $h) {
-            $sender = $h['sender'] === 'user' ? 'User' : 'Mimin';
-            $historyContext .= "{$sender}: {$h['text']}\n";
+        // Cek Terima Kasih
+        if (preg_match('/\b(makasih|terima kasih|terimakasih|thanks|thx|thank you|oke|ok|sip|baik|baiklah)\b/i', $cleanMessage) && str_word_count($cleanMessage) <= 5) {
+            return response()->json([
+                'reply' => 'Sama-sama Kak! 😊 Apakah ada hal lain yang bisa Mimin bantu lagi?',
+                'lead_id' => $lead->id,
+                'show_live_chat_btn' => false
+            ]);
         }
-        if(empty($historyContext)) $historyContext = "(Belum ada obrolan sebelumnya)";
+
+        // =========================================================================
+        // 5. PENYIAPAN KONTEKS & KNOWLEDGE UNTUK AI
+        // =========================================================================
+
+        $showLiveChatBtn = false;
+        // PENTING: GANTI endpoint generate menjadi chat
+        $ollamaUrl = env('OLLAMA_URL', 'http://ollama:11434/api/chat');
 
         $dbPackages = PricingPackage::all();
         $dbPackageNames = $dbPackages->pluck('name')->toArray();
@@ -120,35 +133,19 @@ class ChatbotController extends Controller
             }
         }
 
-        // PENYUSUNAN PROMPT UNTUK AI BERDASARKAN TOPIK (DIPERKETAT)
+        // Siapkan System Prompt
+        $systemContent = "Kamu adalah Mimin, asisten virtual (Customer Service) dari ScanYuk yang ramah dan profesional. Selalu awali dengan sapaan 'Halo Kak'. Jawab dengan bahasa Indonesia yang santai tapi sopan. Jawablah secara singkat, maksimal 2 kalimat.\n\n";
+
         if ($isPricingTopic) {
             $dataPaketContext = "";
             foreach($dbPackages as $p) {
                 $features = is_array($p->features) ? implode(', ', $p->features) : (json_decode($p->features, true) ? implode(', ', json_decode($p->features, true)) : $p->features);
-                $dataPaketContext .= "Paket {$p->name} harganya Rp" . number_format($p->price, 0, ',', '.') . " dengan fitur: {$features}. ";
+                $dataPaketContext .= "- Paket {$p->name}: Harga Rp" . number_format($p->price, 0, ',', '.') . ", Fitur: {$features}.\n";
             }
-
-$prompt = <<<EOT
-[ROLE]
-Kamu Mimin, CS ScanYuk.
-
-[DATA PAKET]
-{$dataPaketContext}
-
-[CHAT HISTORY SEBELUMNYA]
-{$historyContext}
-
-[USER]
-{$originalMessage}
-
-[RULES]
-- Jawab HANYA berdasarkan DATA PAKET.
-- Dilarang keras menyebut kata "RULES", "DATA", atau menjelaskan proses berpikirmu.
-- Jangan bertanya balik kecuali diperlukan untuk klarifikasi (maksimal 1 pertanyaan).
-- Maksimal 2 kalimat. Gunakan sapaan "Halo Kak".
-- Output HANYA jawaban final.
-EOT;
+            $systemContent .= "Berikut adalah DATA PAKET HARGA yang valid:\n{$dataPaketContext}\nJawab pertanyaan user HANYA berdasarkan data di atas. Jangan mengarang harga. Jika user bertanya di luar paket, sarankan untuk klik tombol Live Chat CS.";
+        
         } else {
+            // Pencarian Knowledge Base
             $knowledges = ChatbotKnowledge::all();
             $bestMatch = null;
             $highestScore = 0;
@@ -177,85 +174,89 @@ EOT;
                 }
             }
 
-            if ($bestMatch) {
-                $prompt = <<<EOT
-[ROLE]
-Kamu Mimin, CS ScanYuk.
-
-[KNOWLEDGE]
-{$bestMatch->response}
-
-[CHAT HISTORY SEBELUMNYA]
-{$historyContext}
-
-[USER]
-{$originalMessage}
-
-[RULES]
-- Jawab HANYA berdasarkan KNOWLEDGE.
-- Jika ditanya CS/Live Chat, arahkan klik tombol "Live Chat CS" di atas kolom ketik.
-- Dilarang keras menyebut "RULES", "KNOWLEDGE", atau menjelaskan proses berpikirmu.
-- Dilarang bertanya balik dan dilarang membuat dialog tambahan.
-- Maksimal 2 kalimat. Gunakan sapaan "Halo Kak".
-- Output HANYA jawaban final.
-EOT;
+            // Jika ada Knowledge yang cocok (Threshold score > 0)
+            if ($bestMatch && $highestScore > 2) {
+                $systemContent .= "Berikut adalah INFORMASI (SOP) untuk menjawab pertanyaan user:\n" . $bestMatch->response . "\n\nJawab HANYA berdasarkan informasi di atas. Jika informasi kurang jelas, beritahu user untuk klik tombol Live Chat CS.";
             } else {
-                $prompt = <<<EOT
-[ROLE]
-Kamu adalah Mimin, CS ScanYuk.
-
-[USER]
-{$originalMessage}
-
-[TASK]
-Evaluasi pesan user. Berikan balasan sesuai dengan kategori pesan di bawah ini.
-
-[RULES]
-- Jawab maksimal 2 kalimat.
-- Gunakan sapaan "Halo Kak".
-- Jika user HANYA menyapa (contoh: halo, hai, p, ping, pagi), jawab: "Halo Kak! Ada yang bisa Mimin bantu?"
-- Jika ditanya CS/Live Chat, arahkan klik tombol "Live Chat CS" di atas kolom ketik.
-- Jika user bertanya identitas (apakah kamu AI/bot/manusia), jawab: "Halo Kak, saya Mimin, asisten virtual cerdas dari ScanYuk!"
-- Jika pertanyaan tidak jelas atau di luar aturan di atas, jawab: "Maaf Kak, Mimin belum paham pertanyaannya. Mau dibantu CS langsung?"
-- Output hanya jawaban final tanpa penjelasan.
-
-[FINAL ANSWER]
-EOT;
+                // Jika tidak paham / Knowledge tidak ada
+                $systemContent .= "Kamu TIDAK TAHU jawaban dari pertanyaan user karena tidak ada di database kamu. Tugasmu adalah meminta maaf dengan sopan, dan wajib mengarahkan user untuk menekan tombol 'Live Chat CS' agar bisa dibantu oleh agen manusia.";
                 $showLiveChatBtn = true;
             }
         }
 
+        // =========================================================================
+        // 6. BUILD CHAT MESSAGES ARRAY (Sangat krusial untuk mencegah AI error)
+        // =========================================================================
+        $chatMessages = [];
+        
+        // A. Masukkan System Prompt
+        $chatMessages[] = [
+            'role' => 'system',
+            'content' => $systemContent
+        ];
+
+        // B. Masukkan Chat History (Max 3 terakhir) agar AI paham konteks dialog
+        $chatHistoryArr = json_decode($lead->chat_history, true) ?? [];
+        $recentHistory = array_slice($chatHistoryArr, -3); 
+        foreach ($recentHistory as $h) {
+            $chatMessages[] = [
+                'role' => ($h['sender'] === 'user') ? 'user' : 'assistant',
+                'content' => $h['text']
+            ];
+        }
+
+        // C. Masukkan Pesan User Saat Ini
+        $chatMessages[] = [
+            'role' => 'user',
+            'content' => $originalMessage
+        ];
+
+        // =========================================================================
+        // 7. REQUEST KE OLLAMA AI
+        // =========================================================================
+        $reply = "";
         try {
             $llmResponse = Http::timeout(40)->post($ollamaUrl, [
                 'model' => 'gemma2:2b',
-                'prompt' => $prompt,
+                'messages' => $chatMessages, // Menggunakan messages array, BUKAN string prompt
                 'stream' => false,
                 'options' => [
-                    'temperature' => 0.1,
+                    'temperature' => 0.1, // Rendah = jawaban konsisten sesuai SOP
                     'top_p' => 0.8,
                     'repeat_penalty' => 1.2
                 ]
             ]);
 
             if ($llmResponse->successful()) {
-                $aiText = trim($llmResponse->json('response'));
-                $aiText = preg_replace('/^(aturan|rules|good example|bad example|final answer|task).*$/im', '', $aiText);
-                $aiText = preg_replace('/gunakan sapaan.*$/im', '', $aiText);
+                // Mengambil response dari format endpoint /api/chat
+                $aiText = trim($llmResponse->json('message.content'));
+                
+                // Cleanup text jika ada sisa-sisa prompt (jarang terjadi di api/chat)
+                $aiText = preg_replace('/^(aturan|rules|system|mimin:).*$/im', '', $aiText);
                 $aiText = trim($aiText);
                 if (!empty($aiText)) {
                     $reply = nl2br($aiText);
                 }
+            } else {
+                throw new \Exception("LLM Error");
             }
         } catch (\Exception $e) {
             if ($isPricingTopic) {
-                $reply = "AI Mimin sedang sibuk kak. Silakan cek detail paket langsung di menu 'Pricing' ya!";
+                $reply = "Halo Kak! AI Mimin sedang sibuk kak. Silakan cek detail paket langsung di menu 'Pricing' ya, atau hubungi Live Chat.";
             } else {
-                $reply = isset($bestMatch) ? $bestMatch->response : "Koneksi AI sedang sibuk. Ada yang bisa dibantu oleh CS kami?";
+                $reply = isset($bestMatch) ? "Halo Kak! " . $bestMatch->response : "Halo Kak, koneksi AI sedang sibuk. Ada yang bisa dibantu oleh Tim Live Chat kami?";
             }
+            $showLiveChatBtn = true;
         }
 
+        // Safety fallback
         if (empty($reply)) {
-            $reply = "Maaf kak, Mimin sedang kesulitan memproses jawaban saat ini. Ingin saya hubungkan dengan Tim CS / Admin (Live Chat)?";
+            $reply = "Maaf Kak, Mimin sedang kesulitan memproses jawaban saat ini. Ingin Mimin hubungkan dengan Tim CS / Admin (Live Chat)?";
+            $showLiveChatBtn = true;
+        }
+
+        // Jika di response AI terdeteksi AI menyerah, otomatis munculkan tombol
+        if (preg_match('/(live chat|agen manusia|cs|customer service|admin)/i', $reply)) {
             $showLiveChatBtn = true;
         }
 
@@ -264,42 +265,6 @@ EOT;
             'lead_id' => $lead->id,
             'show_live_chat_btn' => $showLiveChatBtn
         ]);
-    }
-
-    public function requestLiveChat(Request $request) {
-        $lead = null;
-        if ($request->lead_id) {
-            $lead = ChatbotLead::find($request->lead_id);
-        }
-
-        $autoMsg = ['sender' => 'bot', 'text' => 'Meneruskan permintaan ke tim Live Chat. Mohon tunggu sebentar...', 'time' => now()->format('d M, H:i')];
-
-        if (!$lead) {
-            $realIp = $request->ip();
-            if ($request->hasHeader('X-Forwarded-For')) {
-                $ips = explode(',', $request->header('X-Forwarded-For'));
-                $realIp = trim($ips[0]);
-            }
-
-            $lead = ChatbotLead::create([
-                'user_id' => auth()->id(),
-                'ip_address' => $realIp,
-                'topic_context' => 'Bantuan Live Chat (Langsung)',
-                'contact_info' => '-',
-                'chat_history' => json_encode([$autoMsg]),
-                'last_message' => 'Meminta terhubung ke Live Chat',
-                'live_chat_status' => 'pending'
-            ]);
-        } else {
-            $history = json_decode($lead->chat_history, true) ?? [];
-            $history[] = $autoMsg;
-            $lead->update([
-                'live_chat_status' => 'pending',
-                'chat_history' => json_encode($history)
-            ]);
-        }
-
-        return response()->json(['success' => true, 'lead_id' => $lead->id]);
     }
 
     public function pollLiveChat($leadId) {
