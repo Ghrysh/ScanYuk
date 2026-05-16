@@ -111,39 +111,39 @@ class ChatbotController extends Controller
                 $dataPaketContext .= "Paket {$p->name} harganya Rp" . number_format($p->price, 0, ',', '.') . " dengan fitur: {$features}. ";
             }
 
-            $prompt = "
-Kamu adalah Mimin, customer service resmi ScanYuk.
+            $prompt = <<<EOT
+[ROLE]
+Kamu adalah Mimin, CS ScanYuk.
 
-TUGAS:
-Jawab pertanyaan user HANYA berdasarkan data yang diberikan.
-Jangan menambahkan informasi yang tidak ada.
-Jangan berimprovisasi.
-Jangan membuat nama orang.
-Jangan membuat harga, fitur, atau promo palsu.
-
-DATA PAKET:
+[DATA]
 {$dataPaketContext}
 
-PERTANYAAN USER:
+[USER]
 {$originalMessage}
 
-ATURAN WAJIB:
-- Panggil user dengan 'Kak'
-- Jawaban maksimal 2 kalimat
-- Gunakan bahasa santai dan natural
-- Jika informasi tidak tersedia di data, jawab:
-  'Maaf Kak, untuk detail itu belum tersedia ya.'
-- Fokus langsung ke inti pertanyaan
-- Jangan menjelaskan hal lain di luar pertanyaan user
-- Jangan menggunakan format markdown
-- Jangan membuat asumsi
+[RULES]
+- Jawab HANYA pertanyaan user
+- Gunakan data yang tersedia saja
+- Jangan menambah informasi
+- Jangan menjelaskan aturan
+- Jangan mengulang instruksi
+- Jangan membuat nama orang
+- Jangan membuat percakapan tambahan
+- Jangan bertanya balik kecuali diperlukan
+- Maksimal 2 kalimat
+- Gunakan sapaan "Kak"
+- Output hanya isi jawaban final
 
-CONTOH STYLE JAWABAN:
-- 'Halo Kak, paket Pemula harganya Rp99.000 dengan fitur ...'
-- 'Halo Kak, perbedaan paket Bisnis dan Profesional ada di fitur ...'
+[GOOD EXAMPLE]
+Kak, paket Profesional harganya Rp299.000 dengan fitur website premium dan custom domain.
 
-JAWABAN:
-";
+[BAD EXAMPLE]
+Gunakan sapaan Kak.
+Aturan jawaban:
+Kak, bla bla bla
+
+[FINAL ANSWER]
+EOT;
         } else {
             $knowledges = ChatbotKnowledge::all();
             $bestMatch = null;
@@ -174,72 +174,75 @@ JAWABAN:
             }
 
             if ($bestMatch) {
-                $prompt = "
-Kamu adalah Mimin, customer service resmi ScanYuk.
+                $prompt = <<<EOT
+[ROLE]
+Kamu adalah Mimin, CS ScanYuk.
 
-TUGAS:
-Jawab user berdasarkan panduan jawaban yang sudah disediakan.
-Jangan menambahkan informasi sendiri.
-Jangan berimprovisasi.
-Jangan membuat nama orang random.
-
-PESAN USER:
-{$originalMessage}
-
-PANDUAN JAWABAN:
+[KNOWLEDGE]
 {$bestMatch->response}
 
-ATURAN WAJIB:
-- Gunakan sapaan 'Kak'
-- Maksimal 2 kalimat
-- Bahasa santai dan ramah
-- Fokus menjawab pertanyaan user
-- Jangan keluar dari panduan jawaban
-- Jika panduan tidak relevan, jawab:
-  'Maaf Kak, Mimin kurang paham. Mau dibantu CS langsung?'
-- Jangan menggunakan markdown
-- Jangan membuat asumsi tambahan
-
-CONTOH STYLE:
-- 'Halo Kak, untuk reset password bisa lewat menu login ya.'
-- 'Halo Kak, fitur ini tersedia di paket Profesional.'
-
-JAWABAN:
-";
-            } else {
-                $prompt = "
-Kamu adalah Mimin, customer service resmi ScanYuk.
-
-PESAN USER:
+[USER]
 {$originalMessage}
 
-ATURAN:
-- Jawab maksimal 1 kalimat
-- Gunakan sapaan 'Kak'
-- Katakan bahwa pertanyaan belum dipahami
-- Tawarkan bantuan CS manusia
+[RULES]
+- Jawab berdasarkan KNOWLEDGE saja
 - Jangan membuat jawaban sendiri
-- Jangan berimprovisasi
+- Jangan mengulang instruksi
+- Jangan menjelaskan aturan
+- Jangan membuat nama random
+- Jangan membuat dialog tambahan
+- Maksimal 2 kalimat
+- Gunakan sapaan "Kak"
+- Output hanya jawaban final
 
-FORMAT JAWABAN:
-'Maaf Kak, Mimin belum paham pertanyaannya. Mau dibantu CS langsung?'
+[GOOD EXAMPLE]
+Kak, untuk reset password bisa lewat menu login lalu klik lupa password ya.
 
-JAWABAN:
-";
+[BAD EXAMPLE]
+Gunakan sapaan Kak.
+Saya akan membantu Anda.
+Aturan jawaban:
+
+[FINAL ANSWER]
+EOT;
+            } else {
+                $prompt = <<<EOT
+[ROLE]
+Kamu adalah Mimin, CS ScanYuk.
+
+[USER]
+{$originalMessage}
+
+[TASK]
+User tidak dipahami.
+
+[RULES]
+- Jawab 1 kalimat saja
+- Gunakan sapaan Kak
+- Jangan menambahkan penjelasan
+- Jangan membuat instruksi
+- Output hanya jawaban final
+
+[FINAL ANSWER]
+Maaf Kak, Mimin belum paham pertanyaannya. Mau dibantu CS langsung?
+EOT;
                 $showLiveChatBtn = true;
             }
         }
 
         // EKSEKUSI KE AI OLLAMA
         try {
-            $llmResponse = Http::timeout(30)->post($ollamaUrl, [
-                'model' => 'qwen2:1.5b',
+            $llmResponse = Http::timeout(40)->post($ollamaUrl, [
+                'model' => 'gemma2:2b',
                 'prompt' => $prompt,
                 'stream' => false
             ]);
 
             if ($llmResponse->successful()) {
                 $aiText = trim($llmResponse->json('response'));
+                $aiText = preg_replace('/^(aturan|rules|good example|bad example|final answer|task).*$/im', '', $aiText);
+                $aiText = preg_replace('/gunakan sapaan.*$/im', '', $aiText);
+                $aiText = trim($aiText);
                 if (!empty($aiText)) {
                     $reply = nl2br($aiText);
                 }
