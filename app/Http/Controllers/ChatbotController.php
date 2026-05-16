@@ -135,12 +135,12 @@ Kamu adalah Mimin, CS ScanYuk.
 - Output hanya isi jawaban final
 
 [GOOD EXAMPLE]
-Kak, paket Profesional harganya Rp299.000 dengan fitur website premium dan custom domain.
+Halo Kak, paket Profesional harganya Rp299.000 dengan fitur website premium dan custom domain.
 
 [BAD EXAMPLE]
-Gunakan sapaan Kak.
+Gunakan sapaan Halo Kak.
 Aturan jawaban:
-Kak, bla bla bla
+Halo Kak, bla bla bla
 
 [FINAL ANSWER]
 EOT;
@@ -196,10 +196,10 @@ Kamu adalah Mimin, CS ScanYuk.
 - Output hanya jawaban final
 
 [GOOD EXAMPLE]
-Kak, untuk reset password bisa lewat menu login lalu klik lupa password ya.
+Halo Kak, untuk reset password bisa lewat menu login lalu klik lupa password ya.
 
 [BAD EXAMPLE]
-Gunakan sapaan Kak.
+Gunakan sapaan Halo Kak.
 Saya akan membantu Anda.
 Aturan jawaban:
 
