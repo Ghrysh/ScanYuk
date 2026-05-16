@@ -130,6 +130,7 @@ Kamu adalah Mimin, CS ScanYuk.
 - Jangan membuat nama orang
 - Jangan membuat percakapan tambahan
 - Jangan bertanya balik kecuali diperlukan
+- Jika ditanya cara menghubungi CS/Live Chat, arahkan user untuk klik tombol "Live Chat CS" di atas kolom ketik.
 - Maksimal 2 kalimat
 - Gunakan sapaan "Halo Kak"
 - Output hanya isi jawaban final
@@ -191,6 +192,7 @@ Kamu adalah Mimin, CS ScanYuk.
 - Jangan menjelaskan aturan
 - Jangan membuat nama random
 - Jangan membuat dialog tambahan
+- Jika ditanya cara menghubungi CS/Live Chat, arahkan user untuk klik tombol "Live Chat CS" di atas kolom ketik.
 - Maksimal 2 kalimat
 - Gunakan sapaan "Halo Kak"
 - Output hanya jawaban final
@@ -214,17 +216,16 @@ Kamu adalah Mimin, CS ScanYuk.
 {$originalMessage}
 
 [TASK]
-User tidak dipahami.
+Evaluasi pesan user. Jika bertanya cara menghubungi CS, beritahu caranya. Jika pertanyaan tidak jelas, tawarkan bantuan CS.
 
 [RULES]
-- Jawab 1 kalimat saja
+- Jawab maksimal 2 kalimat
 - Gunakan sapaan Halo Kak
-- Jangan menambahkan penjelasan
-- Jangan membuat instruksi
+- Jika ditanya CS/Live Chat, arahkan klik tombol "Live Chat CS" di atas kolom ketik.
+- Jika bukan bertanya CS, jawab: "Maaf Kak, Mimin belum paham. Mau dibantu CS langsung?"
 - Output hanya jawaban final
 
 [FINAL ANSWER]
-Maaf Kak, Mimin belum paham pertanyaannya. Mau dibantu CS langsung?
 EOT;
                 $showLiveChatBtn = true;
             }
