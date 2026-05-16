@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\ChatbotKnowledge;
 use App\Models\ChatbotLead;
 use App\Models\PricingPackage;
+use App\Models\ChatbotKnowledge;
 use Illuminate\Support\Facades\Http;
 
 class ChatbotController extends Controller
@@ -88,14 +88,14 @@ class ChatbotController extends Controller
 
         $reply = "";
         $showLiveChatBtn = false;
+        $ollamaUrl = env('OLLAMA_URL', 'http://ollama:11434/api/generate');
 
         $dbPackages = PricingPackage::all();
         $dbPackageNames = $dbPackages->pluck('name')->toArray();
-        $packageListString = implode(', ', $dbPackageNames);
-
+        
         $isPricingTopic = ($topic === 'Paket & Pembayaran');
         if (!$isPricingTopic) {
-            foreach (array_merge(['paket', 'harga', 'bayar', 'fitur', 'beda'], array_map('strtolower', $dbPackageNames)) as $keyword) {
+            foreach (array_merge(['paket', 'harga', 'bayar', 'fitur', 'beda', 'gratis', 'pemula', 'profesional', 'bisnis'], array_map('strtolower', $dbPackageNames)) as $keyword) {
                 if (str_contains($message, $keyword)) {
                     $isPricingTopic = true;
                     break;
@@ -103,95 +103,26 @@ class ChatbotController extends Controller
             }
         }
 
+        // PENYUSUNAN PROMPT UNTUK AI BERDASARKAN TOPIK
         if ($isPricingTopic) {
-            $prompt = "Analyze this Indonesian message: \"$message\". Return ONLY a valid JSON object without markdown. Keys must be 'intent' (values: check_price, check_features, compare, unknown) and 'package_name' (must be exactly one of: {$packageListString}, or null).";
-            $ollamaUrl = env('OLLAMA_URL', 'http://ollama:11434/api/generate');
-
-            try {
-                $llmResponse = Http::timeout(5)->post($ollamaUrl, [
-                    'model' => 'qwen2:1.5b', 'prompt' => $prompt, 'format' => 'json', 'stream' => false
-                ]);
-
-                $intent = 'unknown';
-                $pkgName = null;
-
-                if ($llmResponse->successful()) {
-                    $extracted = json_decode($llmResponse->json('response'), true);
-                    $intent = $extracted['intent'] ?? 'unknown';
-                    $pkgName = $extracted['package_name'] ?? null;
-                    if (strtolower((string)$pkgName) === 'unknown' || strtolower((string)$pkgName) === 'null') {
-                        $pkgName = null;
-                    }
-                }
-
-                if ($intent === 'compare' || str_contains($message, 'beda') || str_contains($message, 'semua')) {
-                    $reply = "Tentu! Berikut adalah perbandingan singkat paket kami:<br><br>";
-                    foreach($dbPackages as $p) {
-                        $features = is_array($p->features) ? implode(', ', $p->features) : (json_decode($p->features, true) ? implode(', ', json_decode($p->features, true)) : $p->features);
-                        $reply .= "📦 <b>Paket {$p->name} (Rp" . number_format($p->price, 0, ',', '.') . ")</b><br>Termasuk: $features.<br><br>";
-                    }
-                    $reply .= "Mana yang kira-kira paling pas untuk kebutuhan Anda saat ini?";
-                } else {
-                    $package = null;
-                    if ($pkgName) {
-                        $package = PricingPackage::where('name', 'ILIKE', $pkgName)->first();
-                    }
-                    
-                    if (!$package) {
-                        foreach ($dbPackages as $p) {
-                            if (str_contains($message, strtolower($p->name))) {
-                                $package = $p;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!$package) {
-                        $package = PricingPackage::whereRaw("? % name", [$message])
-                                    ->orWhereRaw("name ILIKE ?", ['%'.trim($message).'%'])
-                                    ->orderByRaw("similarity(name, ?) DESC", [$message])
-                                    ->first();
-                    }
-
-                    if ($package) {
-                        $features = is_array($package->features) ? implode(', ', $package->features) : (json_decode($package->features, true) ? implode(', ', json_decode($package->features, true)) : $package->features);
-                        if ($intent === 'check_features' || str_contains($message, 'dapat') || str_contains($message, 'fitur') || str_contains($message, 'isi')) {
-                            $reply = "Untuk <b>Paket {$package->name}</b>, fitur utama yang akan Anda dapatkan antara lain: {$features}. Harganya sendiri hanya Rp" . number_format($package->price, 0, ',', '.') . ". Apakah paket ini sesuai dengan kebutuhan Anda?";
-                        } else {
-                            $reply = "Harga <b>Paket {$package->name}</b> saat ini adalah Rp" . number_format($package->price, 0, ',', '.') . ". Paket ini sudah mencakup {$features}. Ingin lanjut mendaftar paket ini?";
-                        }
-                    } else {
-                        $reply = "Kami memiliki beberapa pilihan paket: ";
-                        $pkgNames = [];
-                        foreach($dbPackages as $p) {
-                            $pkgNames[] = "<b>" . $p->name . "</b> (Rp" . number_format($p->price, 0, ',', '.') . ")";
-                        }
-                        $reply .= implode(', ', $pkgNames) . ". Silakan sebutkan nama paket yang ingin Anda ketahui lebih detail spesifikasinya!";
-                    }
-                }
-            } catch (\Exception $e) {
-                $package = PricingPackage::whereRaw("? % name", [$message])
-                            ->orWhereRaw("name ILIKE ?", ['%'.trim($message).'%'])
-                            ->orderByRaw("similarity(name, ?) DESC", [$message])
-                            ->first();
-
-                if ($package) {
-                    $features = is_array($package->features) ? implode(', ', $package->features) : (json_decode($package->features, true) ? implode(', ', json_decode($package->features, true)) : $package->features);
-                    $reply = "Mimin bantu cek ya! Harga <b>Paket {$package->name}</b> adalah Rp" . number_format($package->price, 0, ',', '.') . ". Paket ini sudah mencakup: {$features}.";
-                } else {
-                    $reply = "Koneksi AI sedang sibuk. Untuk detail harga paket {$packageListString}, Anda bisa cek langsung di menu 'Pricing' ya!";
-                }
+            $dataPaketContext = "";
+            foreach($dbPackages as $p) {
+                $features = is_array($p->features) ? implode(', ', $p->features) : (json_decode($p->features, true) ? implode(', ', json_decode($p->features, true)) : $p->features);
+                $dataPaketContext .= "Paket {$p->name} harganya Rp" . number_format($p->price, 0, ',', '.') . " dengan fitur: {$features}. ";
             }
 
+            $prompt = "Kamu adalah 'Mimin', CS ScanYuk. User bertanya: \"{$originalMessage}\".
+            Ini adalah data paket resmi kami: {$dataPaketContext}
+            Tugasmu: Jawab dengan RAMAH dan LUWES menggunakan data resmi di atas. DILARANG mengarang angka atau fitur.";
         } else {
-            $knowledges = ChatbotKnowledge::whereIn('topic', [$topic, 'Umum'])->get();
+            // Pencarian data SOP dari tabel chatbot_knowledges
+            $knowledges = ChatbotKnowledge::all();
             $bestMatch = null;
             $highestScore = 0;
 
             foreach ($knowledges as $k) {
                 $keywords = json_decode($k->keywords, true);
                 $score = 0;
-
                 foreach ($keywords as $kw) {
                     $kw = strtolower(trim($kw));
                     if (str_contains($message, $kw)) {
@@ -207,19 +138,51 @@ class ChatbotController extends Controller
                         }
                     }
                 }
-
                 if ($score > $highestScore) {
                     $highestScore = $score;
                     $bestMatch = $k;
                 }
             }
 
-            if ($highestScore > 0) {
-                $reply = $bestMatch->response;
+            if ($bestMatch) {
+                // Jika ketemu panduannya, suruh AI merangkumnya jadi luwes
+                $prompt = "Kamu adalah 'Mimin', CS ScanYuk. User berkata: \"{$originalMessage}\".
+                Ini adalah panduan SOP kami terkait hal itu: \"{$bestMatch->response}\".
+                Tugasmu: Gunakan panduan SOP tersebut sebagai dasar jawabanmu. Ubah bahasanya menjadi sangat RAMAH, SANTAI, dan LUWES layaknya manusia yang sedang mengobrol. Jangan ubah inti informasi dari SOP tersebut.";
             } else {
-                $reply = "Maaf, Mimin kurang menangkap maksud Anda terkait topik <b>".$topic."</b> ini. Ingin saya hubungkan dengan Tim CS / Admin (Live Chat)?";
+                // Jika tidak ketemu di database, suruh AI menjawab sopan & mengarahkan ke CS
+                $prompt = "Kamu adalah 'Mimin', CS ScanYuk. User berkata: \"{$originalMessage}\".
+                Tugasmu: Karena ini di luar topik teknismu, balas dengan sangat ramah dan sopan bahwa kamu kurang paham, dan tawarkan untuk disambungkan ke tim CS Manusia (Live Chat).";
                 $showLiveChatBtn = true;
             }
+        }
+
+        // EKSEKUSI KE AI OLLAMA
+        try {
+            $llmResponse = Http::timeout(30)->post($ollamaUrl, [
+                'model' => 'qwen2:1.5b',
+                'prompt' => $prompt,
+                'stream' => false
+            ]);
+
+            if ($llmResponse->successful()) {
+                $aiText = trim($llmResponse->json('response'));
+                if (!empty($aiText)) {
+                    $reply = nl2br($aiText);
+                }
+            }
+        } catch (\Exception $e) {
+            // Fallback Murni Jika AI Mati/Timeout
+            if ($isPricingTopic) {
+                $reply = "AI Mimin sedang sibuk kak. Silakan cek detail paket langsung di menu 'Pricing' ya!";
+            } else {
+                $reply = isset($bestMatch) ? $bestMatch->response : "Koneksi AI sedang sibuk. Ada yang bisa dibantu oleh CS kami?";
+            }
+        }
+
+        if (empty($reply)) {
+            $reply = "Maaf kak, Mimin sedang kesulitan memproses jawaban saat ini. Ingin saya hubungkan dengan Tim CS / Admin (Live Chat)?";
+            $showLiveChatBtn = true;
         }
 
         return response()->json([
