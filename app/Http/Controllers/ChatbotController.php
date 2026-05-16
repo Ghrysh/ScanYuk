@@ -86,9 +86,26 @@ class ChatbotController extends Controller
             ]);
         }
 
+        if (preg_match('/^(halo|hallo|hai|p|ping|pagi|siang|sore|malam|test|tes)$/i', $cleanMessage)) {
+            return response()->json([
+                'reply' => 'Halo Kak! 👋 Ada yang bisa Mimin bantu terkait ScanYuk?',
+                'lead_id' => $lead->id,
+                'show_live_chat_btn' => false
+            ]);
+        }
+
         $reply = "";
         $showLiveChatBtn = false;
         $ollamaUrl = env('OLLAMA_URL', 'http://ollama:11434/api/generate');
+
+        $chatHistoryArr = json_decode($lead->chat_history, true) ?? [];
+        $recentHistory = array_slice($chatHistoryArr, -4, 3); 
+        $historyContext = "";
+        foreach ($recentHistory as $h) {
+            $sender = $h['sender'] === 'user' ? 'User' : 'Mimin';
+            $historyContext .= "{$sender}: {$h['text']}\n";
+        }
+        if(empty($historyContext)) $historyContext = "(Belum ada obrolan sebelumnya)";
 
         $dbPackages = PricingPackage::all();
         $dbPackageNames = $dbPackages->pluck('name')->toArray();
@@ -111,39 +128,25 @@ class ChatbotController extends Controller
                 $dataPaketContext .= "Paket {$p->name} harganya Rp" . number_format($p->price, 0, ',', '.') . " dengan fitur: {$features}. ";
             }
 
-            $prompt = <<<EOT
+$prompt = <<<EOT
 [ROLE]
-Kamu adalah Mimin, CS ScanYuk.
+Kamu Mimin, CS ScanYuk.
 
-[DATA]
+[DATA PAKET]
 {$dataPaketContext}
+
+[CHAT HISTORY SEBELUMNYA]
+{$historyContext}
 
 [USER]
 {$originalMessage}
 
 [RULES]
-- Jawab HANYA pertanyaan user
-- Gunakan data yang tersedia saja
-- Jangan menambah informasi
-- Jangan menjelaskan aturan
-- Jangan mengulang instruksi
-- Jangan membuat nama orang
-- Jangan membuat percakapan tambahan
-- Jangan bertanya balik kecuali diperlukan
-- Jika ditanya cara menghubungi CS/Live Chat, arahkan user untuk klik tombol "Live Chat CS" di atas kolom ketik.
-- Maksimal 2 kalimat
-- Gunakan sapaan "Halo Kak"
-- Output hanya isi jawaban final
-
-[GOOD EXAMPLE]
-Halo Kak, paket Profesional harganya Rp299.000 dengan fitur website premium dan custom domain.
-
-[BAD EXAMPLE]
-Gunakan sapaan Halo Kak.
-Aturan jawaban:
-Halo Kak, bla bla bla
-
-[FINAL ANSWER]
+- Jawab HANYA berdasarkan DATA PAKET.
+- Dilarang keras menyebut kata "RULES", "DATA", atau menjelaskan proses berpikirmu.
+- Jangan bertanya balik kecuali diperlukan untuk klarifikasi (maksimal 1 pertanyaan).
+- Maksimal 2 kalimat. Gunakan sapaan "Halo Kak".
+- Output HANYA jawaban final.
 EOT;
         } else {
             $knowledges = ChatbotKnowledge::all();
@@ -177,37 +180,24 @@ EOT;
             if ($bestMatch) {
                 $prompt = <<<EOT
 [ROLE]
-Kamu adalah Mimin, CS ScanYuk.
+Kamu Mimin, CS ScanYuk.
 
 [KNOWLEDGE]
 {$bestMatch->response}
+
+[CHAT HISTORY SEBELUMNYA]
+{$historyContext}
 
 [USER]
 {$originalMessage}
 
 [RULES]
-- Jawab berdasarkan KNOWLEDGE saja
-- Jangan membuat jawaban sendiri
-- Jangan mengulang instruksi
-- Jangan menjelaskan aturan
-- Jangan membuat nama random
-- Jangan membuat dialog tambahan
-- Jika user HANYA menyapa (halo, hai, pagi, siang), abaikan KNOWLEDGE dan jawab: "Halo Kak! Ada yang bisa Mimin bantu?"
-- Jika ditanya cara menghubungi CS/Live Chat, arahkan user untuk klik tombol "Live Chat CS" di atas kolom ketik.
-- Jika user bertanya apakah kamu AI/bot/manusia, abaikan KNOWLEDGE dan jawab: "Halo Kak, saya Mimin, asisten virtual dari ScanYuk!"
-- Maksimal 2 kalimat
-- Gunakan sapaan "Halo Kak"
-- Output hanya jawaban final
-
-[GOOD EXAMPLE]
-Halo Kak, untuk reset password bisa lewat menu login lalu klik lupa password ya.
-
-[BAD EXAMPLE]
-Gunakan sapaan Halo Kak.
-Saya akan membantu Anda.
-Aturan jawaban:
-
-[FINAL ANSWER]
+- Jawab HANYA berdasarkan KNOWLEDGE.
+- Jika ditanya CS/Live Chat, arahkan klik tombol "Live Chat CS" di atas kolom ketik.
+- Dilarang keras menyebut "RULES", "KNOWLEDGE", atau menjelaskan proses berpikirmu.
+- Dilarang bertanya balik dan dilarang membuat dialog tambahan.
+- Maksimal 2 kalimat. Gunakan sapaan "Halo Kak".
+- Output HANYA jawaban final.
 EOT;
             } else {
                 $prompt = <<<EOT
@@ -235,12 +225,16 @@ EOT;
             }
         }
 
-        // EKSEKUSI KE AI OLLAMA
         try {
             $llmResponse = Http::timeout(40)->post($ollamaUrl, [
                 'model' => 'gemma2:2b',
                 'prompt' => $prompt,
-                'stream' => false
+                'stream' => false,
+                'options' => [
+                    'temperature' => 0.1,
+                    'top_p' => 0.8,
+                    'repeat_penalty' => 1.2
+                ]
             ]);
 
             if ($llmResponse->successful()) {
