@@ -251,7 +251,7 @@ class ArProjectController extends Controller
         $orbitDir    = (int)   ($config['orbit_dir']    ?? 1);
         $animClip    = $config['anim_clip'] ?? '*';
 
-        return view('user.ar-viewer', compact(
+        return view('dashboard.ar-viewer', compact(
             'project', 'mindUrl', 'modelUrl', 'config',
             'scale', 'position', 'rotation', 'isTemplate', 'placeholders',
             'orbitActive', 'orbitSpeed', 'orbitRadius', 'orbitDir', 'animClip'
