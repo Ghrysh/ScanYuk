@@ -214,7 +214,15 @@ class QrCodeController extends Controller
     {
         if ($qrCode->user_id !== Auth::id()) abort(403);
         
-        $apiUrl = url('/scan-ar?id=' . $qrCode->uuid);
+        // ─── PERBAIKAN: LOGIKA URL BERDASARKAN TIPE AR ───
+        if ($qrCode->ar_type === 'marker') {
+            // Jika tipe marker, arahkan langsung ke halaman viewer marker project tersebut
+            $apiUrl = route('ar.view', ['project' => $qrCode->ar_project_id]);
+        } else {
+            // Jika tipe biasa (2D/3D/AI), arahkan ke scanner universal bawaan
+            $apiUrl = url('/scan-ar?id=' . $qrCode->uuid);
+        }
+        
         $type = $request->query('type', 'svg');
 
         if ($type === 'png') {
