@@ -835,43 +835,43 @@
     }, { passive: false });
 
     const modelAsset = document.getElementById('ar-model');
+    
     const gltfEntity = document.querySelector('a-gltf-model');
     const modelUrl = {!! json_encode($modelUrl ?? '') !!};
 
     document.addEventListener('DOMContentLoaded', async () => {
         if (!modelUrl) return;
 
-        // CEK APAKAH FILE DARI MINIO
         const isMinio = modelUrl.includes('minio');
 
         if (isMinio) {
-            // LOGIKA KHUSUS MINIO (Untuk bypass CORS)
+            // LOGIKA MINIO
             try {
-                console.log("Memuat file via MinIO Proxy (Blob)...");
+                console.log("Memuat file MinIO via Blob...");
                 const response = await fetch(modelUrl);
                 if (!response.ok) throw new Error('Status: ' + response.status);
                 
                 const blob = await response.blob();
                 const blobUrl = URL.createObjectURL(blob);
                 
-                modelAsset.setAttribute('src', blobUrl);
-                if (gltfEntity) gltfEntity.setAttribute('src', blobUrl);
-                console.log("Model MinIO berhasil dimuat ✓");
+                // PENTING: Jangan pakai ID asset, tapi langsung set src ke entitas GLTF
+                // Ini memaksa A-Frame untuk mengabaikan a-assets dan memproses Blob langsung
+                gltfEntity.setAttribute('src', blobUrl);
+                
+                console.log("Model MinIO berhasil disuntikkan ke scene ✓");
             } catch (error) {
                 console.error("Gagal memuat MinIO:", error);
                 alert("Gagal memuat model 3D MinIO.");
             }
         } else {
-            // LOGIKA STANDAR (Untuk file lokal /storage/models/...)
-            // Langsung set src tanpa fetch, ini cara paling lancar
-            console.log("Memuat file lokal via A-Frame...");
-            modelAsset.setAttribute('src', modelUrl);
-            if (gltfEntity) gltfEntity.setAttribute('src', modelUrl);
-            console.log("Model lokal berhasil dimuat ✓");
+            // LOGIKA LOKAL (JANGAN DIUBAH)
+            // Biarkan menggunakan #ar-model karena file lokal sudah terdaftar di a-assets
+            console.log("Memuat file lokal...");
+            gltfEntity.setAttribute('src', '#ar-model'); 
         }
     });
 
-    // Perbaikan typo kecil di kode Anda (tosuchmove -> touchmove)
+    // Prevent pinch zoom
     document.addEventListener('touchmove', e => {
         if (e.touches.length > 1) e.preventDefault();
     }, { passive: false });
