@@ -834,27 +834,35 @@
         if (e.touches.length > 1) e.preventDefault();
     }, { passive: false });
 
-    <script>
+    // 1. GUNAKAN @json() AGAR AMAN
+    const modelUrl = @json($modelUrl ?? ''); 
+
     document.addEventListener('DOMContentLoaded', async () => {
-        const modelUrl = "{{ $modelUrl }}"; // URL dari MinIO Anda
         const modelAsset = document.getElementById('ar-model');
+        
+        if (!modelUrl) {
+            console.error("URL Model Kosong!");
+            return;
+        }
 
         try {
-            console.log("Fetching model from MinIO...");
+            console.log("Mencoba memuat dari:", modelUrl);
             const response = await fetch(modelUrl);
-            if (!response.ok) throw new Error('Gagal mendownload model');
             
-            // Ubah menjadi Blob (Objek lokal)
+            // Jika response bukan 200 (OK), fetch akan tetap sukses tapi datanya halaman error
+            if (!response.ok) {
+                throw new Error('Server merespon dengan status: ' + response.status);
+            }
+            
             const blob = await response.blob();
             const blobUrl = URL.createObjectURL(blob);
             
-            // Masukkan ke a-asset-item
             modelAsset.setAttribute('src', blobUrl);
-            
             console.log("Model berhasil dimuat via Blob URL ✓");
         } catch (error) {
             console.error("Gagal memuat model:", error);
-            alert("Gagal memuat model 3D: " + error.message);
+            // Tambahkan alert agar Anda tahu persis apa yang error di HP
+            alert("Gagal memuat model 3D. Periksa Console!");
         }
     });
     </script>
