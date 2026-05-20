@@ -602,8 +602,7 @@
 
                 <a-entity
                     id="model-container"
-                    gltf-model="" 
-                    visible="false"
+                    gltf-model="#ar-model"
                     @if($orbitActive)
                     position="{{ floatval($orbitRadius) }} 0 0"
                     @else
@@ -836,61 +835,46 @@
     }, { passive: false });
 
     const modelAsset = document.getElementById('ar-model');
-    
-    const gltfEntity = document.getElementById('model-container');
+    const gltfEntity = document.querySelector('a-gltf-model');
     const modelUrl = {!! json_encode($modelUrl ?? '') !!};
-    
-    // Fungsi untuk me-refresh animation-mixer
-    function _restartMixer() {
-        if (!gltfEntity) return;
-        gltfEntity.removeAttribute('animation-mixer');
-        requestAnimationFrame(() => {
-            gltfEntity.setAttribute('animation-mixer', 
-                `clip: ${AR.animClip || '*'}; loop: repeat; crossFadeDuration: 0.3`
-            );
-        });
-    }
 
     document.addEventListener('DOMContentLoaded', async () => {
         if (!modelUrl) return;
 
+        // CEK APAKAH FILE DARI MINIO
         const isMinio = modelUrl.includes('minio');
 
         if (isMinio) {
+            // LOGIKA KHUSUS MINIO (Untuk bypass CORS)
             try {
-                console.log("Memuat file MinIO via Blob...");
+                console.log("Memuat file via MinIO Proxy (Blob)...");
                 const response = await fetch(modelUrl);
                 if (!response.ok) throw new Error('Status: ' + response.status);
                 
                 const blob = await response.blob();
                 const blobUrl = URL.createObjectURL(blob);
                 
-                // Set atribut gltf-model langsung ke URL Blob
-                gltfEntity.setAttribute('gltf-model', blobUrl);
-                gltfEntity.setAttribute('visible', 'true');
-                
-                console.log("Model MinIO berhasil di-inject ✓");
-                _restartMixer(); // Panggil mixer setelah model muncul
+                modelAsset.setAttribute('src', blobUrl);
+                if (gltfEntity) gltfEntity.setAttribute('src', blobUrl);
+                console.log("Model MinIO berhasil dimuat ✓");
             } catch (error) {
                 console.error("Gagal memuat MinIO:", error);
                 alert("Gagal memuat model 3D MinIO.");
             }
         } else {
-            console.log("Memuat file lokal...");
-            // Set ke ID asset untuk lokal agar tetap pakai pre-loading
-            gltfEntity.setAttribute('gltf-model', '#ar-model');
-            gltfEntity.setAttribute('visible', 'true');
-            _restartMixer();
+            // LOGIKA STANDAR (Untuk file lokal /storage/models/...)
+            // Langsung set src tanpa fetch, ini cara paling lancar
+            console.log("Memuat file lokal via A-Frame...");
+            modelAsset.setAttribute('src', modelUrl);
+            if (gltfEntity) gltfEntity.setAttribute('src', modelUrl);
+            console.log("Model lokal berhasil dimuat ✓");
         }
     });
 
-    // Event listener untuk memastikan model muncul saat target found
-    const targetEl = document.querySelector('[mindar-image-target]');
-    targetEl.addEventListener('targetFound', () => {
-        if (gltfEntity) {
-            gltfEntity.setAttribute('visible', 'true');
-            _restartMixer();
-        }
-    });
+    // Perbaikan typo kecil di kode Anda (tosuchmove -> touchmove)
+    document.addEventListener('touchmove', e => {
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+    </script>
 </body>
 </html>
