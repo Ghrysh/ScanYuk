@@ -63,11 +63,19 @@ class ArProject extends Model
      */
     public function getModelUrlAttribute(): string
     {
-        if ($this->type === 'template' && $this->template) {
-            // ArAsset menggunakan 'file_path', bukan 'model_path'
-            return Storage::url($this->template->file_path);
+        $path = ($this->type === 'template' && $this->template) 
+                ? $this->template->file_path 
+                : $this->model_path;
+
+        if (empty($path)) return '';
+
+        // JIKA PATH ADALAH URL LENGKAP (MinIO Proxy / External Link), return langsung
+        if (str_starts_with($path, 'http')) {
+            return $path;
         }
-        return $this->model_path ? Storage::url($this->model_path) : '';
+
+        // JIKA PATH ADALAH FILE LOKAL, tambahkan /storage/
+        return Storage::url($path);
     }
 
     /**

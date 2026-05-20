@@ -84,7 +84,7 @@ Route::get('/case-studies', function () {
     return view('case-studies');
 })->name('case-studies');
 
-Route::get('/ar/view/{project}', [\App\Http\Controllers\ArProjectController::class, 'show'])->name('ar.show');
+Route::get('/ar/view/{project}', [App\Http\Controllers\ArProjectController::class, 'view'])->name('ar.view');
 
 Route::get('/api/scan/{uuid}', [ScanController::class, 'scanQr']);
 
@@ -158,7 +158,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/api/blend-status/{id}', [\App\Http\Controllers\ArProjectController::class, 'checkBlendStatus']);
 
         Route::get('/dashboard/ar/result/{project}', [App\Http\Controllers\ArProjectController::class, 'result'])->name('ar.result');
-        Route::get('/ar/view/{project}', [App\Http\Controllers\ArProjectController::class, 'view'])->name('ar.view');
 
         Route::delete('/markers/{marker}', [\App\Http\Controllers\MarkerController::class, 'destroy'])->name('marker.destroy')->middleware('auth');
     });
