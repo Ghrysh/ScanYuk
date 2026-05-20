@@ -141,7 +141,7 @@ class ArProjectController extends Controller
                 'model' => ['required', 'file', 'mimes:glb,gltf', 'max:102400'], // 100MB
             ]);
             $modelPath = $request->file('model')->store('models', 'public');
-            $data['model_path'] = 'public/' . $modelPath;
+            $data['model_path'] = $modelPath;
             $project = ArProject::create($data);
 
         } elseif ($request->type === 'blend') {
