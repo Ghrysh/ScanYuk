@@ -168,7 +168,15 @@ class UserDashboardController extends Controller
         $scriptPath = $scriptDir . '/remove_bg.py';
         $hfHome = storage_path('app/public/ai_models');
 
-        $command = "export U2NET_HOME=" . escapeshellarg($hfHome) . " && export HF_HOME=" . escapeshellarg($hfHome) . " && cd " . escapeshellarg($scriptDir) . " && python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " 2>&1";
+        $command = "export U2NET_HOME=" . escapeshellarg($hfHome) . 
+                   " && export HF_HOME=" . escapeshellarg($hfHome) . 
+                   " && export NUMBA_CACHE_DIR=/tmp " .
+                   " && export MPLCONFIGDIR=/tmp " .
+                   " && export XDG_CACHE_HOME=/tmp " .
+                   " && cd " . escapeshellarg($scriptDir) . 
+                   " && python3 " . escapeshellarg($scriptPath) . 
+                   " " . escapeshellarg($fullInputPath) . 
+                   " " . escapeshellarg($fullOutputPath) . " 2>&1";
         
         exec($command, $output, $return_var);
 
