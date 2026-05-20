@@ -269,10 +269,13 @@
                 // Coba baca target entity index
                 const targetEl  = this.el.closest('[mindar-image-target]')
                                || this.el.parentEl;
-                const targetIdx = parseInt(
-                    targetEl?.getAttribute('mindar-image-target')
-                        ?.match(/targetIndex:\s*(\d+)/)?.[1] ?? '0'
-                );
+                let targetIdx = 0;
+                const mindData = targetEl?.getAttribute('mindar-image-target');
+                if (typeof mindData === 'string') {
+                    targetIdx = parseInt(mindData.match(/targetIndex:\s*(\d+)/)?.[1] ?? '0');
+                } else if (mindData && mindData.targetIndex !== undefined) {
+                    targetIdx = parseInt(mindData.targetIndex);
+                }
 
                 const imgTarget = ctrl?.imageTargets?.[targetIdx];
                 if (imgTarget?.dimensions) {
@@ -797,21 +800,26 @@
 
     // ── LOGIKA PEMUATAN FILE (LOKAL / MINIO) ──────────────────────────────────
     const modelUrlData = {!! json_encode($modelUrl ?? '') !!};
+    let retryCount = 0;
 
-    // Eksekusi langsung tanpa menunggu DOMContentLoaded (Menghindari Bug Livewire/Turbolinks)
-    (async () => {
-        if (!modelUrlData) return;
+    function processModel() {
+        if (!modelUrlData) {
+            modelLoaded = true;
+            return;
+        }
 
         const modelEl = document.getElementById('model-container');
         
-        // Jika URL model ada, tapi elemen HTML tidak dirender oleh sistem
+        // Jika elemen belum dirender oleh browser / A-Frame, tunggu 200ms dan coba lagi.
         if (!modelEl) {
-            console.warn("-> Model container tidak ditemukan. Memaksa kamera muncul.");
-            modelLoaded = true;
-            if (arReady) {
-                hideLoading();
-                scanningEl.classList.add('visible');
+            retryCount++;
+            if (retryCount > 15) { // Batal mencari jika sudah ditunggu 3 detik
+                console.warn("-> Batal memuat model: Elemen 'model-container' tidak ditemukan di HTML.");
+                modelLoaded = true; 
+                if (arReady) { hideLoading(); scanningEl.classList.add('visible'); }
+                return;
             }
+            setTimeout(processModel, 200);
             return;
         }
 
@@ -819,54 +827,46 @@
         const isMinio = modelUrlData.toLowerCase().includes('minio');
 
         if (isMinio) {
-            try {
-                console.log("-> File terdeteksi dari MinIO. Memulai fetch Blob...");
-                const response = await fetch(modelUrlData);
-                if (!response.ok) throw new Error('HTTP ' + response.status);
-                
-                const blob = await response.blob();
-                console.log("-> Blob diterima, ukuran:", blob.size, "bytes");
+            console.log("-> File dari MinIO. Memulai proses fetch Blob...");
+            fetch(modelUrlData)
+                .then(res => {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.blob();
+                })
+                .then(blob => {
+                    console.log("-> Blob diterima, ukuran:", blob.size, "bytes");
+                    const blobUrl = URL.createObjectURL(blob);
+                    modelEl.setAttribute('gltf-model', blobUrl);
+                    console.log("-> Atribut gltf-model berhasil dipasang ✓");
 
-                const blobUrl = URL.createObjectURL(blob);
-                
-                // Inject model ke komponen
-                modelEl.setAttribute('gltf-model', blobUrl);
-                console.log("-> Atribut gltf-model berhasil dipasang dengan URL Blob ✓");
-
-                // FALLBACK: Jika A-Frame nge-bug dan tidak memancarkan event 'model-loaded'
-                // Paksa loading screen tertutup dalam 2.5 detik agar kamera tetap bisa digunakan
-                setTimeout(() => {
-                    if (!modelLoaded) {
-                        console.warn("-> FALLBACK UI: Memaksa kamera muncul karena A-Frame lambat.");
-                        modelLoaded = true;
-                        if (arReady) {
-                            hideLoading();
-                            scanningEl.classList.add('visible');
+                    setTimeout(() => {
+                        if (!modelLoaded) {
+                            console.warn("-> FALLBACK UI: Memaksa kamera muncul.");
+                            modelLoaded = true;
+                            if (arReady) { hideLoading(); scanningEl.classList.add('visible'); }
                         }
-                    }
-                }, 2500);
-
-            } catch (error) {
-                console.error("Gagal memuat MinIO:", error);
-                showError('Gagal Memuat Model', 'File 3D MinIO gagal diunduh.');
-            }
+                    }, 2500);
+                })
+                .catch(err => {
+                    console.error("Gagal memuat MinIO:", err);
+                    showError('Gagal Memuat Model', 'File 3D MinIO gagal diunduh.');
+                });
         } else {
             console.log("-> File lokal terdeteksi. Memuat via URL standar...");
             modelEl.setAttribute('gltf-model', modelUrlData);
             
-            // Fallback juga untuk lokal
             setTimeout(() => {
                 if (!modelLoaded) {
                     console.warn("-> FALLBACK UI (Lokal): Memaksa kamera muncul.");
                     modelLoaded = true;
-                    if (arReady) {
-                        hideLoading();
-                        scanningEl.classList.add('visible');
-                    }
+                    if (arReady) { hideLoading(); scanningEl.classList.add('visible'); }
                 }
             }, 2500);
         }
-    })();
+    }
+
+    // Jalankan pemuatan (Polling otomatis berjalan)
+    processModel();
     </script>
 </body>
 </html>
