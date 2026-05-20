@@ -22,6 +22,8 @@ RUN apt-get update && apt-get install -y \
     libxcursor-dev \
     libxinerama-dev \
     libxi-dev \
+    libgl1 \
+    libglib2.0-0 \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Set Environment agar CMake tidak rewel soal versi
@@ -31,7 +33,7 @@ ENV CMAKE_POLICY_VERSION_MINIMUM=3.5
 RUN docker-php-ext-install pdo_pgsql mbstring exif pcntl bcmath gd
 
 # Instal Torch Versi CPU (Wajib!)
-RUN pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cpu --break-system-packages
+RUN pip3 install torch torchvision opencv-python-headless --index-url https://download.pytorch.org/whl/cpu --break-system-packages
 
 # Copy requirements
 COPY TripoSR/requirements.txt /tmp/requirements.txt

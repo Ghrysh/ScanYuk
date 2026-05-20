@@ -64,7 +64,14 @@ class UserDashboardController extends Controller
         $hfHome = storage_path('app/public/ai_models');
         if (!file_exists($hfHome)) mkdir($hfHome, 0777, true);
 
-        $command = "export U2NET_HOME=" . escapeshellarg($hfHome) . " && export HF_HOME=" . escapeshellarg($hfHome) . " && cd " . escapeshellarg($scriptDir) . " && nohup python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " > " . escapeshellarg($logPath) . " 2>&1 &";
+        // Kodingan yang benar (dengan Fix Cache):
+        $command = "export U2NET_HOME=" . escapeshellarg($hfHome) . 
+                   " && export HF_HOME=" . escapeshellarg($hfHome) . 
+                   " && export NUMBA_CACHE_DIR=/tmp" . 
+                   " && export MPLCONFIGDIR=/tmp" . 
+                   " && export XDG_CACHE_HOME=/tmp" . 
+                   " && cd " . escapeshellarg($scriptDir) . 
+                   " && nohup python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " > " . escapeshellarg($logPath) . " 2>&1 &";
         
         exec($command);
 
