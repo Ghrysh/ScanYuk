@@ -145,6 +145,15 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard/marker/result/{project}', [\App\Http\Controllers\ArProjectController::class, 'result'])->name('user.marker.result');
 
         Route::delete('/dashboard/marker/{project}', [\App\Http\Controllers\ArProjectController::class, 'destroy'])->name('user.marker.destroy');
+
+        Route::get('/api/markers', [\App\Http\Controllers\MarkerController::class, 'index']);
+        Route::post('/api/markers', [\App\Http\Controllers\MarkerController::class, 'store']);
+        Route::get('/api/marker/{id}', [\App\Http\Controllers\MarkerController::class, 'status']); 
+        
+        Route::get('/api/templates', [\App\Http\Controllers\TemplateController::class, 'index']);
+        
+        Route::post('/api/blend-upload', [\App\Http\Controllers\ArProjectController::class, 'uploadBlend']);
+        Route::get('/api/blend-status/{id}', [\App\Http\Controllers\ArProjectController::class, 'checkBlendStatus']);
     });
 
     Route::post('/checkout', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
