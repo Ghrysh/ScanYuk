@@ -548,7 +548,7 @@
 
         <a-assets timeout="600000">
             @if($modelUrl)
-            <a-asset-item id="ar-model" src="{{ $modelUrl }}"></a-asset-item>
+            <a-asset-item id="ar-model" src=""></a-asset-item>
             @endif
         </a-assets>
 
@@ -833,6 +833,30 @@
     document.addEventListener('tosuchmove', e => {
         if (e.touches.length > 1) e.preventDefault();
     }, { passive: false });
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const modelUrl = "{{ $modelUrl }}"; // URL dari MinIO Anda
+        const modelAsset = document.getElementById('ar-model');
+
+        try {
+            console.log("Fetching model from MinIO...");
+            const response = await fetch(modelUrl);
+            if (!response.ok) throw new Error('Gagal mendownload model');
+            
+            // Ubah menjadi Blob (Objek lokal)
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // Masukkan ke a-asset-item
+            modelAsset.setAttribute('src', blobUrl);
+            
+            console.log("Model berhasil dimuat via Blob URL ✓");
+        } catch (error) {
+            console.error("Gagal memuat model:", error);
+            alert("Gagal memuat model 3D: " + error.message);
+        }
+    });
     </script>
 </body>
 </html>
