@@ -836,9 +836,12 @@
 
     // 1. Ambil URL dari atribut data yang kita pasang di HTML tadi
     const modelAsset = document.getElementById('ar-model');
-    const modelUrl = modelAsset.getAttribute('data-url');
+    const gltfEntity = document.querySelector('a-gltf-model'); // Pastikan Anda punya <a-gltf-model src="#ar-model">
 
     document.addEventListener('DOMContentLoaded', async () => {
+        // Ambil URL dari atribut yang tadi kita pasang
+        const modelUrl = modelAsset.getAttribute('data-url');
+        
         if (!modelUrl) {
             console.error("URL Model Kosong!");
             return;
@@ -847,19 +850,23 @@
         try {
             console.log("Mencoba memuat dari:", modelUrl);
             const response = await fetch(modelUrl);
-            
-            if (!response.ok) {
-                throw new Error('Server merespon dengan status: ' + response.status);
-            }
+            if (!response.ok) throw new Error('Status: ' + response.status);
             
             const blob = await response.blob();
             const blobUrl = URL.createObjectURL(blob);
             
+            // 1. Set ke asset
             modelAsset.setAttribute('src', blobUrl);
-            console.log("Model berhasil dimuat via Blob URL ✓");
+            
+            // 2. FORCE REFRESH: Set ke entitas GLTF agar A-Frame me-render ulang
+            if (gltfEntity) {
+                gltfEntity.setAttribute('src', blobUrl);
+            }
+            
+            console.log("Model berhasil disuntikkan ke scene ✓");
         } catch (error) {
-            console.error("Gagal memuat model:", error);
-            alert("Gagal memuat model 3D. Periksa Console!");
+            console.error("Gagal memuat:", error);
+            alert("Gagal memuat model: " + error.message);
         }
     });
 
