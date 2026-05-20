@@ -225,7 +225,7 @@ class ArProjectController extends Controller
     {
         $arUrl  = route('ar.view', ['project' => $project->id]);
         $qrCode = QrCode::format('svg')->size(250)->errorCorrection('H')->generate($arUrl);
-        return view('result', compact('project', 'arUrl', 'qrCode'));
+        return view('dashboard.result', compact('project', 'arUrl', 'qrCode'));
     }
 
     public function view(ArProject $project)
