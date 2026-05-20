@@ -159,7 +159,7 @@
             <div class="p-6">
                 
                 <div class="flex p-1 bg-slate-100 rounded-lg w-fit mb-6 gap-1 border border-slate-200">
-                    <button class="mode-tab active px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700" id="tab-template" onclick="switchMode('template')">Template</button>
+                    <button class="mode-tab active px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700" id="tab-template" onclick="switchMode('template')">3D Pack</button>
                     <button class="mode-tab px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700" id="tab-gltf" onclick="switchMode('gltf')">GLB / GLTF</button>
                     <button class="mode-tab px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700" id="tab-blend" onclick="switchMode('blend')">Blender (.blend)</button>
                 </div>
@@ -927,7 +927,12 @@ async function loadMarkerLibrary() {
         }
 
         grid.innerHTML = markers.map(marker => `
-            <div class="marker-card flex flex-col items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:border-teal-500" data-id="${marker.id}" data-image-url="${marker.image_url}">
+            <div class="marker-card relative flex flex-col items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:border-teal-500 group" data-id="${marker.id}" data-image-url="${marker.image_url}">
+                
+                <button type="button" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition shadow-md hover:bg-red-600 z-10" onclick="event.stopPropagation(); deleteMarker(${marker.id})" title="Hapus Marker">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </button>
+
                 <img src="${marker.image_url}" alt="Marker" class="w-full aspect-square object-cover rounded-lg border border-white">
                 <div class="text-[10px] font-bold text-slate-600 truncate w-full text-center">Marker #${marker.id}</div>
             </div>
@@ -942,6 +947,35 @@ async function loadMarkerLibrary() {
         grid.innerHTML = '<div class="text-red-500 text-xs col-span-full">Gagal memuat marker.</div>';
     }
 }
+
+// TAMBAHKAN FUNGSI INI DI BAWAH loadMarkerLibrary()
+window.deleteMarker = async (markerId) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus marker ini?')) return;
+    
+    try {
+        const res = await fetch(`/api/markers/${markerId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            }
+        });
+        
+        if (res.ok) {
+            // Jika marker yang sedang dipilih dihapus, reset state
+            if (state.markerId === markerId) {
+                resetMarkerUpload();
+            }
+            // Muat ulang daftar marker
+            loadMarkerLibrary();
+        } else {
+            alert('Gagal menghapus marker. Pastikan Anda memiliki akses.');
+        }
+    } catch (e) {
+        console.error('Delete error:', e);
+        alert('Terjadi kesalahan saat menghapus marker.');
+    }
+};
 
 window.selectExistingMarker = (markerId, imageUrl) => {
     state.markerId = Number(markerId);
@@ -991,7 +1025,7 @@ fetch('/api/templates')
     .then(templates => {
         const grid = document.getElementById('template-grid');
         if (!templates.length) {
-            grid.innerHTML = '<p class="text-xs text-slate-400 col-span-full">Belum ada template tersedia.</p>';
+            grid.innerHTML = '<p class="text-xs text-slate-400 col-span-full">Belum ada 3D Pack tersedia.</p>';
             return;
         }
         grid.innerHTML = templates.map(t => `

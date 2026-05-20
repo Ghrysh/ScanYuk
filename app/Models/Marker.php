@@ -12,6 +12,7 @@ class Marker extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'image_path',
         'mind_path',
         'status',
@@ -37,6 +38,14 @@ class Marker extends Model
     public function getImageUrlAttribute(): string
     {
         return Storage::url($this->image_path);
+    }
+
+    /**
+    * Relasi ke user (nullable)
+    */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**

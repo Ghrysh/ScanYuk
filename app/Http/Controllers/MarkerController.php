@@ -18,23 +18,20 @@ class MarkerController extends Controller
      */
     public function upload(Request $request): JsonResponse
     {
-        // Validasi file upload
         $request->validate([
-            'image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'], // max 5MB
+            'image' => ['required', 'image', 'mimes:jpg,jpeg,png', 'max:5120'],
         ]);
 
-        // Simpan file ke storage/app/public/markers/
         $path = $request->file('image')->store('markers', 'public');
 
-        // Buat record marker dengan status awal processing
         $marker = Marker::create([
-            'image_path'    => $path,
+            'user_id'       => auth()->id(), // Set marker ini milik user yang login
+            'image_path'    => $path,        // (Pastikan ini sudah tanpa 'public/' sesuai perbaikan sebelumnya)
             'status'        => Marker::STATUS_PROCESSING,
             'error_message' => null,
         ]);
 
-        // Dispatch job ke queue untuk compile .mind di background
-        CompileMindARJob::dispatch($marker);
+        \App\Jobs\CompileMindARJob::dispatch($marker);
 
         return response()->json([
             'marker_id' => $marker->id,
@@ -68,7 +65,8 @@ class MarkerController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $markers = Marker::where('status', Marker::STATUS_READY)
+        $markers = Marker::where('user_id', auth()->id())
+            ->where('status', Marker::STATUS_READY)
             ->orderByDesc('id')
             ->get()
             ->map(fn (Marker $marker) => [
@@ -78,5 +76,19 @@ class MarkerController extends Controller
             ]);
 
         return response()->json($markers);
+    }
+
+    public function destroy(Marker $marker): JsonResponse
+    {
+        if ($marker->user_id !== auth()->id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        if ($marker->image_path) Storage::disk('public')->delete($marker->image_path);
+        if ($marker->mind_path) Storage::disk('public')->delete($marker->mind_path);
+
+        $marker->delete();
+
+        return response()->json(['message' => 'Marker berhasil dihapus']);
     }
 }
