@@ -165,13 +165,17 @@
                 </div>
 
                 {{-- MODE: Template --}}
-                <div id="mode-template">
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="template-grid">
-                        <div class="text-xs text-slate-400">Memuat template...</div>
-                    </div>
-                    <div id="tpl-config-area" class="d-none mt-6 pt-6 border-t border-slate-100">
-                        <h6 class="font-bold text-slate-700 text-sm mb-4">Konfigurasi Template</h6>
-                        <div id="tpl-config-fields" class="space-y-4"></div>
+                <div id="panel-template" class="step-panel">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm mb-6">
+                        <label class="block text-sm font-bold text-slate-900 mb-2">Pilih dari Library 3D ScanYuk</label>
+                        
+                        <div class="relative mb-4">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            <input type="text" id="search-3d" placeholder="Cari objek 3D..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none" onkeyup="filter3DPack()">
+                        </div>
+
+                        <div id="template-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3 max-h-72 overflow-y-auto p-1 no-scrollbar">
+                            </div>
                     </div>
                 </div>
 
@@ -1019,54 +1023,6 @@ function checkStep2() {
     document.getElementById('btn-next-2').disabled = !isStep2Complete();
 }
 
-// Load templates
-fetch('/api/templates')
-    .then(r => r.json())
-    .then(templates => {
-        const grid = document.getElementById('template-grid');
-        if (!templates.length) {
-            grid.innerHTML = '<p class="text-xs text-slate-400 col-span-full">Belum ada 3D Pack tersedia.</p>';
-            return;
-        }
-        grid.innerHTML = templates.map(t => `
-            <div class="tpl-card bg-slate-50 border border-slate-200 rounded-xl p-3 cursor-pointer text-center hover:border-teal-500" id="tpl-${t.id}" onclick="selectTemplate(${t.id}, '${t.model_url}', '${t.name}', ${JSON.stringify(t.placeholders ?? [])})">
-                <div class="h-20 bg-white rounded-lg mb-2 flex items-center justify-center text-slate-300 border border-slate-100">
-                    ${t.thumbnail ? `<img src="${t.thumbnail}" class="max-h-full max-w-full object-cover rounded-md">` : '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>'}
-                </div>
-                <div class="text-[11px] font-bold text-slate-600 truncate">${t.name}</div>
-            </div>
-        `).join('');
-    })
-    .catch(() => {
-        document.getElementById('template-grid').innerHTML = '<p class="text-red-500 text-xs col-span-full">Gagal memuat template.</p>';
-    });
-
-window.selectTemplate = (id, url, name, placeholders) => {
-    state.selectedTemplateId = id;
-    state.selectedTemplateName = name;
-    state.selectedTemplateUrl = url;
-
-    document.querySelectorAll('.tpl-card').forEach(c => c.classList.remove('selected'));
-    document.getElementById(`tpl-${id}`)?.classList.add('selected');
-
-    // Config fields
-    const area = document.getElementById('tpl-config-area');
-    const fields = document.getElementById('tpl-config-fields');
-    if (placeholders && placeholders.length) {
-        area.classList.remove('d-none');
-        fields.innerHTML = placeholders.map(ph => `
-            <div>
-                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">${ph.label ?? ph.key}</label>
-                <input type="text" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-teal-500 outline-none" id="tpl-field-${ph.key}" placeholder="${ph.placeholder ?? ''}" value="${ph.default ?? ''}">
-            </div>
-        `).join('');
-    } else {
-        area.classList.add('d-none');
-    }
-
-    checkStep2();
-};
-
 // GLTF upload
 const gltfInput = document.getElementById('gltf-file-input');
 const gltfDZ = document.getElementById('gltf-drop-zone');
@@ -1409,4 +1365,82 @@ window.submitGenerate = () => {
 
     document.getElementById('generate-form').submit();
 };
+
+// ─── LIBRARY 3D PACK (Pengganti Template) ────────────────────────────────────
+window.library3DData = [];
+
+// Harus pakai window. agar bisa dipanggil oleh HTML onclick
+window.loadTemplateLibrary = async () => {
+    const grid = document.getElementById('template-grid');
+    grid.innerHTML = '<div class="text-sm text-slate-500 col-span-full text-center py-4">Memuat Library 3D ScanYuk...</div>';
+    
+    try {
+        const res = await fetch('/api/templates');
+        window.library3DData = await res.json();
+        render3DPacks(window.library3DData);
+    } catch (e) {
+        console.error(e);
+        grid.innerHTML = '<div class="text-red-500 text-xs col-span-full text-center">Gagal memuat library 3D.</div>';
+    }
+};
+
+window.filter3DPack = () => {
+    const query = document.getElementById('search-3d').value.toLowerCase();
+    const filtered = window.library3DData.filter(item => item.name.toLowerCase().includes(query));
+    render3DPacks(filtered);
+};
+
+function render3DPacks(items) {
+    const grid = document.getElementById('template-grid');
+    
+    if (items.length === 0) {
+        grid.innerHTML = '<p class="text-xs text-slate-400 col-span-full text-center py-4">Objek 3D tidak ditemukan.</p>';
+        return;
+    }
+
+    grid.innerHTML = items.map(item => {
+        const isSelected = state.selectedTemplateId === item.id;
+        
+        const previewHtml = item.thumbnail_url 
+            ? `<img src="${item.thumbnail_url}" class="w-full h-full object-cover">`
+            : `<model-viewer src="${item.model_url}" class="w-full h-full" disable-zoom disable-pan shadow-intensity="0" exposure="1" environment-image="neutral" auto-rotate></model-viewer>`;
+
+        return `
+        <label class="flex flex-col bg-white border ${isSelected ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : 'border-slate-200'} rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden" onclick="select3DPack(${item.id})">
+            
+            <div class="h-24 md:h-32 bg-slate-100 relative pointer-events-none flex items-center justify-center overflow-hidden">
+                ${previewHtml}
+            </div>
+            
+            <div class="p-2 border-t border-slate-100 flex items-start gap-1">
+                <input type="radio" name="library3d" value="${item.id}" class="mt-0.5 text-teal-500 focus:ring-teal-500" ${isSelected ? 'checked' : ''}>
+                <span class="text-[10px] md:text-xs font-bold text-slate-700 leading-tight line-clamp-2">${item.name}</span>
+            </div>
+        </label>
+        `;
+    }).join('');
+}
+
+window.select3DPack = (id) => {
+    // 1. Cari data lengkap dari array
+    const selectedItem = window.library3DData.find(item => item.id === id);
+    if (!selectedItem) return;
+
+    // 2. Simpan ke state (Wajib simpan URL agar Step 3 bisa muncul)
+    state.selectedTemplateId = id;
+    state.selectedTemplateName = selectedItem.name;
+    state.selectedTemplateUrl = selectedItem.model_url;
+
+    // 3. Render ulang agar kotaknya terlihat terpilih (ada outline hijau)
+    render3DPacks(document.getElementById('search-3d').value 
+        ? window.library3DData.filter(item => item.name.toLowerCase().includes(document.getElementById('search-3d').value.toLowerCase()))
+        : window.library3DData
+    );
+    
+    // 4. Cek apakah tombol "Lanjut" bisa dinyalakan
+    checkStep2(); 
+};
+
+// JALANKAN FUNGSINYA SAAT HALAMAN DIMUAT
+window.loadTemplateLibrary();
 </script>
