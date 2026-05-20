@@ -602,7 +602,8 @@
 
                 <a-entity
                     id="model-container"
-                    gltf-model="#ar-model"
+                    gltf-model="" 
+                    visible="false"
                     @if($orbitActive)
                     position="{{ floatval($orbitRadius) }} 0 0"
                     @else
@@ -836,8 +837,19 @@
 
     const modelAsset = document.getElementById('ar-model');
     
-    const gltfEntity = document.querySelector('a-gltf-model');
+    const gltfEntity = document.getElementById('model-container');
     const modelUrl = {!! json_encode($modelUrl ?? '') !!};
+    
+    // Fungsi untuk me-refresh animation-mixer
+    function _restartMixer() {
+        if (!gltfEntity) return;
+        gltfEntity.removeAttribute('animation-mixer');
+        requestAnimationFrame(() => {
+            gltfEntity.setAttribute('animation-mixer', 
+                `clip: ${AR.animClip || '*'}; loop: repeat; crossFadeDuration: 0.3`
+            );
+        });
+    }
 
     document.addEventListener('DOMContentLoaded', async () => {
         if (!modelUrl) return;
@@ -845,7 +857,6 @@
         const isMinio = modelUrl.includes('minio');
 
         if (isMinio) {
-            // LOGIKA MINIO
             try {
                 console.log("Memuat file MinIO via Blob...");
                 const response = await fetch(modelUrl);
@@ -854,27 +865,32 @@
                 const blob = await response.blob();
                 const blobUrl = URL.createObjectURL(blob);
                 
-                // PENTING: Jangan pakai ID asset, tapi langsung set src ke entitas GLTF
-                // Ini memaksa A-Frame untuk mengabaikan a-assets dan memproses Blob langsung
-                gltfEntity.setAttribute('src', blobUrl);
+                // Set atribut gltf-model langsung ke URL Blob
+                gltfEntity.setAttribute('gltf-model', blobUrl);
+                gltfEntity.setAttribute('visible', 'true');
                 
-                console.log("Model MinIO berhasil disuntikkan ke scene ✓");
+                console.log("Model MinIO berhasil di-inject ✓");
+                _restartMixer(); // Panggil mixer setelah model muncul
             } catch (error) {
                 console.error("Gagal memuat MinIO:", error);
                 alert("Gagal memuat model 3D MinIO.");
             }
         } else {
-            // LOGIKA LOKAL (JANGAN DIUBAH)
-            // Biarkan menggunakan #ar-model karena file lokal sudah terdaftar di a-assets
             console.log("Memuat file lokal...");
-            gltfEntity.setAttribute('src', '#ar-model'); 
+            // Set ke ID asset untuk lokal agar tetap pakai pre-loading
+            gltfEntity.setAttribute('gltf-model', '#ar-model');
+            gltfEntity.setAttribute('visible', 'true');
+            _restartMixer();
         }
     });
 
-    // Prevent pinch zoom
-    document.addEventListener('touchmove', e => {
-        if (e.touches.length > 1) e.preventDefault();
-    }, { passive: false });
-    </script>
+    // Event listener untuk memastikan model muncul saat target found
+    const targetEl = document.querySelector('[mindar-image-target]');
+    targetEl.addEventListener('targetFound', () => {
+        if (gltfEntity) {
+            gltfEntity.setAttribute('visible', 'true');
+            _restartMixer();
+        }
+    });
 </body>
 </html>
