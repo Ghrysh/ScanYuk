@@ -120,7 +120,7 @@
     </div>
 
     <div class="d-flex gap-3 justify-content-center">
-        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">
+        <a href="{{ route('user.dashboard') }}" class="btn btn-outline-secondary">
             <i class="bi bi-grid me-1"></i>Dashboard
         </a>
         <a href="{{ route('ar.create') }}" class="btn btn-primary">
