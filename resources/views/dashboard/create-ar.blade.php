@@ -8,6 +8,15 @@
     <title>Create AR Experience - ScanYuk</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%230d9488' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect width='5' height='5' x='3' y='3' rx='1'%3E%3C/rect%3E%3Crect width='5' height='5' x='16' y='3' rx='1'%3E%3C/rect%3E%3Crect width='5' height='5' x='3' y='16' rx='1'%3E%3C/rect%3E%3Cpath d='M21 16h-3a2 2 0 0 0-2 2v3'%3E%3C/path%3E%3Cpath d='M21 21v.01'%3E%3C/path%3E%3Cpath d='M12 7v3a2 2 0 0 1-2 2H7'%3E%3C/path%3E%3Cpath d='M3 12h.01'%3E%3C/path%3E%3Cpath d='M12 3h.01'%3E%3C/path%3E%3Cpath d='M12 16v.01'%3E%3C/path%3E%3Cpath d='M16 12h1'%3E%3C/path%3E%3Cpath d='M21 12v.01'%3E%3C/path%3E%3Cpath d='M12 21v-1'%3E%3C/path%3E%3C/svg%3E">
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
@@ -62,9 +71,10 @@
                 </div>
                 <h1 class="text-base sm:text-lg font-bold text-slate-900 mr-auto sm:mr-0">Buat AR</h1>
             </div>
-            <div class="flex p-1 bg-slate-100 rounded-lg border border-slate-200 w-full sm:w-auto overflow-x-auto justify-center">
+            <div class="flex p-1 bg-slate-100 rounded-lg border border-slate-200 w-full sm:w-auto overflow-x-auto justify-center gap-1">
                 <button @click="mainTab = 'custom'" :class="mainTab === 'custom' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="flex-1 sm:flex-none px-4 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all whitespace-nowrap">Custom AR</button>
                 <button @click="mainTab = 'template'" :class="mainTab === 'template' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="flex-1 sm:flex-none px-4 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all whitespace-nowrap">Template</button>
+                <button @click="mainTab = 'marker'" :class="mainTab === 'marker' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="flex-1 sm:flex-none px-4 sm:px-6 py-1.5 rounded-md text-xs sm:text-sm transition-all whitespace-nowrap">Marker AR</button>
             </div>
         </div>
     </header>
@@ -469,6 +479,15 @@
                     </div>
                 </template>
             </div>
+        </div>
+
+        <div x-show="mainTab === 'marker'" style="display: none;" 
+             x-transition:enter="transition ease-out duration-300 origin-bottom" 
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4" 
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+            
+            @include('components.create')
+            
         </div>
 
         <div x-show="showModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center p-4">

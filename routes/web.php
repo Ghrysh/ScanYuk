@@ -12,6 +12,7 @@ use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\Api\ScanController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserDashboardController;
+use App\Http\Controllers\ArProjectController;
 
 Route::get('/', function () {
     return view('home');
@@ -81,6 +82,8 @@ Route::get('/case-studies', function () {
     return view('case-studies');
 })->name('case-studies');
 
+Route::get('/ar/view/{project}', [\App\Http\Controllers\ArProjectController::class, 'show'])->name('ar.show');
+
 Route::get('/api/scan/{uuid}', [ScanController::class, 'scanQr']);
 
 Route::get('/contact', [ContactController::class, 'show'])->name('contact');
@@ -135,7 +138,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/dashboard/ar/store', [\App\Http\Controllers\QrCodeController::class, 'store'])->name('user.ar.store');
         Route::patch('/dashboard/ar/{qrCode}/toggle-status', [\App\Http\Controllers\QrCodeController::class, 'toggleStatus'])->name('user.ar.toggle-status');
         Route::get('/dashboard/ar/{qrCode}/download', [\App\Http\Controllers\QrCodeController::class, 'download'])->name('user.ar.download');
-        Route::post('/api/remove-bg', [UserDashboardController::class, 'removeBackground']);
+        Route::post('/api/remove-bg', [\App\Http\Controllers\UserDashboardController::class, 'removeBackground']);
+
+        Route::post('/dashboard/marker/store', [\App\Http\Controllers\ArProjectController::class, 'store'])->name('user.marker.store');
+
+        Route::get('/dashboard/marker/result/{project}', [\App\Http\Controllers\ArProjectController::class, 'result'])->name('user.marker.result');
+
+        Route::delete('/dashboard/marker/{project}', [\App\Http\Controllers\ArProjectController::class, 'destroy'])->name('user.marker.destroy');
     });
 
     Route::post('/checkout', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
