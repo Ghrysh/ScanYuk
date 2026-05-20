@@ -542,7 +542,7 @@
         id="ar-scene"
         mindar-image="imageTargetSrc: {{ $mindUrl }}; uiLoading: no; uiError: no; uiScanning: no;"
         color-space="sRGB"
-        renderer="colorManagement: true; sortObjects: true; antialias: true; logarithmicDepthBuffer: true"
+        renderer="colorManagement: true; sortTransparentObjects: true; antialias: true; logarithmicDepthBuffer: true"
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false">
 
@@ -834,8 +834,12 @@
         if (e.touches.length > 1) e.preventDefault();
     }, { passive: false });
 
+    // Prevent pinch zoom di mobile
+    document.addEventListener('touchmove', e => {
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+
     const modelAsset = document.getElementById('ar-model');
-    const gltfEntity = document.querySelector('a-gltf-model');
     const modelUrl = {!! json_encode($modelUrl ?? '') !!};
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -854,27 +858,27 @@
                 const blob = await response.blob();
                 const blobUrl = URL.createObjectURL(blob);
                 
-                modelAsset.setAttribute('src', blobUrl);
-                if (gltfEntity) gltfEntity.setAttribute('src', blobUrl);
-                console.log("Model MinIO berhasil dimuat ✓");
+                // PERBAIKAN: Set langsung blobUrl ke atribut gltf-model pada entity
+                // modelEl sudah dideklarasikan di atas (const modelEl = document.getElementById('model-container');)
+                if (modelEl) {
+                    modelEl.setAttribute('gltf-model', blobUrl);
+                }
+                
+                console.log("Model MinIO berhasil diunduh dan diproses ✓");
+                // Event 'model-loaded' akan otomatis terpicu oleh A-Frame setelah ini
             } catch (error) {
                 console.error("Gagal memuat MinIO:", error);
-                alert("Gagal memuat model 3D MinIO.");
+                showError('Gagal Memuat Model', 'File 3D dari MinIO gagal diunduh.');
             }
         } else {
             // LOGIKA STANDAR (Untuk file lokal /storage/models/...)
-            // Langsung set src tanpa fetch, ini cara paling lancar
             console.log("Memuat file lokal via A-Frame...");
-            modelAsset.setAttribute('src', modelUrl);
-            if (gltfEntity) gltfEntity.setAttribute('src', modelUrl);
-            console.log("Model lokal berhasil dimuat ✓");
+            if (modelAsset) {
+                modelAsset.setAttribute('src', modelUrl);
+            }
+            console.log("Model lokal berhasil diset ✓");
         }
     });
-
-    // Perbaikan typo kecil di kode Anda (tosuchmove -> touchmove)
-    document.addEventListener('touchmove', e => {
-        if (e.touches.length > 1) e.preventDefault();
-    }, { passive: false });
     </script>
 </body>
 </html>
