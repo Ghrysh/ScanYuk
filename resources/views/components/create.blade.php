@@ -1382,19 +1382,17 @@ window.submitGenerate = () => {
 
 // ─── LIBRARY 3D PACK (Pengganti Template) ────────────────────────────────────
 
-// Ambil data langsung dari Controller (Bypass API Error 500)
-window.library3DData = @json($library3dList ?? []);
+// Ambil data langsung, jika tidak ada $library3dList, kita ambil dari ArAsset::all()
+window.library3DData = @json($library3dList ?? \App\Models\ArAsset::all() ?? []);
 
 window.loadTemplateLibrary = () => {
     const grid = document.getElementById('template-grid');
+    if (!grid) return; // Cegah error jika elemen HTML belum siap
     
-    // Jika data kosong
     if (!window.library3DData || window.library3DData.length === 0) {
         grid.innerHTML = '<div class="text-sm text-slate-500 col-span-full text-center py-4">Belum ada objek 3D di Library ScanYuk.</div>';
         return;
     }
-
-    // Langsung render tanpa perlu menunggu fetch loading
     render3DPacks(window.library3DData);
 };
 
@@ -1406,6 +1404,7 @@ window.filter3DPack = () => {
 
 function render3DPacks(items) {
     const grid = document.getElementById('template-grid');
+    if (!grid) return;
     
     if (items.length === 0) {
         grid.innerHTML = '<p class="text-xs text-slate-400 col-span-full text-center py-4">Objek 3D tidak ditemukan.</p>';
@@ -1415,17 +1414,24 @@ function render3DPacks(items) {
     grid.innerHTML = items.map(item => {
         const isSelected = state.selectedTemplateId === item.id;
         
+        // PERBAIKAN BUGS UNDEFINED: Baca dari model_url ATAU file_path
+        let rawUrl = item.model_url || item.file_path || '';
+        
+        // Pastikan format URL valid agar tidak 404
+        let validUrl = '';
+        if (rawUrl) {
+            validUrl = (rawUrl.startsWith('http') || rawUrl.startsWith('/')) ? rawUrl : '/storage/' + rawUrl;
+        }
+        
         const previewHtml = item.thumbnail_url 
             ? `<img src="${item.thumbnail_url}" class="w-full h-full object-cover">`
-            : `<model-viewer src="${item.model_url}" class="w-full h-full" disable-zoom disable-pan shadow-intensity="0" exposure="1" environment-image="neutral" auto-rotate></model-viewer>`;
+            : (validUrl ? `<model-viewer src="${validUrl}" class="w-full h-full" disable-zoom disable-pan shadow-intensity="0" exposure="1" environment-image="neutral" auto-rotate></model-viewer>` : `<div class="text-[10px] text-slate-400 font-bold">File Error</div>`);
 
         return `
         <label class="flex flex-col bg-white border ${isSelected ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : 'border-slate-200'} rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden" onclick="select3DPack(${item.id})">
-            
             <div class="h-24 md:h-32 bg-slate-100 relative pointer-events-none flex items-center justify-center overflow-hidden">
                 ${previewHtml}
             </div>
-            
             <div class="p-2 border-t border-slate-100 flex items-start gap-1">
                 <input type="radio" name="library3d" value="${item.id}" class="mt-0.5 text-teal-500 focus:ring-teal-500" ${isSelected ? 'checked' : ''}>
                 <span class="text-[10px] md:text-xs font-bold text-slate-700 leading-tight line-clamp-2">${item.name}</span>
@@ -1436,25 +1442,28 @@ function render3DPacks(items) {
 }
 
 window.select3DPack = (id) => {
-    // 1. Cari data lengkap dari array
     const selectedItem = window.library3DData.find(item => item.id === id);
     if (!selectedItem) return;
 
-    // 2. Simpan ke state (Wajib simpan URL agar Step 3 bisa muncul)
+    // Ambil URL yang valid untuk dikirim ke Step 3 (Preview)
+    let rawUrl = selectedItem.model_url || selectedItem.file_path || '';
+    let validUrl = (rawUrl.startsWith('http') || rawUrl.startsWith('/')) ? rawUrl : '/storage/' + rawUrl;
+
     state.selectedTemplateId = id;
     state.selectedTemplateName = selectedItem.name;
-    state.selectedTemplateUrl = selectedItem.model_url;
+    state.selectedTemplateUrl = validUrl;
 
-    // 3. Render ulang agar kotaknya terlihat terpilih (ada outline hijau)
     render3DPacks(document.getElementById('search-3d').value 
         ? window.library3DData.filter(item => item.name.toLowerCase().includes(document.getElementById('search-3d').value.toLowerCase()))
         : window.library3DData
     );
-    
-    // 4. Cek apakah tombol "Lanjut" bisa dinyalakan
     checkStep2(); 
 };
 
-// JALANKAN FUNGSINYA SAAT HALAMAN DIMUAT
-window.loadTemplateLibrary();
+// PERBAIKAN TAB KOSONG DI AWAL:
+// Gunakan DOMContentLoaded agar kodingan menunggu halaman selesai dirender sempurna
+document.addEventListener('DOMContentLoaded', () => {
+    window.loadTemplateLibrary();
+    window.switchMode('template'); // Membuka tab 3D Pack otomatis
+});
 </script>

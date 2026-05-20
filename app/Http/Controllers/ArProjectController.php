@@ -21,18 +21,16 @@ class ArProjectController extends Controller
      */
     public function create()
     {
-        // Ambil data 3D Pack dari ArAsset (MinIO)
-        $library3dList = \App\Models\ArAsset::all()->map(function ($asset) {
+        // whereNotNull mencegah pengambilan data yang filenya kosong/rusak
+        $library3dList = \App\Models\ArAsset::whereNotNull('file_path')->get()->map(function ($asset) {
             return [
                 'id'            => $asset->id,
                 'name'          => $asset->name,
-                // Mengambil URL dari MinIO/S3
                 'model_url'     => Storage::url($asset->file_path), 
-                'thumbnail_url' => null, // Dikosongkan agar otomatis render 3D
+                'thumbnail_url' => null,
             ];
         });
 
-        // Kirim datanya ke view
         return view('create', compact('library3dList'));
     }
 
