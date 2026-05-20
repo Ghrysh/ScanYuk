@@ -834,39 +834,40 @@
         if (e.touches.length > 1) e.preventDefault();
     }, { passive: false });
 
-    // 1. Ambil URL dari atribut data yang kita pasang di HTML tadi
     const modelAsset = document.getElementById('ar-model');
-    const gltfEntity = document.querySelector('a-gltf-model'); // Pastikan Anda punya <a-gltf-model src="#ar-model">
+    const gltfEntity = document.querySelector('a-gltf-model');
+    const modelUrl = {!! json_encode($modelUrl ?? '') !!};
 
     document.addEventListener('DOMContentLoaded', async () => {
-        // Ambil URL dari atribut yang tadi kita pasang
-        const modelUrl = modelAsset.getAttribute('data-url');
-        
-        if (!modelUrl) {
-            console.error("URL Model Kosong!");
-            return;
-        }
+        if (!modelUrl) return;
 
-        try {
-            console.log("Mencoba memuat dari:", modelUrl);
-            const response = await fetch(modelUrl);
-            if (!response.ok) throw new Error('Status: ' + response.status);
-            
-            const blob = await response.blob();
-            const blobUrl = URL.createObjectURL(blob);
-            
-            // 1. Set ke asset
-            modelAsset.setAttribute('src', blobUrl);
-            
-            // 2. FORCE REFRESH: Set ke entitas GLTF agar A-Frame me-render ulang
-            if (gltfEntity) {
-                gltfEntity.setAttribute('src', blobUrl);
+        // CEK APAKAH FILE DARI MINIO
+        const isMinio = modelUrl.includes('minio');
+
+        if (isMinio) {
+            // LOGIKA KHUSUS MINIO (Untuk bypass CORS)
+            try {
+                console.log("Memuat file via MinIO Proxy (Blob)...");
+                const response = await fetch(modelUrl);
+                if (!response.ok) throw new Error('Status: ' + response.status);
+                
+                const blob = await response.blob();
+                const blobUrl = URL.createObjectURL(blob);
+                
+                modelAsset.setAttribute('src', blobUrl);
+                if (gltfEntity) gltfEntity.setAttribute('src', blobUrl);
+                console.log("Model MinIO berhasil dimuat ✓");
+            } catch (error) {
+                console.error("Gagal memuat MinIO:", error);
+                alert("Gagal memuat model 3D MinIO.");
             }
-            
-            console.log("Model berhasil disuntikkan ke scene ✓");
-        } catch (error) {
-            console.error("Gagal memuat:", error);
-            alert("Gagal memuat model: " + error.message);
+        } else {
+            // LOGIKA STANDAR (Untuk file lokal /storage/models/...)
+            // Langsung set src tanpa fetch, ini cara paling lancar
+            console.log("Memuat file lokal via A-Frame...");
+            modelAsset.setAttribute('src', modelUrl);
+            if (gltfEntity) gltfEntity.setAttribute('src', modelUrl);
+            console.log("Model lokal berhasil dimuat ✓");
         }
     });
 
