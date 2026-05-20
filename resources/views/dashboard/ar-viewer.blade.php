@@ -845,38 +845,54 @@
     document.addEventListener('DOMContentLoaded', async () => {
         if (!modelUrl) return;
 
-        // CEK APAKAH FILE DARI MINIO
+        // 1. PENTING: Copot dulu atribut gltf-model dari entity
+        // Ini mencegah A-Frame nyangkut (stuck) karena mencoba me-load asset kosong di awal
+        if (modelEl) {
+            modelEl.removeAttribute('gltf-model');
+        }
+
         const isMinio = modelUrl.includes('minio');
 
         if (isMinio) {
-            // LOGIKA KHUSUS MINIO (Untuk bypass CORS)
             try {
                 console.log("Memuat file via MinIO Proxy (Blob)...");
                 const response = await fetch(modelUrl);
-                if (!response.ok) throw new Error('Status: ' + response.status);
+                if (!response.ok) throw new Error('Status HTTP: ' + response.status);
                 
                 const blob = await response.blob();
+                console.log(`Blob diterima: ${blob.size} bytes, tipe: ${blob.type}`);
+
+                // 2. Proteksi tambahan: Pastikan ukurannya wajar. 
+                // Jika ukurannya sangat kecil (< 1000 bytes) atau berwujud HTML, 
+                // berarti yang didownload adalah halaman Error Proxy, bukan file .glb!
+                if (blob.size < 1000 || blob.type.includes('text/html')) {
+                    throw new Error("File tidak valid (kemungkinan error proxy MinIO/CORS).");
+                }
+
                 const blobUrl = URL.createObjectURL(blob);
                 
-                // PERBAIKAN: Set langsung blobUrl ke atribut gltf-model pada entity
-                // modelEl sudah dideklarasikan di atas (const modelEl = document.getElementById('model-container');)
-                if (modelEl) {
-                    modelEl.setAttribute('gltf-model', blobUrl);
-                }
-                
-                console.log("Model MinIO berhasil diunduh dan diproses ✓");
-                // Event 'model-loaded' akan otomatis terpicu oleh A-Frame setelah ini
+                // 3. Gunakan setTimeout kecil untuk memberi waktu A-Frame membersihkan komponen lamanya
+                // Setelah itu, tembakkan URL Blob sebagai model baru
+                setTimeout(() => {
+                    if (modelEl) {
+                        modelEl.setAttribute('gltf-model', blobUrl);
+                        console.log("URL Blob berhasil dipasang ke komponen gltf-model ✓");
+                    }
+                }, 100);
+
             } catch (error) {
                 console.error("Gagal memuat MinIO:", error);
-                showError('Gagal Memuat Model', 'File 3D dari MinIO gagal diunduh.');
+                showError('Gagal Memuat Model', 'File 3D MinIO gagal diunduh atau format tidak sesuai.');
             }
         } else {
-            // LOGIKA STANDAR (Untuk file lokal /storage/models/...)
+            // LOGIKA STANDAR (Lokal)
             console.log("Memuat file lokal via A-Frame...");
-            if (modelAsset) {
-                modelAsset.setAttribute('src', modelUrl);
-            }
-            console.log("Model lokal berhasil diset ✓");
+            setTimeout(() => {
+                if (modelEl) {
+                    modelEl.setAttribute('gltf-model', modelUrl);
+                    console.log("URL Lokal berhasil dipasang ✓");
+                }
+            }, 100);
         }
     });
     </script>
