@@ -123,7 +123,7 @@
         <a href="{{ route('user.dashboard') }}" class="btn btn-outline-secondary">
             <i class="bi bi-grid me-1"></i>Dashboard
         </a>
-        <a href="{{ route('ar.create') }}" class="btn btn-primary">
+        <a href="{{ route('user.ar.create') }}" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i>Buat Project Baru
         </a>
     </div>
