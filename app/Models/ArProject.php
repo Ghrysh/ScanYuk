@@ -14,6 +14,7 @@ class ArProject extends Model
     protected $table = 'ar_projects';
 
     protected $fillable = [
+        'user_id',
         'marker_id',
         'type',
         'template_id',

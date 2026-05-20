@@ -100,6 +100,7 @@ class ArProjectController extends Controller
     public function store(Request $request)
     {
         $request->validate([
+            'title'        => ['required', 'string', 'max:255'], // Wajib diisi!
             'marker_id'    => ['required', 'exists:markers,id'],
             'type'         => ['required', 'in:template,gltf,blend'],
             'scale'        => ['nullable', 'numeric', 'min:0.05', 'max:10'],
@@ -115,13 +116,14 @@ class ArProjectController extends Controller
         $marker = Marker::findOrFail($request->marker_id);
 
         if (!$marker->isReady()) {
-            return back()->withErrors(['marker' => 'Marker belum siap.']);
+            return response()->json(['error' => 'Marker belum siap.'], 422);
         }
 
         $position = $request->filled('position') ? json_decode($request->position, true) : [0, 0, 0];
         $rotation = $request->filled('rotation') ? json_decode($request->rotation, true) : [0, 0, 0];
 
         $data = [
+            'user_id'   => auth()->id(), // Masukkan ID user yang login
             'marker_id' => $marker->id,
             'type'      => $request->type,
             'scale'     => $request->scale ?? 1.0,
@@ -137,6 +139,7 @@ class ArProjectController extends Controller
             ],
         ];
 
+        // Buat record Project berdasarkan tipe konten
         if ($request->type === 'template') {
             $request->validate([
                 'template_id' => ['required', 'exists:templates,id'],
@@ -148,15 +151,13 @@ class ArProjectController extends Controller
 
         } elseif ($request->type === 'gltf') {
             $request->validate([
-                'model' => ['required', 'file', 'mimes:glb,gltf', 'max:102400'], // 100MB
+                'model' => ['required', 'file', 'mimes:glb,gltf', 'max:102400'],
             ]);
             $modelPath = $request->file('model')->store('models', 'public');
             $data['model_path'] = $modelPath;
             $project = ArProject::create($data);
 
         } elseif ($request->type === 'blend') {
-            // Blend sudah diproses sebelumnya lewat blendUpload → job
-            // Tinggal update project yang sudah ada dengan marker_id dan transform
             $request->validate([
                 'blend_project_id' => ['required', 'exists:ar_projects,id'],
             ]);
@@ -164,10 +165,11 @@ class ArProjectController extends Controller
             $project = ArProject::findOrFail($request->blend_project_id);
 
             if ($project->status !== 'ready') {
-                return back()->withErrors(['model' => 'Konversi blend belum selesai.']);
+                return response()->json(['error' => 'Konversi blend belum selesai.'], 422);
             }
 
             $project->update([
+                'user_id'   => auth()->id(),
                 'marker_id' => $marker->id,
                 'scale'     => $data['scale'],
                 'position'  => $data['position'],
@@ -175,8 +177,39 @@ class ArProjectController extends Controller
             ]);
         }
 
-        return redirect()->route('ar.result', ['project' => $project->id])
-            ->with('success', 'Project AR berhasil dibuat!');
+        // ─── GENERATE QR CODE SECARA OTOMATIS BERDASARKAN PROYEK ───
+        $uuid = (string) \Illuminate\Support\Str::uuid();
+        // Arahkan QR scan ke link view AR viewer bawaan Anda
+        $qrUrl = route('ar.view', ['project' => $project->id]); 
+        $qrImage = base64_encode(QrCode::format('svg')->size(300)->margin(2)->generate($qrUrl));
+
+        // Daftarkan ke tabel qr_codes agar tampil di list dashboard user utama
+        \App\Models\QrCode::create([
+            'user_id'       => auth()->id(),
+            'uuid'          => $uuid,
+            'title'         => $request->title,
+            'ar_type'       => 'marker', // Bedakan tipe kontennya menjadi 'marker'
+            'ar_project_id' => $project->id,
+            'qr_image_path' => $qrImage,
+            'status'        => 'Aktif',
+            'scan_count'    => 0,
+        ]);
+
+        // Tambah limit counter user (Gunakan logic yang sama seperti QrCodeController)
+        $user = auth()->user();
+        if ($user) {
+            $user->increment('image'); // Sesuaikan counter penggunaan limit di dashboard
+        }
+
+        // Return AJAX response untuk memicu animasi progress bar di create.blade.php
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'redirect_url' => route('user.dashboard')
+            ]);
+        }
+
+        return redirect()->route('user.dashboard')->with('success', 'Project AR berhasil dibuat!');
     }
 
     // ─────────────────────────────────────────────────────────────────────────
