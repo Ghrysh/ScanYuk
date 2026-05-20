@@ -37,7 +37,7 @@ class Template extends Model
      */
     public function getModelUrlAttribute(): string
     {
-        return Storage::url($this->model_path);
+        return !empty($this->model_path) ? Storage::url($this->model_path) : '';
     }
 
     /**
@@ -45,6 +45,6 @@ class Template extends Model
      */
     public function getThumbnailUrlAttribute(): ?string
     {
-        return $this->thumbnail ? Storage::url($this->thumbnail) : null;
+        return !empty($this->thumbnail) ? Storage::url($this->thumbnail) : null;
     }
 }

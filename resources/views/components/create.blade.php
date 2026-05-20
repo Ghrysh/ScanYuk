@@ -180,7 +180,7 @@
                 </div>
 
                 {{-- MODE: GLTF --}}
-                <div id="mode-gltf" class="d-none">
+                <div id="panel-gltf" class="step-panel">
                     <div class="border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-teal-50 hover:border-teal-500 transition-colors rounded-2xl p-10 text-center cursor-pointer group" id="gltf-drop-zone">
                         <input type="file" id="gltf-file-input" accept=".glb,.gltf" class="d-none">
                         <div class="text-slate-400 group-hover:text-teal-500 mb-3 flex justify-center">
@@ -203,7 +203,7 @@
                 </div>
 
                 {{-- MODE: Blend --}}
-                <div id="mode-blend" class="d-none">
+                <div id="panel-blend" class="step-panel">
                     <div class="border-2 border-dashed border-slate-300 bg-slate-50 hover:bg-amber-50 hover:border-amber-500 transition-colors rounded-2xl p-8 text-center cursor-pointer group mb-4" id="blend-drop-zone">
                         <input type="file" id="blend-file-input" accept=".blend" class="d-none">
                         <div class="text-slate-400 group-hover:text-amber-500 mb-2 flex justify-center">
