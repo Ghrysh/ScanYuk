@@ -158,6 +158,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/api/blend-status/{id}', [\App\Http\Controllers\ArProjectController::class, 'checkBlendStatus']);
 
         Route::get('/dashboard/ar/result/{project}', [App\Http\Controllers\ArProjectController::class, 'result'])->name('ar.result');
+        Route::get('/ar/view/{project}', [App\Http\Controllers\ArProjectController::class, 'view'])->name('ar.view');
     });
 
     Route::post('/checkout', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
