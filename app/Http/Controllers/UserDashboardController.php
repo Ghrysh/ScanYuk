@@ -73,7 +73,13 @@ class UserDashboardController extends Controller
                    " && cd " . escapeshellarg($scriptDir) . 
                    " && nohup python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " > " . escapeshellarg($logPath) . " 2>&1 &";
         
-        exec($command);
+        // DEBUG: Tulis perintahnya ke log sebelum dieksekusi
+        file_put_contents($logPath, "COMMAND: " . $command . "\n\n", FILE_APPEND);
+        
+        exec($command, $output, $return_var);
+        
+        // DEBUG: Tulis hasil exec ke log
+        file_put_contents($logPath, "RETURN_VAR: " . $return_var . "\n", FILE_APPEND);
 
         return response()->json(['success' => true, 'job_id' => $job->id]);
     }
