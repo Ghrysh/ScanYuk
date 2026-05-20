@@ -403,6 +403,10 @@
                         <img id="gen-marker-img" src="" class="w-full h-auto aspect-square object-cover rounded-xl border border-slate-200 shadow-sm bg-white">
                     </div>
                     <div class="md:col-span-3">
+                        <div class="mb-5 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-widest mb-2">Nama / Judul AR <span class="text-red-500">*</span></label>
+                            <input type="text" id="marker-project-title" placeholder="Masukkan nama project AR Anda..." class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:bg-white focus:border-teal-500 font-semibold outline-none transition-all" required>
+                        </div>
                         <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Ringkasan Project</p>
                         <div id="review-summary" class="space-y-3">
                             <div class="flex border-b border-slate-200 pb-2">
@@ -432,6 +436,7 @@
                 {{-- Hidden form --}}
                 <form id="generate-form" action="{{ route('user.marker.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
+                    <input type="hidden" name="title" id="form-title">
                     <input type="hidden" name="marker_id"   id="form-marker-id">
                     <input type="hidden" name="type"        id="form-type">
                     <input type="hidden" name="template_id" id="form-template-id">
@@ -460,7 +465,20 @@
             </div>
         </div>
     </div>
-
+    <div id="gen-progress-modal" class="fixed inset-0 z-[200] flex items-center justify-center hidden">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm"></div>
+        <div class="relative bg-white rounded-3xl p-8 max-w-sm w-full mx-4 shadow-2xl flex flex-col items-center text-center border border-white/20">
+            <div class="w-16 h-16 border-4 border-slate-100 border-t-teal-500 rounded-full animate-spin mb-6"></div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Menggenerate AR...</h3>
+            <div class="w-full bg-slate-100 rounded-full h-3 mb-3 overflow-hidden">
+                <div id="gen-progress-bar" class="bg-gradient-to-r from-teal-400 to-indigo-500 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between w-full text-sm font-semibold">
+                <span id="gen-progress-percent" class="text-indigo-600">0%</span>
+                <span class="text-slate-500">Membangun Matrix AR...</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script type="module">
@@ -1324,6 +1342,16 @@ window.switchAnimClip = (index) => {
 };
 
 window.submitGenerate = () => {
+    const titleInput = document.getElementById('marker-project-title');
+    if (!titleInput || !titleInput.value.trim()) {
+        alert('Nama / Judul AR wajib diisi sebelum men-generate!');
+        if(titleInput) titleInput.focus();
+        return;
+    }
+
+    // Suntikkan teks nama ke hidden form input
+    document.getElementById('form-title').value = titleInput.value.trim();
+
     const baseScale = previewModel?.userData._baseScale || 1;
     const bottomY   = previewModel?.userData._bottomY   || 0;
     const scaleAR = state.scale * baseScale;
@@ -1362,13 +1390,15 @@ window.submitGenerate = () => {
         document.getElementById('form-template-id').value = state.selectedTemplateId;
         const configContainer = document.getElementById('tpl-config-fields');
         const configHidden    = document.getElementById('form-config-fields');
-        configHidden.innerHTML = '';
-        configContainer.querySelectorAll('input[id^="tpl-field-"]').forEach(inp => {
-            const key = inp.id.replace('tpl-field-', '');
-            const h   = document.createElement('input');
-            h.type = 'hidden'; h.name = `config[${key}]`; h.value = inp.value;
-            configHidden.appendChild(h);
-        });
+        if(configContainer && configHidden) {
+            configHidden.innerHTML = '';
+            configContainer.querySelectorAll('input[id^="tpl-field-"]').forEach(inp => {
+                const key = inp.id.replace('tpl-field-', '');
+                const h   = document.createElement('input');
+                h.type = 'hidden'; h.name = `config[${key}]`; h.value = inp.value;
+                configHidden.appendChild(h);
+            });
+        }
     } else if (state.mode === 'gltf' && state.gltfFile) {
         const dt = new DataTransfer();
         dt.items.add(state.gltfFile);
@@ -1377,7 +1407,50 @@ window.submitGenerate = () => {
         document.getElementById('form-blend-project-id').value = state.blendProjectId;
     }
 
-    document.getElementById('generate-form').submit();
+    // ─── EKSEKUSI AJAX UPLOAD & REDIRECT ───
+    const form = document.getElementById('generate-form');
+    const formData = new FormData(form);
+    
+    const modal = document.getElementById('gen-progress-modal');
+    const progressBar = document.getElementById('gen-progress-bar');
+    const progressPercent = document.getElementById('gen-progress-percent');
+    
+    // Tampilkan modal progress
+    modal.classList.remove('hidden');
+    
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', form.action, true);
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+    
+    // Track persentase unggahan data / file glb
+    xhr.upload.addEventListener('progress', (e) => {
+        if (e.lengthComputable) {
+            const percent = Math.round((e.loaded / e.total) * 92); // Sisakan 8% untuk proses kompilasi server
+            progressBar.style.width = percent + '%';
+            progressPercent.textContent = percent + '%';
+        }
+    });
+    
+    xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+            progressBar.style.width = '100%';
+            progressPercent.textContent = '100%';
+            // Sukses! Alihkan halaman langsung ke dashboard user
+            setTimeout(() => {
+                window.location.href = JSON.parse(xhr.responseText).redirect_url;
+            }, 500);
+        } else {
+            modal.classList.add('hidden');
+            alert('Gagal membuat AR. Mohon periksa kembali file Anda atau hubungi admin.');
+        }
+    };
+    
+    xhr.onerror = () => {
+        modal.classList.add('hidden');
+        alert('Koneksi jaringan terputus.');
+    };
+    
+    xhr.send(formData);
 };
 
 // ─── LIBRARY 3D PACK (Pengganti Template) ────────────────────────────────────
