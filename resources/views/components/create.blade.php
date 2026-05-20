@@ -1004,10 +1004,24 @@ loadMarkerLibrary();
 // ─── STEP 2: MODE ────────────────────────────────────────────────────────────
 window.switchMode = (mode) => {
     state.mode = mode;
-    ['template','gltf','blend'].forEach(m => {
-        document.getElementById(`mode-${m}`).classList.toggle('d-none', m !== mode);
-        document.getElementById(`tab-${m}`).classList.toggle('active', m === mode);
-        document.getElementById(`tab-${m}`).classList.toggle('text-slate-500', m !== mode);
+    ['template', 'gltf', 'blend'].forEach(m => {
+        const tab = document.getElementById('tab-' + m);
+        const panel = document.getElementById('panel-' + m);
+        
+        if (m === mode) {
+            // Tambahkan if (tab) dan if (panel) agar tidak error jika elemen tidak ada
+            if (tab) tab.classList.add('active', 'text-teal-600', 'border-teal-500');
+            if (panel) {
+                panel.classList.add('active');
+                panel.style.display = 'block';
+            }
+        } else {
+            if (tab) tab.classList.remove('active', 'text-teal-600', 'border-teal-500');
+            if (panel) {
+                panel.classList.remove('active');
+                panel.style.display = 'none';
+            }
+        }
     });
     checkStep2();
 };
