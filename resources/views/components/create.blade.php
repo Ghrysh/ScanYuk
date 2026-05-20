@@ -1382,15 +1382,153 @@ window.submitGenerate = () => {
 
 // ─── LIBRARY 3D PACK (Pengganti Template) ────────────────────────────────────
 
-// Ambil data langsung, jika tidak ada $library3dList, kita ambil dari ArAsset::all()
 window.library3DData = @json($library3dList ?? \App\Models\ArAsset::all() ?? []);
+window.modelStates = {}; 
+window.abortControllers = {};
 
+// BATAS AUTO DOWNLOAD (Dalam MB). Ubah angka 3 ini sesuai selera Anda.
+const MAX_AUTO_DOWNLOAD_MB = 3; 
+
+// Fungsi format byte menjadi MB/KB
+function formatBytes(bytes) {
+    if (!bytes || bytes === 0) return '0 B';
+    const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'], i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+}
+
+// Fungsi cek ukuran file tanpa mengunduh isinya (menggunakan HEAD)
+async function checkFileSize(id, url) {
+    try {
+        const res = await fetch(url, { method: 'HEAD' });
+        const size = parseInt(res.headers.get('content-length') || '0', 10);
+        window.modelStates[id].total = size;
+        
+        // Jika ukuran di bawah batas, langsung jadikan 'loaded'
+        if (size > 0 && size <= (MAX_AUTO_DOWNLOAD_MB * 1024 * 1024)) {
+            window.modelStates[id].state = 'loaded';
+        } else {
+            window.modelStates[id].state = 'idle';
+        }
+    } catch(e) {
+        window.modelStates[id].state = 'idle';
+    }
+    updateItemPreview(id); // Perbarui tampilan kotaknya saja
+}
+
+// Fungsi Download & Pause manual (Stream)
+window.toggleDownload = async (id, event) => {
+    // Mencegah klik tombol merembet ke pilihan radio
+    if(event) { event.preventDefault(); event.stopPropagation(); }
+    
+    const mState = window.modelStates[id];
+    
+    if (mState.state === 'idle' || mState.state === 'paused') {
+        mState.state = 'downloading';
+        updateItemPreview(id);
+        
+        window.abortControllers[id] = new AbortController();
+        try {
+            const res = await fetch(mState.validUrl, { signal: window.abortControllers[id].signal });
+            const total = parseInt(res.headers.get('content-length') || mState.total || '0', 10);
+            mState.total = total;
+            
+            const reader = res.body.getReader();
+            let downloaded = 0;
+            let chunks = [];
+            
+            // Proses unduh sedikit demi sedikit (chunk)
+            while(true) {
+                const {done, value} = await reader.read();
+                if(done) break;
+                chunks.push(value);
+                downloaded += value.length;
+                mState.downloaded = downloaded;
+                if(total) mState.progress = Math.round((downloaded/total) * 100);
+                updateItemPreview(id);
+            }
+            
+            // Satukan file dan jadikan URL Blob agar tidak perlu download ulang
+            const blob = new Blob(chunks);
+            mState.blobUrl = URL.createObjectURL(blob);
+            mState.state = 'loaded';
+            updateItemPreview(id);
+            
+        } catch(e) {
+            // Jika dipause (dibatalkan sengaja)
+            if (e.name === 'AbortError') {
+                mState.state = 'paused';
+            } else {
+                mState.state = 'idle';
+            }
+            updateItemPreview(id);
+        }
+    } else if (mState.state === 'downloading') {
+        // Eksekusi Pause
+        if(window.abortControllers[id]) {
+            window.abortControllers[id].abort(); 
+        }
+    }
+};
+
+// Fungsi update khusus untuk 1 kotak preview (mencegah kedip / re-render seluruh halaman)
+function updateItemPreview(id) {
+    const box = document.getElementById(`preview-box-${id}`);
+    if(!box) return;
+    const mState = window.modelStates[id];
+    
+    let html = '';
+    if (mState.state === 'checking') {
+        html = `<div class="text-[10px] text-slate-400 font-bold animate-pulse">Menghitung ukuran...</div>`;
+    } else if (mState.state === 'loaded') {
+        html = `<model-viewer src="${mState.blobUrl || mState.validUrl}" class="w-full h-full" disable-zoom disable-pan shadow-intensity="0" exposure="1" environment-image="neutral" auto-rotate></model-viewer>`;
+    } else if (mState.state === 'idle') {
+        html = `
+        <div onclick="toggleDownload(${id}, event)" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-colors">
+            <svg class="w-7 h-7 md:w-8 md:h-8 text-teal-500 mb-1 hover:scale-110 transition-transform drop-shadow-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span class="text-[9px] md:text-[10px] font-bold text-slate-700">${formatBytes(mState.total)}</span>
+            <span class="text-[7px] md:text-[8px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Klik Unduh</span>
+        </div>`;
+    } else if (mState.state === 'paused') {
+        html = `
+        <div onclick="toggleDownload(${id}, event)" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-colors">
+            <div class="relative flex items-center justify-center w-7 h-7 md:w-8 md:h-8 mb-1 opacity-60">
+                <svg class="w-full h-full text-slate-300" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
+                <svg class="absolute inset-0 w-full h-full text-amber-500" viewBox="0 0 36 36">
+                    <path stroke-dasharray="${mState.progress || 0}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center text-amber-600 bg-amber-50 rounded-full w-4 h-4 md:w-5 md:h-5 m-auto">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+                </div>
+            </div>
+            <span class="text-[6px] md:text-[7px] font-bold text-amber-600 uppercase tracking-wider text-center px-1">Di-pause</span>
+        </div>`;
+    } else if (mState.state === 'downloading') {
+        html = `
+        <div onclick="toggleDownload(${id}, event)" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-colors" title="Klik untuk Pause">
+            <div class="relative flex items-center justify-center w-7 h-7 md:w-8 md:h-8 mb-1">
+                <svg class="w-full h-full text-slate-300" viewBox="0 0 36 36"><path stroke-dasharray="100, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" /></svg>
+                <svg class="absolute inset-0 w-full h-full text-teal-500 transition-all duration-200" viewBox="0 0 36 36">
+                    <path stroke-dasharray="${mState.progress || 0}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" />
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="text-[7px] md:text-[8px] font-bold text-teal-700">${mState.progress || 0}%</span>
+                </div>
+            </div>
+            <span class="text-[6px] md:text-[7px] font-bold text-teal-600 tracking-widest text-center px-1">${formatBytes(mState.downloaded)} / ${formatBytes(mState.total)}</span>
+        </div>`;
+    }
+    
+    box.innerHTML = html;
+}
+
+// Fungsi Render Utama Grid
 window.loadTemplateLibrary = () => {
     const grid = document.getElementById('template-grid');
-    if (!grid) return; // Cegah error jika elemen HTML belum siap
-    
+    if (!grid) return;
     if (!window.library3DData || window.library3DData.length === 0) {
-        grid.innerHTML = '<div class="text-sm text-slate-500 col-span-full text-center py-4">Belum ada objek 3D di Library ScanYuk.</div>';
+        grid.innerHTML = '<div class="text-sm text-slate-500 col-span-full text-center py-4">Belum ada objek 3D.</div>';
         return;
     }
     render3DPacks(window.library3DData);
@@ -1405,7 +1543,6 @@ window.filter3DPack = () => {
 function render3DPacks(items) {
     const grid = document.getElementById('template-grid');
     if (!grid) return;
-    
     if (items.length === 0) {
         grid.innerHTML = '<p class="text-xs text-slate-400 col-span-full text-center py-4">Objek 3D tidak ditemukan.</p>';
         return;
@@ -1414,48 +1551,45 @@ function render3DPacks(items) {
     grid.innerHTML = items.map(item => {
         const isSelected = state.selectedTemplateId === item.id;
         
-        // PERBAIKAN: Gunakan item.path sesuai data dari MinIO di create-ar
         let rawUrl = item.path || item.model_url || item.file_path || '';
-        
-        // Sesuaikan format URL dengan standar MinIO ScanYuk
-        let validUrl = '';
-        if (rawUrl) {
-            validUrl = (rawUrl.startsWith('http') || rawUrl.startsWith('/')) ? rawUrl : '/' + rawUrl;
+        let validUrl = rawUrl ? ((rawUrl.startsWith('http') || rawUrl.startsWith('/')) ? rawUrl : '/' + rawUrl) : '';
+
+        // Setup State (Jika belum ada)
+        if (!window.modelStates[item.id]) {
+            window.modelStates[item.id] = { state: 'checking', total: 0, progress: 0, validUrl: validUrl, blobUrl: null };
+            checkFileSize(item.id, validUrl); // Lempar tugas cek ukuran di background
         }
-        
-        const previewHtml = item.thumbnail_url 
-            ? `<img src="${item.thumbnail_url}" class="w-full h-full object-cover">`
-            : (validUrl ? `<model-viewer src="${validUrl}" class="w-full h-full" disable-zoom disable-pan shadow-intensity="0" exposure="1" environment-image="neutral" auto-rotate></model-viewer>` : `<div class="text-[10px] text-slate-400 font-bold">File Error</div>`);
 
         return `
         <label class="flex flex-col bg-white border ${isSelected ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : 'border-slate-200'} rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden" onclick="select3DPack(${item.id})">
-            <div class="h-24 md:h-32 bg-slate-100 relative pointer-events-none flex items-center justify-center overflow-hidden">
-                ${previewHtml}
-            </div>
-            <div class="p-2 border-t border-slate-100 flex items-start gap-1">
+            
+            <div id="preview-box-${item.id}" class="h-24 md:h-32 bg-slate-100 relative flex items-center justify-center overflow-hidden">
+                </div>
+            
+            <div class="p-2 border-t border-slate-100 flex items-start gap-1 pointer-events-none">
                 <input type="radio" name="library3d" value="${item.id}" class="mt-0.5 text-teal-500 focus:ring-teal-500" ${isSelected ? 'checked' : ''}>
                 <span class="text-[10px] md:text-xs font-bold text-slate-700 leading-tight line-clamp-2">${item.name}</span>
             </div>
         </label>
         `;
     }).join('');
+
+    // Trigger UI update untuk menggambar icon Download / Progress bar di dalam kotak
+    items.forEach(item => updateItemPreview(item.id));
 }
 
 window.select3DPack = (id) => {
     const selectedItem = window.library3DData.find(item => item.id === id);
     if (!selectedItem) return;
 
-    // PERBAIKAN: Gunakan selectedItem.path
     let rawUrl = selectedItem.path || selectedItem.model_url || selectedItem.file_path || '';
-    let validUrl = '';
-    if (rawUrl) {
-        validUrl = (rawUrl.startsWith('http') || rawUrl.startsWith('/')) ? rawUrl : '/' + rawUrl;
-    }
+    let validUrl = rawUrl ? ((rawUrl.startsWith('http') || rawUrl.startsWith('/')) ? rawUrl : '/' + rawUrl) : '';
 
     state.selectedTemplateId = id;
     state.selectedTemplateName = selectedItem.name;
     state.selectedTemplateUrl = validUrl;
 
+    // Render ulang hanya gridnya (untuk memindah outline hijau radio button)
     render3DPacks(document.getElementById('search-3d').value 
         ? window.library3DData.filter(item => item.name.toLowerCase().includes(document.getElementById('search-3d').value.toLowerCase()))
         : window.library3DData
@@ -1463,10 +1597,9 @@ window.select3DPack = (id) => {
     checkStep2(); 
 };
 
-// PERBAIKAN TAB KOSONG DI AWAL:
-// Gunakan DOMContentLoaded agar kodingan menunggu halaman selesai dirender sempurna
+// Pastikan tab otomatis terbuka saat halaman dimuat
 document.addEventListener('DOMContentLoaded', () => {
     window.loadTemplateLibrary();
-    window.switchMode('template'); // Membuka tab 3D Pack otomatis
+    window.switchMode('template');
 });
 </script>
