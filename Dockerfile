@@ -16,7 +16,11 @@ RUN apt-get update && apt-get install -y \
     libpango1.0-dev \
     libjpeg-dev \
     libgif-dev \
-    librsvg2-dev
+    librsvg2-dev \
+    python3 \
+    python3-pip
+
+RUN pip3 install Pillow --break-system-packages
 
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
