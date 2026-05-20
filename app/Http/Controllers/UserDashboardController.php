@@ -71,15 +71,21 @@ class UserDashboardController extends Controller
                    " && export MPLCONFIGDIR=/tmp" . 
                    " && export XDG_CACHE_HOME=/tmp" . 
                    " && cd " . escapeshellarg($scriptDir) . 
-                   " && nohup python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " > " . escapeshellarg($logPath) . " 2>&1 &";
+                   " && python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " 2>&1";
         
-        // DEBUG: Tulis perintahnya ke log sebelum dieksekusi
-        file_put_contents($logPath, "COMMAND: " . $command . "\n\n", FILE_APPEND);
-        
+        // JALANKAN SECARA LANGSUNG (Synchronous)
+        // PHP akan diam menunggu hasil dari Python
         exec($command, $output, $return_var);
-        
-        // DEBUG: Tulis hasil exec ke log
-        file_put_contents($logPath, "RETURN_VAR: " . $return_var . "\n", FILE_APPEND);
+
+        // Jika return_var tidak 0, berarti ada error
+        if ($return_var !== 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Python Gagal',
+                'error_detail' => $output, // Ini akan menampilkan isi error asli!
+                'exit_code' => $return_var
+            ], 500);
+        }
 
         return response()->json(['success' => true, 'job_id' => $job->id]);
     }
