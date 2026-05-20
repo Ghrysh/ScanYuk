@@ -13,6 +13,8 @@ use App\Http\Controllers\Api\ScanController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\ArProjectController;
+use App\Http\Controllers\MarkerController;
+use App\Http\Controllers\TemplateController;
 
 Route::get('/', function () {
     return view('home');
@@ -147,7 +149,7 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/dashboard/marker/{project}', [\App\Http\Controllers\ArProjectController::class, 'destroy'])->name('user.marker.destroy');
 
         Route::get('/api/markers', [\App\Http\Controllers\MarkerController::class, 'index']);
-        Route::post('/api/markers', [\App\Http\Controllers\MarkerController::class, 'store']);
+        Route::post('/api/markers', [\App\Http\Controllers\MarkerController::class, 'upload']);
         Route::get('/api/marker/{id}', [\App\Http\Controllers\MarkerController::class, 'status']); 
         
         Route::get('/api/templates', [\App\Http\Controllers\TemplateController::class, 'index']);
