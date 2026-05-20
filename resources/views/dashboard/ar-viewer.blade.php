@@ -548,7 +548,7 @@
 
         <a-assets timeout="600000">
             @if($modelUrl)
-            <a-asset-item id="ar-model" src=""></a-asset-item>
+            <a-asset-item id="ar-model" src="" data-url="{{ $modelUrl ?? '' }}"></a-asset-item>
             @endif
         </a-assets>
 
@@ -834,12 +834,11 @@
         if (e.touches.length > 1) e.preventDefault();
     }, { passive: false });
 
-    // 1. GUNAKAN @json() AGAR AMAN
-    const modelUrl = {!! json_encode($modelUrl ?? '') !!};
+    // 1. Ambil URL dari atribut data yang kita pasang di HTML tadi
+    const modelAsset = document.getElementById('ar-model');
+    const modelUrl = modelAsset.getAttribute('data-url');
 
     document.addEventListener('DOMContentLoaded', async () => {
-        const modelAsset = document.getElementById('ar-model');
-        
         if (!modelUrl) {
             console.error("URL Model Kosong!");
             return;
@@ -849,7 +848,6 @@
             console.log("Mencoba memuat dari:", modelUrl);
             const response = await fetch(modelUrl);
             
-            // Jika response bukan 200 (OK), fetch akan tetap sukses tapi datanya halaman error
             if (!response.ok) {
                 throw new Error('Server merespon dengan status: ' + response.status);
             }
@@ -861,10 +859,14 @@
             console.log("Model berhasil dimuat via Blob URL ✓");
         } catch (error) {
             console.error("Gagal memuat model:", error);
-            // Tambahkan alert agar Anda tahu persis apa yang error di HP
             alert("Gagal memuat model 3D. Periksa Console!");
         }
     });
+
+    // Perbaikan typo kecil di kode Anda (tosuchmove -> touchmove)
+    document.addEventListener('touchmove', e => {
+        if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
     </script>
 </body>
 </html>
