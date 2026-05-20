@@ -571,7 +571,7 @@
                 position="0 0 0">
             </a-entity>
 
-            @if(!$isTemplate && $modelUrl)
+            @if($modelUrl)
             {{--
                 STRUKTUR: Pivot → Model
 
