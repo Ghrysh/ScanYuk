@@ -835,7 +835,7 @@
     }, { passive: false });
 
     // 1. GUNAKAN @json() AGAR AMAN
-    const modelUrl = @json($modelUrl ?? ''); 
+    const modelUrl = {!! json_encode($modelUrl ?? '') !!};
 
     document.addEventListener('DOMContentLoaded', async () => {
         const modelAsset = document.getElementById('ar-model');
