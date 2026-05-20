@@ -1414,13 +1414,13 @@ function render3DPacks(items) {
     grid.innerHTML = items.map(item => {
         const isSelected = state.selectedTemplateId === item.id;
         
-        // PERBAIKAN BUGS UNDEFINED: Baca dari model_url ATAU file_path
-        let rawUrl = item.model_url || item.file_path || '';
+        // PERBAIKAN: Gunakan item.path sesuai data dari MinIO di create-ar
+        let rawUrl = item.path || item.model_url || item.file_path || '';
         
-        // Pastikan format URL valid agar tidak 404
+        // Sesuaikan format URL dengan standar MinIO ScanYuk
         let validUrl = '';
         if (rawUrl) {
-            validUrl = (rawUrl.startsWith('http') || rawUrl.startsWith('/')) ? rawUrl : '/storage/' + rawUrl;
+            validUrl = (rawUrl.startsWith('http') || rawUrl.startsWith('/')) ? rawUrl : '/' + rawUrl;
         }
         
         const previewHtml = item.thumbnail_url 
@@ -1445,9 +1445,12 @@ window.select3DPack = (id) => {
     const selectedItem = window.library3DData.find(item => item.id === id);
     if (!selectedItem) return;
 
-    // Ambil URL yang valid untuk dikirim ke Step 3 (Preview)
-    let rawUrl = selectedItem.model_url || selectedItem.file_path || '';
-    let validUrl = (rawUrl.startsWith('http') || rawUrl.startsWith('/')) ? rawUrl : '/storage/' + rawUrl;
+    // PERBAIKAN: Gunakan selectedItem.path
+    let rawUrl = selectedItem.path || selectedItem.model_url || selectedItem.file_path || '';
+    let validUrl = '';
+    if (rawUrl) {
+        validUrl = (rawUrl.startsWith('http') || rawUrl.startsWith('/')) ? rawUrl : '/' + rawUrl;
+    }
 
     state.selectedTemplateId = id;
     state.selectedTemplateName = selectedItem.name;
