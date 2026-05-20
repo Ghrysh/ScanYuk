@@ -168,9 +168,9 @@ class UserDashboardController extends Controller
         $scriptPath = $scriptDir . '/remove_bg.py';
         $hfHome = storage_path('app/public/ai_models');
 
-        $command = "export U2NET_HOME=" . escapeshellarg($hfHome) . " && export HF_HOME=" . escapeshellarg($hfHome) . " && cd " . escapeshellarg($scriptDir) . " && python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath);
+        $command = "export U2NET_HOME=" . escapeshellarg($hfHome) . " && export HF_HOME=" . escapeshellarg($hfHome) . " && cd " . escapeshellarg($scriptDir) . " && python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " 2>&1";
         
-        exec($command);
+        exec($command, $output, $return_var);
 
         if (file_exists($fullOutputPath)) {
             return response()->json([
@@ -179,6 +179,11 @@ class UserDashboardController extends Controller
             ]);
         }
 
-        return response()->json(['success' => false, 'message' => 'Gagal menghapus background'], 500);
+        return response()->json([
+            'success' => false, 
+            'message' => 'Gagal menghapus background',
+            'python_log' => $output,
+            'exit_code' => $return_var
+        ], 500);
     }
 }
