@@ -156,6 +156,8 @@ Route::middleware(['auth'])->group(function () {
         
         Route::post('/api/blend-upload', [\App\Http\Controllers\ArProjectController::class, 'uploadBlend']);
         Route::get('/api/blend-status/{id}', [\App\Http\Controllers\ArProjectController::class, 'checkBlendStatus']);
+
+        Route::get('/dashboard/ar/result/{project}', [App\Http\Controllers\ArProjectController::class, 'result'])->name('ar.result');
     });
 
     Route::post('/checkout', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
