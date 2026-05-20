@@ -546,12 +546,6 @@
         vr-mode-ui="enabled: false"
         device-orientation-permission-ui="enabled: false">
 
-        <a-assets timeout="600000">
-            @if($modelUrl)
-            <a-asset-item id="ar-model" src="" data-url="{{ $modelUrl ?? '' }}"></a-asset-item>
-            @endif
-        </a-assets>
-
         <a-camera position="0 0 0" look-controls="enabled: false; magicWindowTrackingEnabled: false" near="0.001" far="1000"></a-camera>
 
         {{-- ar-world-lock dipasang di sini: mendengar targetFound dari entity ini --}}
@@ -602,7 +596,6 @@
 
                 <a-entity
                     id="model-container"
-                    gltf-model="#ar-model"
                     @if($orbitActive)
                     position="{{ floatval($orbitRadius) }} 0 0"
                     @else
@@ -839,60 +832,42 @@
         if (e.touches.length > 1) e.preventDefault();
     }, { passive: false });
 
-    const modelAsset = document.getElementById('ar-model');
     const modelUrl = {!! json_encode($modelUrl ?? '') !!};
 
     document.addEventListener('DOMContentLoaded', async () => {
         if (!modelUrl) return;
 
-        // 1. PENTING: Copot dulu atribut gltf-model dari entity
-        // Ini mencegah A-Frame nyangkut (stuck) karena mencoba me-load asset kosong di awal
-        if (modelEl) {
-            modelEl.removeAttribute('gltf-model');
-        }
+        const modelEl = document.getElementById('model-container');
+        if (!modelEl) return;
 
+        // CEK APAKAH FILE DARI MINIO
         const isMinio = modelUrl.includes('minio');
 
         if (isMinio) {
+            // LOGIKA MINIO
             try {
                 console.log("Memuat file via MinIO Proxy (Blob)...");
                 const response = await fetch(modelUrl);
-                if (!response.ok) throw new Error('Status HTTP: ' + response.status);
+                if (!response.ok) throw new Error('Status: ' + response.status);
                 
                 const blob = await response.blob();
                 console.log(`Blob diterima: ${blob.size} bytes, tipe: ${blob.type}`);
 
-                // 2. Proteksi tambahan: Pastikan ukurannya wajar. 
-                // Jika ukurannya sangat kecil (< 1000 bytes) atau berwujud HTML, 
-                // berarti yang didownload adalah halaman Error Proxy, bukan file .glb!
-                if (blob.size < 1000 || blob.type.includes('text/html')) {
-                    throw new Error("File tidak valid (kemungkinan error proxy MinIO/CORS).");
-                }
-
                 const blobUrl = URL.createObjectURL(blob);
                 
-                // 3. Gunakan setTimeout kecil untuk memberi waktu A-Frame membersihkan komponen lamanya
-                // Setelah itu, tembakkan URL Blob sebagai model baru
-                setTimeout(() => {
-                    if (modelEl) {
-                        modelEl.setAttribute('gltf-model', blobUrl);
-                        console.log("URL Blob berhasil dipasang ke komponen gltf-model ✓");
-                    }
-                }, 100);
+                // Inject langsung file blob ke entity model
+                modelEl.setAttribute('gltf-model', blobUrl);
+                console.log("Model MinIO berhasil dirender ✓");
 
             } catch (error) {
                 console.error("Gagal memuat MinIO:", error);
-                showError('Gagal Memuat Model', 'File 3D MinIO gagal diunduh atau format tidak sesuai.');
+                showError('Gagal Memuat Model', 'File 3D MinIO gagal diunduh.');
             }
         } else {
-            // LOGIKA STANDAR (Lokal)
+            // LOGIKA STANDAR (Untuk file lokal)
             console.log("Memuat file lokal via A-Frame...");
-            setTimeout(() => {
-                if (modelEl) {
-                    modelEl.setAttribute('gltf-model', modelUrl);
-                    console.log("URL Lokal berhasil dipasang ✓");
-                }
-            }, 100);
+            modelEl.setAttribute('gltf-model', modelUrl);
+            console.log("Model lokal berhasil dirender ✓");
         }
     });
     </script>
