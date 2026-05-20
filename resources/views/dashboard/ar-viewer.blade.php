@@ -648,7 +648,7 @@
         <button class="btn-ui primary" onclick="location.reload()">↺ Reset AR</button>
     </div>
 
-    <script>
+<script>
     // ── Config dari server ────────────────────────────────────────────────────
     const AR = {
         orbitActive: {{ $orbitActive ? 'true' : 'false' }},
@@ -687,9 +687,9 @@
         setTimeout(() => { loadingEl.style.display = 'none'; }, 500);
     }
 
-    // Timeout 30 detik
+    // Timeout loading engine
     const loadTimeout = setTimeout(() => {
-        if (!arReady) showError('Gagal Memuat', 'AR engine tidak merespons. Pastikan koneksi stabil dan browser mendukung kamera.');
+        if (!arReady) showError('Gagal Memuat', 'AR engine tidak merespons. Pastikan browser mendukung kamera.');
     }, 600000);
 
     // ── MindAR ready ──────────────────────────────────────────────────────────
@@ -704,19 +704,28 @@
         }
     });
 
-    // ── Model loaded ──────────────────────────────────────────────────────────
+    // Helper: set ulang animation-mixer agar clip mulai dari awal
+    function _restartMixer() {
+        if (!modelEl) return;
+        modelEl.removeAttribute('animation-mixer');
+        requestAnimationFrame(() => {
+            modelEl.setAttribute('animation-mixer',
+                `clip: ${AR.animClip || '*'}; loop: repeat; crossFadeDuration: 0.3; timeScale: 1`
+            );
+        });
+    }
+
+    // ── Model loaded Event ────────────────────────────────────────────────────
     if (modelEl) {
         modelEl.addEventListener('model-loaded', () => {
             modelLoaded = true;
-            console.log('[AR] Model loaded ✓');
+            console.log('[AR] Event model-loaded resmi terpanggil ✓');
 
-            // Populate clip selector dari animasi GLB
             try {
                 const obj3d  = modelEl.getObject3D('mesh');
                 const clips  = obj3d?.animations || [];
                 if (clips.length > 1) {
-                    clipSelect.innerHTML =
-                        '<option value="*">Semua Animasi</option>' +
+                    clipSelect.innerHTML = '<option value="*">Semua Animasi</option>' +
                         clips.map(c => `<option value="${c.name}"${AR.animClip === c.name ? ' selected' : ''}>${c.name}</option>`).join('');
                     clipWrap.classList.add('show');
                 }
@@ -728,146 +737,108 @@
             }
 
             if (AR.orbitActive) orbitBadge.classList.add('visible');
-
-            // ── Paksa animation-mixer aktif sejak awal ─────────────────────
-            // MindAR menyembunyikan entity sebelum marker ditemukan, yang
-            // menyebabkan animation-mixer ter-pause saat init. Kita set ulang
-            // atribut agar mixer tahu clip yang harus dimainkan.
-            // Restart sesungguhnya terjadi di targetFound (lihat bawah).
             _restartMixer();
         });
 
-        modelEl.addEventListener('model-error', () => {
-            showError('Gagal Memuat Model', 'File 3D tidak dapat dimuat. Coba upload ulang model.');
+        modelEl.addEventListener('model-error', (e) => {
+            console.error('[AR] Error dari komponen gltf-model:', e);
         });
     } else if (!AR.hasModel) {
         modelLoaded = true;
     }
 
-    // Helper: set ulang animation-mixer agar clip mulai dari awal
-    function _restartMixer() {
-        if (!modelEl) return;
-        // Hapus dulu atribut → tambah lagi → mixer reset & mulai play
-        modelEl.removeAttribute('animation-mixer');
-        requestAnimationFrame(() => {
-            modelEl.setAttribute('animation-mixer',
-                `clip: ${AR.animClip || '*'}; loop: repeat; crossFadeDuration: 0.3; timeScale: 1`
-            );
-        });
-    }
-
-    // ── AR Error ──────────────────────────────────────────────────────────────
-    sceneEl.addEventListener('arError', () => {
-        const isHttps = location.protocol === 'https:';
-        showError(
-            'Kamera Tidak Bisa Diakses',
-            isHttps ? 'Izinkan akses kamera di browser, lalu coba lagi.'
-                    : 'AR membutuhkan HTTPS. Akses via ngrok atau domain HTTPS.'
-        );
-    });
-
     // ── Marker found / lost ───────────────────────────────────────────────────
     const targetEl = document.querySelector('[mindar-image-target]');
-    targetEl.addEventListener('targetFound', () => {
-        if (isWorldLocked) return; // sudah locked, abaikan
-        scanningEl.classList.remove('visible');
-        foundBadge.classList.add('visible');
-        if (AR.orbitActive) orbitBadge.classList.add('visible');
-
-        // MindAR me-resume visibility entity di sini, tapi animation-mixer
-        // tidak otomatis resume. Restart mixer secara eksplisit.
-        _restartMixer();
-    });
-    targetEl.addEventListener('targetLost', () => {
-        if (isWorldLocked) return; // sudah locked, jangan tampilkan scanning lagi
-        foundBadge.classList.remove('visible');
-        orbitBadge.classList.remove('visible');
-        scanningEl.classList.add('visible');
-    });
+    if(targetEl) {
+        targetEl.addEventListener('targetFound', () => {
+            if (isWorldLocked) return;
+            scanningEl.classList.remove('visible');
+            foundBadge.classList.add('visible');
+            if (AR.orbitActive) orbitBadge.classList.add('visible');
+            _restartMixer();
+        });
+        targetEl.addEventListener('targetLost', () => {
+            if (isWorldLocked) return;
+            foundBadge.classList.remove('visible');
+            orbitBadge.classList.remove('visible');
+            scanningEl.classList.add('visible');
+        });
+    }
 
     // ── World lock berhasil ───────────────────────────────────────────────────
     sceneEl.addEventListener('ar-world-locked', () => {
         isWorldLocked = true;
-
         foundBadge.classList.remove('visible');
         scanningEl.classList.remove('visible');
         worldlockBadge.classList.add('visible');
-
         document.getElementById('btn-rescan').style.display = 'flex';
         document.getElementById('btn-recalibrate').style.display = 'flex';
-
         worldlockHint.classList.add('visible');
         setTimeout(() => worldlockHint.classList.remove('visible'), 4000);
-
-        // Pastikan animasi tetap jalan setelah world lock (reparent entity)
         _restartMixer();
-
-        console.log('[AR] World lock UI updated ✓');
     });
 
-    // ── Kalibrasi ulang gyro (reset baseline arah pandang) ───────────────────
     window.arRecalibrateGyro = () => {
         const camEl = sceneEl.querySelector('a-camera');
-        if (!camEl) return;
-        const gyroComp = camEl.components['ar-gyro-camera'];
-        if (gyroComp) {
-            gyroComp._qBase = null; // reset baseline → orientasi sekarang jadi titik nol baru
+        if (camEl && camEl.components['ar-gyro-camera']) {
+            camEl.components['ar-gyro-camera']._qBase = null;
         }
     };
 
-    // ── Switch clip ───────────────────────────────────────────────────────────
     function switchClip(clip) {
         if (!modelEl) return;
         AR.animClip = clip;
         _restartMixer();
     }
 
-    // Prevent pinch zoom di mobile
-    document.addEventListener('tosuchmove', e => {
-        if (e.touches.length > 1) e.preventDefault();
-    }, { passive: false });
-
-    // Prevent pinch zoom di mobile
     document.addEventListener('touchmove', e => {
         if (e.touches.length > 1) e.preventDefault();
     }, { passive: false });
 
-    const modelUrl = {!! json_encode($modelUrl ?? '') !!};
+    // ── LOGIKA PEMUATAN FILE (LOKAL / MINIO) ──────────────────────────────────
+    const modelUrlData = {!! json_encode($modelUrl ?? '') !!};
 
     document.addEventListener('DOMContentLoaded', async () => {
-        if (!modelUrl) return;
+        if (!modelUrlData || !modelEl) return;
 
-        const modelEl = document.getElementById('model-container');
-        if (!modelEl) return;
-
-        // CEK APAKAH FILE DARI MINIO
-        const isMinio = modelUrl.includes('minio');
+        console.log("=== Memulai Pemuatan Model 3D ===", modelUrlData);
+        const isMinio = modelUrlData.toLowerCase().includes('minio');
 
         if (isMinio) {
-            // LOGIKA MINIO
             try {
-                console.log("Memuat file via MinIO Proxy (Blob)...");
-                const response = await fetch(modelUrl);
-                if (!response.ok) throw new Error('Status: ' + response.status);
+                console.log("-> File terdeteksi dari MinIO. Memulai fetch Blob...");
+                const response = await fetch(modelUrlData);
+                if (!response.ok) throw new Error('HTTP ' + response.status);
                 
                 const blob = await response.blob();
-                console.log(`Blob diterima: ${blob.size} bytes, tipe: ${blob.type}`);
+                console.log("-> Blob diterima, ukuran:", blob.size, "bytes");
 
                 const blobUrl = URL.createObjectURL(blob);
                 
-                // Inject langsung file blob ke entity model
+                // Inject model ke komponen
                 modelEl.setAttribute('gltf-model', blobUrl);
-                console.log("Model MinIO berhasil dirender ✓");
+                console.log("-> Atribut gltf-model berhasil dipasang dengan URL Blob ✓");
+
+                // FALLBACK: Jika A-Frame nge-bug dan tidak memancarkan event 'model-loaded'
+                // Paksa loading screen tertutup dalam 2 detik.
+                setTimeout(() => {
+                    if (!modelLoaded) {
+                        console.warn("-> FALLBACK UI: Memaksa kamera muncul karena model-loaded telat/gagal terpicu.");
+                        modelLoaded = true;
+                        if (arReady) {
+                            hideLoading();
+                            scanningEl.classList.add('visible');
+                        }
+                    }
+                }, 2000);
 
             } catch (error) {
                 console.error("Gagal memuat MinIO:", error);
                 showError('Gagal Memuat Model', 'File 3D MinIO gagal diunduh.');
             }
         } else {
-            // LOGIKA STANDAR (Untuk file lokal)
-            console.log("Memuat file lokal via A-Frame...");
-            modelEl.setAttribute('gltf-model', modelUrl);
-            console.log("Model lokal berhasil dirender ✓");
+            console.log("-> File lokal terdeteksi. Memuat via URL standar...");
+            modelEl.setAttribute('gltf-model', modelUrlData);
         }
     });
     </script>
