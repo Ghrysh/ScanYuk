@@ -150,7 +150,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/api/markers', [\App\Http\Controllers\MarkerController::class, 'index']);
         Route::post('/api/markers', [\App\Http\Controllers\MarkerController::class, 'upload']);
-        Route::get('/api/marker/{id}', [\App\Http\Controllers\MarkerController::class, 'status']); 
+        Route::get('/api/marker/{marker}', [\App\Http\Controllers\MarkerController::class, 'status']);
         
         Route::get('/api/templates', [\App\Http\Controllers\TemplateController::class, 'index']);
         

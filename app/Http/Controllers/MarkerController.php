@@ -46,26 +46,23 @@ class MarkerController extends Controller
 
     /**
      * Cek status marker (digunakan polling dari frontend)
-     *
-     * GET /api/marker/{id}
-     * Returns: JSON { id, status, image_url, mind_url, error_message }
      */
     public function status(Marker $marker): JsonResponse
     {
-        $marker = Marker::findOrFail($id);
+        // 1. Hapus baris Marker::findOrFail($id) karena $marker sudah terisi otomatis oleh Laravel
         
-        $progress = $marker->status === 'ready' ? 100 : 50; 
-        $eta = $marker->status === 'ready' ? 0 : 30;
+        // 2. Logika progress (bisa disesuaikan nanti)
+        $progress = $marker->status === Marker::STATUS_READY ? 100 : 50; 
+        $eta = $marker->status === Marker::STATUS_READY ? 0 : 30;
 
         return response()->json([
             'id'            => $marker->id,
-            'status'        => $marker->status,
+            'status'        => $marker->status, // kunci status hanya perlu satu
             'image_url'     => $marker->image_url,
             'mind_url'      => $marker->mind_url,
             'error_message' => $marker->error_message,
-            'status' => $marker->status,
-            'progress' => $progress,
-            'eta' => $eta,
+            'progress'      => $progress,
+            'eta'           => $eta,
         ]);
     }
 
