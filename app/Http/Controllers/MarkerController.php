@@ -28,7 +28,7 @@ class MarkerController extends Controller
 
         // Buat record marker dengan status awal processing
         $marker = Marker::create([
-            'image_path'    => 'public/' . $path,
+            'image_path'    => $path,
             'status'        => Marker::STATUS_PROCESSING,
             'error_message' => null,
         ]);

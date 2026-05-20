@@ -67,7 +67,7 @@ class ConvertBlenderJob implements ShouldQueue
 
         if ($success) {
             $this->project->update([
-                'model_path' => 'public/models/' . $glbFileName,
+                'model_path' => 'models/' . $glbFileName,
                 'status'     => 'ready',
             ]);
             Storage::disk('local')->delete($this->tmpPath);

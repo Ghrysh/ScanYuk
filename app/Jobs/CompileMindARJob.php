@@ -87,7 +87,7 @@ class CompileMindARJob implements ShouldQueue
             // 5. Update Database
             $this->marker->update([
                 'status'        => Marker::STATUS_READY,
-                'mind_path'     => 'public/' . $mindFilename,
+                'mind_path'     => $mindFilename,
                 'error_message' => null,
             ]);
 
