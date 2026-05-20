@@ -1381,21 +1381,21 @@ window.submitGenerate = () => {
 };
 
 // ─── LIBRARY 3D PACK (Pengganti Template) ────────────────────────────────────
-window.library3DData = [];
 
-// Harus pakai window. agar bisa dipanggil oleh HTML onclick
-window.loadTemplateLibrary = async () => {
+// Ambil data langsung dari Controller (Bypass API Error 500)
+window.library3DData = @json($library3dList ?? []);
+
+window.loadTemplateLibrary = () => {
     const grid = document.getElementById('template-grid');
-    grid.innerHTML = '<div class="text-sm text-slate-500 col-span-full text-center py-4">Memuat Library 3D ScanYuk...</div>';
     
-    try {
-        const res = await fetch('/api/templates');
-        window.library3DData = await res.json();
-        render3DPacks(window.library3DData);
-    } catch (e) {
-        console.error(e);
-        grid.innerHTML = '<div class="text-red-500 text-xs col-span-full text-center">Gagal memuat library 3D.</div>';
+    // Jika data kosong
+    if (!window.library3DData || window.library3DData.length === 0) {
+        grid.innerHTML = '<div class="text-sm text-slate-500 col-span-full text-center py-4">Belum ada objek 3D di Library ScanYuk.</div>';
+        return;
     }
+
+    // Langsung render tanpa perlu menunggu fetch loading
+    render3DPacks(window.library3DData);
 };
 
 window.filter3DPack = () => {
