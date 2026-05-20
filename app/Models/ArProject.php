@@ -55,7 +55,7 @@ class ArProject extends Model
      */
     public function template(): BelongsTo
     {
-        return $this->belongsTo(Template::class);
+        return $this->belongsTo(ArAsset::class, 'template_id');
     }
 
     /**
@@ -64,7 +64,8 @@ class ArProject extends Model
     public function getModelUrlAttribute(): string
     {
         if ($this->type === 'template' && $this->template) {
-            return Storage::url($this->template->model_path);
+            // ArAsset menggunakan 'file_path', bukan 'model_path'
+            return Storage::url($this->template->file_path);
         }
         return $this->model_path ? Storage::url($this->model_path) : '';
     }

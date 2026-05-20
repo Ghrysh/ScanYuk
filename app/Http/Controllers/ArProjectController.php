@@ -142,7 +142,8 @@ class ArProjectController extends Controller
         // Buat record Project berdasarkan tipe konten
         if ($request->type === 'template') {
             $request->validate([
-                'template_id' => ['required', 'exists:templates,id'],
+                // UBAH VALIDASI DI BAWAH INI MENJADI ar_assets
+                'template_id' => ['required', 'exists:ar_assets,id'],
                 'config'      => ['nullable', 'array'],
             ]);
             $data['template_id'] = $request->template_id;
