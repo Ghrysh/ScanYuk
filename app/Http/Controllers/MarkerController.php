@@ -52,12 +52,20 @@ class MarkerController extends Controller
      */
     public function status(Marker $marker): JsonResponse
     {
+        $marker = Marker::findOrFail($id);
+        
+        $progress = $marker->status === 'ready' ? 100 : 50; 
+        $eta = $marker->status === 'ready' ? 0 : 30;
+
         return response()->json([
             'id'            => $marker->id,
             'status'        => $marker->status,
             'image_url'     => $marker->image_url,
             'mind_url'      => $marker->mind_url,
             'error_message' => $marker->error_message,
+            'status' => $marker->status,
+            'progress' => $progress,
+            'eta' => $eta,
         ]);
     }
 

@@ -115,10 +115,14 @@
                             <div id="mstatus-uploading" class="d-none mb-3 text-sm font-semibold text-slate-600 animate-pulse">Mengupload...</div>
 
                             <div id="mstatus-processing" class="d-none mb-3">
-                                <div class="mb-2"><span class="badge-status processing"><span class="dot"></span> Memproses marker...</span></div>
-                                <div class="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                                    <div class="prog-bar indeterminate bg-gradient-to-r from-amber-400 to-amber-500 h-full rounded-full"></div>
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <span class="badge-status processing"><span class="dot"></span> Memproses marker...</span>
+                                    <span id="prog-text" class="text-[10px] font-bold text-slate-600">0%</span>
                                 </div>
+                                <div class="prog-wrap">
+                                    <div class="prog-bar bg-amber-500 h-full transition-all duration-500" id="marker-progbar" style="width:0%"></div>
+                                </div>
+                                <p id="eta-text" class="small text-muted mt-2">Estimasi: memuat...</p>
                             </div>
 
                             <div id="mstatus-ready" class="d-none mb-3">
@@ -869,6 +873,17 @@ function startMarkerPolling() {
         try {
             const res  = await fetch(`/api/marker/${state.markerId}`);
             const data = await res.json();
+            
+            if (data.progress) {
+                const bar = document.getElementById('marker-progbar');
+                const txt = document.getElementById('prog-text');
+                const eta = document.getElementById('eta-text');
+                
+                bar.style.width = data.progress + '%';
+                txt.textContent = data.progress + '%';
+                if(data.eta) eta.textContent = 'Estimasi: ' + data.eta + ' detik lagi';
+            }
+
             if (data.status === 'ready') {
                 clearInterval(state.markerPollingTimer);
                 document.getElementById('mstatus-processing').classList.add('d-none');

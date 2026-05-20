@@ -56,7 +56,6 @@ class CompileMindARJob implements ShouldQueue
             Storage::disk('public')->makeDirectory('targets');
 
             // 2. Definisi Command menggunakan Symfony Process
-            // Ini lebih aman dan efisien daripada menggunakan exec()
             $scriptPath = base_path('scripts/compile-mind-ar.mjs');
             
             $process = new Process([
@@ -65,6 +64,8 @@ class CompileMindARJob implements ShouldQueue
                 $imagePath, 
                 $mindPath
             ]);
+            
+            $process->setWorkingDirectory(base_path());
 
             // Set timeout proses agar sinkron dengan timeout job
             $process->setTimeout($this->timeout);
