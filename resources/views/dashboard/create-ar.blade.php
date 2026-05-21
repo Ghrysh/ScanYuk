@@ -87,6 +87,16 @@
                 <input type="hidden" name="selected_3d_id" :value="selectedLibrary3d">
                 <input type="hidden" name="bgm_path" :value="isCustomBgm ? '' : (selectedMusic ? '/minio-proxy/bg_sounds/' + selectedMusic : '')">
 
+                {{-- Transform & Anim Hidden Inputs --}}
+                <input type="hidden" name="scale" id="form-scale" value="1">
+                <input type="hidden" name="position" id="form-position" value="[0,0,0]">
+                <input type="hidden" name="rotation" id="form-rotation" value="[0,0,0]">
+                <input type="hidden" name="orbit_active" id="form-orbit-active" value="0">
+                <input type="hidden" name="orbit_speed" id="form-orbit-speed" value="0.5">
+                <input type="hidden" name="orbit_radius" id="form-orbit-radius" value="1.5">
+                <input type="hidden" name="orbit_dir" id="form-orbit-dir" value="1">
+                <input type="hidden" name="anim_clip" id="form-anim-clip" value="*">
+
                 <div x-show="uploadError" style="display: none;" class="p-4 bg-red-50 border border-red-200 rounded-xl" x-transition>
                     <div class="flex items-center gap-2 text-red-600 font-bold mb-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
@@ -246,6 +256,113 @@
                                     </label>
                                 </template>
                             </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ===== TAMBAHAN: PREVIEW & POSISI ===== --}}
+                <div x-show="getPreviewModelUrl() !== null" style="display: none;" class="pt-6 mt-6 border-t border-slate-200" x-transition>
+                    <label class="block text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                        Preview 3D & Atur Posisi (Opsional)
+                    </label>
+                    <p class="text-xs sm:text-sm text-slate-500 mb-4">Geser, putar, dan atur ukuran model langsung di preview untuk menentukan bagaimana objek ini akan tampil.</p>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                        {{-- Preview canvas --}}
+                        <div class="lg:col-span-7">
+                            <div class="w-full bg-slate-900 rounded-2xl overflow-hidden relative shadow-inner border border-slate-800" style="height: 350px;">
+                                <canvas id="canvas-3d" class="w-full h-full block"></canvas>
+                                <div class="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-black/60 text-white/80 text-[10px] px-3 py-1 rounded-full pointer-events-none backdrop-blur-sm">
+                                    Drag rotate &nbsp;&middot;&nbsp; Scroll zoom
+                                </div>
+                                <div id="canvas-loading" class="absolute inset-0 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm" style="display: none;">
+                                    <div class="text-center">
+                                        <div class="inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                                        <p class="text-xs text-slate-300">Memuat model 3D...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {{-- Scale slider --}}
+                            <div class="mt-4 bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <h6 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ukuran (Scale)</h6>
+                                <div class="flex items-center gap-3">
+                                    <input type="range" class="w-full accent-teal-500" id="scale-slider" min="0.05" max="5" step="0.05" value="1">
+                                    <span id="scale-display" class="min-w-[40px] text-right text-sm font-bold text-teal-600">1.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {{-- Controls --}}
+                        <div class="lg:col-span-5 space-y-4">
+                            {{-- Position --}}
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <h6 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Posisi (Position)</h6>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[10px] font-bold text-center rounded bg-red-100 text-red-600 py-0.5">X</span>
+                                        <input type="number" id="pos-x" value="0" step="0.1" oninput="window.applyTransformFromForm()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[10px] font-bold text-center rounded bg-green-100 text-green-600 py-0.5">Y</span>
+                                        <input type="number" id="pos-y" value="0" step="0.1" oninput="window.applyTransformFromForm()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[10px] font-bold text-center rounded bg-blue-100 text-blue-600 py-0.5">Z</span>
+                                        <input type="number" id="pos-z" value="0" step="0.1" oninput="window.applyTransformFromForm()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Rotation --}}
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+                                <h6 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Rotasi (Degrees)</h6>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[10px] font-bold text-center rounded bg-red-100 text-red-600 py-0.5">X</span>
+                                        <input type="number" id="rot-x" value="0" step="1" oninput="window.applyTransformFromForm()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[10px] font-bold text-center rounded bg-green-100 text-green-600 py-0.5">Y</span>
+                                        <input type="number" id="rot-y" value="0" step="1" oninput="window.applyTransformFromForm()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <span class="text-[10px] font-bold text-center rounded bg-blue-100 text-blue-600 py-0.5">Z</span>
+                                        <input type="number" id="rot-z" value="0" step="1" oninput="window.applyTransformFromForm()" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Orbit & Anim Panel --}}
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm" id="orbit-panel">
+                                <h6 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Animasi Berputar (Orbit)</h6>
+                                <div class="flex items-center gap-2 mb-3">
+                                    <button type="button" id="btn-orbit" class="flex-1 bg-slate-50 border border-slate-300 text-slate-700 text-xs font-bold py-1.5 rounded-lg shadow-sm hover:bg-slate-100" onclick="window.toggleOrbit()">
+                                        <i class="bi bi-play-circle" id="orbit-icon"></i> Mulai Berputar
+                                    </button>
+                                    <button type="button" class="bg-slate-50 border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg shadow-sm hover:bg-slate-100" onclick="window.toggleOrbitDir()" title="Balik arah">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="orbit-dir-icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                    </button>
+                                </div>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="text-[10px] text-slate-500 min-w-[35px]">Speed</span>
+                                    <input type="range" class="w-full accent-teal-500" id="orbit-speed" min="0.1" max="3" step="0.1" value="0.5">
+                                    <span id="orbit-speed-val" class="text-xs font-bold text-teal-600 min-w-[25px] text-right">0.5×</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[10px] text-slate-500 min-w-[35px]">Radius</span>
+                                    <input type="range" class="w-full accent-teal-500" id="orbit-radius" min="0.0" max="4" step="0.1" value="0.0">
+                                    <span id="orbit-radius-val" class="text-xs font-bold text-teal-600 min-w-[25px] text-right">0.0</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm" id="anim-clip-panel" style="display:none">
+                                <h6 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Animasi Bawaan Objek</h6>
+                                <select id="anim-clip-select" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-teal-500 outline-none" onchange="window.switchAnimClip(this.value)"></select>
+                            </div>
+
+                            <button type="button" class="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 border border-slate-200 bg-white rounded-xl shadow-sm transition" onclick="window.resetTransform()">Reset Posisi & Skala</button>
                         </div>
                     </div>
                 </div>
@@ -1062,20 +1179,36 @@
                     
                     this.library3dList.forEach(item => {
                         this.modelStates[item.id] = { 
-                            state: 'idle', 
-                            progress: 0, 
-                            url: null, 
-                            path: item.path,
-                            downloadedBytes: 0,
-                            chunks: [],
-                            totalBytes: 0,
-                            abortController: null
+                            state: 'idle', progress: 0, url: null, path: item.path,
+                            downloadedBytes: 0, chunks: [], totalBytes: 0, abortController: null
                         };
                     });
 
                     setTimeout(() => {
                         this.sortAndStartQueue();
                     }, 1000);
+
+                    // TAMBAHAN: Otomatis render 3D ketika URL model tersedia
+                    this.$watch('getPreviewModelUrl()', (url) => {
+                        if (url) {
+                            setTimeout(() => {
+                                if (window.loadModelIntoPreview) window.loadModelIntoPreview(url);
+                            }, 300);
+                        }
+                    });
+                },
+
+                getPreviewModelUrl() {
+                    if (this.arType === '2d' && this.$store.ai3d && this.$store.ai3d.resultUrl) {
+                        return this.$store.ai3d.resultUrl; // Hasil konversi AI
+                    } else if (this.arType === '3d') {
+                        if (this.upload3dName && this.local3dUrl) return this.local3dUrl; // Upload mandiri
+                        if (this.selectedLibrary3d) { // Dari library
+                            let state = this.modelStates[this.selectedLibrary3d];
+                            return (state && state.state === 'loaded') ? state.url : this.library3dList.find(i => i.id == this.selectedLibrary3d)?.path;
+                        }
+                    }
+                    return null;
                 },
 
                 mainTab: 'custom', arType: '2d', title: '',
@@ -1812,6 +1945,185 @@
         <span x-text="$store.toast.type === 'error' ? '⚠️' : '✅'"></span>
         <span x-text="$store.toast.message"></span>
     </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader }    from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader }   from 'three/addons/loaders/DRACOLoader.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        window.threeState = { scale: 1.0, position: [0, 0, 0], rotation: [0, 0, 0] };
+        window.orbitState = { active: false, speed: 0.5, dir: 1, radius: 0.0, angle: 0 };
+
+        let renderer, scene, camera, orbitControls, mixer, clock, animFrame;
+        let previewModel = null, pivotGroup = null, allClips = [], activeAction = null;  
+
+        function initThree() {
+            const canvas = document.getElementById('canvas-3d');
+            if(!canvas) return;
+            const wrap = canvas.parentElement;
+            const W = wrap.offsetWidth || 600, H = wrap.offsetHeight || 350;
+
+            if (renderer) { renderer.setSize(W, H); camera.aspect = W / H; camera.updateProjectionMatrix(); return; }
+
+            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer.setSize(W, H); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.LinearToneMapping;
+
+            scene = new THREE.Scene(); scene.background = new THREE.Color(0x0f172a); 
+            camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 500); camera.position.set(0, 1.5, 4);
+
+            scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+            const dir = new THREE.DirectionalLight(0xffffff, 1.2); dir.position.set(5, 8, 5); scene.add(dir);
+            scene.add(new THREE.GridHelper(6, 12, 0x334155, 0x1e293b));
+
+            orbitControls = new OrbitControls(camera, renderer.domElement);
+            orbitControls.enableDamping = true; orbitControls.target.set(0, 0.5, 0);
+            orbitControls.addEventListener('change', () => { if (previewModel) syncFormFromModel(); });
+
+            clock = new THREE.Clock();
+            function animate() {
+                requestAnimationFrame(animate);
+                const delta = clock.getDelta();
+                if (mixer) mixer.update(delta);
+                if (window.orbitState.active && pivotGroup) {
+                    window.orbitState.angle += window.orbitState.speed * window.orbitState.dir * delta;
+                    pivotGroup.position.x = Math.sin(window.orbitState.angle) * window.orbitState.radius;
+                    pivotGroup.position.z = Math.cos(window.orbitState.angle) * window.orbitState.radius;
+                    pivotGroup.rotation.y = window.orbitState.angle;
+                }
+                orbitControls.update(); renderer.render(scene, camera);
+            } animate();
+        }
+
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/');
+
+        window.loadModelIntoPreview = (url) => {
+            initThree();
+            const loadingEl = document.getElementById('canvas-loading');
+            if(loadingEl) loadingEl.style.display = 'flex';
+            if (previewModel) { scene.remove(previewModel); previewModel = null; }
+            if (mixer) { mixer.stopAllAction(); mixer = null; }
+
+            const loader = new GLTFLoader(); loader.setDRACOLoader(dracoLoader);
+            loader.load(url, (gltf) => {
+                previewModel = gltf.scene;
+                previewModel.traverse((node) => {
+                    if (node.isMesh && node.material) { node.material.side = THREE.FrontSide; node.material.needsUpdate = true; }
+                });
+
+                const box = new THREE.Box3().setFromObject(previewModel);
+                const center = box.getCenter(new THREE.Vector3());
+                const norm = 1.2 / (Math.max(box.getSize(new THREE.Vector3()).x, box.getSize(new THREE.Vector3()).y, box.getSize(new THREE.Vector3()).z) || 1);
+                
+                previewModel.scale.setScalar(norm);
+                const bottomY = box.min.y * norm;
+                previewModel.position.set(-center.x * norm, -bottomY, -center.z * norm);
+                previewModel.userData = { _baseScale: norm, _bottomY: -bottomY };
+
+                if (pivotGroup) scene.remove(pivotGroup);
+                pivotGroup = new THREE.Group(); pivotGroup.add(previewModel); scene.add(pivotGroup);
+
+                allClips = gltf.animations;
+                if (allClips.length > 0) {
+                    mixer = new THREE.AnimationMixer(previewModel);
+                    activeAction = mixer.clipAction(allClips[0]); activeAction.play();
+                    const sel = document.getElementById('anim-clip-select');
+                    if(sel) sel.innerHTML = allClips.map((c, i) => `<option value="${i}">${c.name}</option>`).join('');
+                    document.getElementById('anim-clip-panel').style.display = '';
+                } else document.getElementById('anim-clip-panel').style.display = 'none';
+
+                window.applyTransformToModel();
+                if(loadingEl) loadingEl.style.display = 'none';
+            });
+        };
+
+        window.applyTransformFromForm = () => {
+            window.threeState.position = [parseFloat(document.getElementById('pos-x').value)||0, parseFloat(document.getElementById('pos-y').value)||0, parseFloat(document.getElementById('pos-z').value)||0];
+            window.threeState.rotation = [parseFloat(document.getElementById('rot-x').value)||0, parseFloat(document.getElementById('rot-y').value)||0, parseFloat(document.getElementById('rot-z').value)||0];
+            
+            // Sync values ke Hidden Inputs agar terkirim via Form Submit
+            document.getElementById('form-position').value = JSON.stringify(window.threeState.position);
+            document.getElementById('form-rotation').value = JSON.stringify(window.threeState.rotation);
+            document.getElementById('form-scale').value = window.threeState.scale;
+            
+            window.applyTransformToModel();
+        };
+
+        window.applyTransformToModel = () => {
+            if (!previewModel) return;
+            previewModel.position.set(window.threeState.position[0], window.threeState.position[1] + previewModel.userData._bottomY, window.threeState.position[2]);
+            previewModel.rotation.set(THREE.MathUtils.degToRad(window.threeState.rotation[0]), THREE.MathUtils.degToRad(window.threeState.rotation[1]), THREE.MathUtils.degToRad(window.threeState.rotation[2]));
+            previewModel.scale.setScalar(window.threeState.scale * previewModel.userData._baseScale);
+            if (!window.orbitState.active && pivotGroup) { pivotGroup.position.set(0, 0, 0); pivotGroup.rotation.set(0, 0, 0); }
+        };
+
+        function syncFormFromModel() {
+            if (!previewModel) return;
+            document.getElementById('pos-x').value = previewModel.position.x.toFixed(2);
+            document.getElementById('pos-y').value = (previewModel.position.y - previewModel.userData._bottomY).toFixed(2);
+            document.getElementById('pos-z').value = previewModel.position.z.toFixed(2);
+            document.getElementById('rot-x').value = THREE.MathUtils.radToDeg(previewModel.rotation.x).toFixed(1);
+            document.getElementById('rot-y').value = THREE.MathUtils.radToDeg(previewModel.rotation.y).toFixed(1);
+            document.getElementById('rot-z').value = THREE.MathUtils.radToDeg(previewModel.rotation.z).toFixed(1);
+            window.applyTransformFromForm();
+        }
+
+        window.resetTransform = () => {
+            window.threeState = { scale: 1, position: [0,0,0], rotation: [0,0,0] };
+            ['pos-x','pos-y','pos-z','rot-x','rot-y','rot-z'].forEach(id => document.getElementById(id).value = 0);
+            document.getElementById('scale-slider').value = 1; document.getElementById('scale-display').textContent = '1.00';
+            window.applyTransformFromForm();
+        };
+
+        document.getElementById('scale-slider')?.addEventListener('input', function() {
+            window.threeState.scale = parseFloat(this.value);
+            document.getElementById('scale-display').textContent = window.threeState.scale.toFixed(2);
+            window.applyTransformFromForm();
+        });
+
+        window.toggleOrbit = () => {
+            window.orbitState.active = !window.orbitState.active;
+            const btn = document.getElementById('btn-orbit'), icon = document.getElementById('orbit-icon');
+            if (window.orbitState.active) {
+                icon.className = 'bi bi-pause-circle'; btn.innerHTML = '<i class="bi bi-pause-circle"></i> Pause Berputar';
+                btn.classList.add('bg-teal-50', 'text-teal-700', 'border-teal-500');
+                if (pivotGroup) { pivotGroup.position.set(0, 0, window.orbitState.radius); pivotGroup.rotation.y = 0; }
+            } else {
+                icon.className = 'bi bi-play-circle'; btn.innerHTML = '<i class="bi bi-play-circle"></i> Mulai Berputar';
+                btn.classList.remove('bg-teal-50', 'text-teal-700', 'border-teal-500');
+                if (pivotGroup) { pivotGroup.position.set(0, 0, 0); pivotGroup.rotation.set(0, 0, 0); }
+            }
+            document.getElementById('form-orbit-active').value = window.orbitState.active ? 1 : 0;
+        };
+
+        window.toggleOrbitDir = () => { 
+            window.orbitState.dir *= -1; 
+            document.getElementById('orbit-dir-icon').style.transform = window.orbitState.dir === 1 ? '' : 'scaleX(-1)'; 
+            document.getElementById('form-orbit-dir').value = window.orbitState.dir;
+        };
+        
+        document.getElementById('orbit-speed')?.addEventListener('input', function() { 
+            window.orbitState.speed = parseFloat(this.value); 
+            document.getElementById('orbit-speed-val').textContent = this.value + '×'; 
+            document.getElementById('form-orbit-speed').value = this.value;
+        });
+        
+        document.getElementById('orbit-radius')?.addEventListener('input', function() { 
+            window.orbitState.radius = parseFloat(this.value); 
+            document.getElementById('orbit-radius-val').textContent = this.value; 
+            document.getElementById('form-orbit-radius').value = this.value;
+        });
+        
+        window.switchAnimClip = (i) => { 
+            if (!mixer || !allClips[i]) return; 
+            if (activeAction) activeAction.fadeOut(0.3); 
+            activeAction = mixer.clipAction(allClips[i]); 
+            activeAction.reset().fadeIn(0.3).play(); 
+            document.getElementById('form-anim-clip').value = allClips[i].name;
+        };
+    </script>
 
     @include('components.chatbot')
 </body>
