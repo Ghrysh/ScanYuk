@@ -274,7 +274,7 @@
             <h3 class="font-extrabold text-slate-900 text-xl mb-6">Pilih Format Download</h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                <button type="button" @click="window.open(`/dashboard/ar/${selectedQrId}/download?type=svg`, '_self'); showDownloadModal = false;" class="flex flex-col items-center p-6 border-2 border-slate-200 rounded-2xl hover:border-teal-500 hover:bg-teal-50 transition-all group">
+                <button type="button" @click="window.open(`/dashboard/ar/${selectedQrId}/download?type=svg&t=` + Date.now(), '_self'); showDownloadModal = false;" class="flex flex-col items-center p-6 border-2 border-slate-200 rounded-2xl hover:border-teal-500 hover:bg-teal-50 transition-all group">
                     <div class="w-16 h-16 bg-slate-100 rounded-xl mb-4 flex items-center justify-center text-slate-400 group-hover:text-teal-500 group-hover:bg-white shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg>
                     </div>
@@ -363,7 +363,7 @@
         const qrContainer = document.getElementById('flyer-qr-container');
 
         try {
-            const response = await fetch(`/dashboard/ar/${qrId}/download?type=svg`);
+            const response = await fetch(`/dashboard/ar/${qrId}/download?type=svg&t=${Date.now()}`);
             if (!response.ok) throw new Error("Gagal server");
             
             alpineData.flyerProgress = 30;

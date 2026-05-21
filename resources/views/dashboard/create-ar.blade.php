@@ -1509,10 +1509,33 @@
                     this.isGenerating = true; this.progress = 0; this.uploadError = null;
                     let formData = new FormData(e.target);
                     
+                    // --- MENCEGAH FILE TERTIMPA DI SERVER DENGAN RENAME OTOMATIS ---
+                    let file3d = document.getElementById('glb-upload')?.files[0];
+                    if (file3d && this.arType === '3d') {
+                        formData.delete('file_3d');
+                        let ext = file3d.name.split('.').pop();
+                        formData.append('file_3d', file3d, `3d_model_${Date.now()}_${Math.floor(Math.random()*1000)}.${ext}`);
+                    }
+                    
+                    let file2d = document.getElementById('image-upload')?.files[0];
+                    if (file2d && this.arType === '2d') {
+                        formData.delete('image');
+                        let ext = file2d.name.split('.').pop();
+                        formData.append('image', file2d, `image_2d_${Date.now()}_${Math.floor(Math.random()*1000)}.${ext}`);
+                    }
+                    
+                    let fileBgm = document.getElementById('bgm-upload')?.files[0];
+                    if (fileBgm) {
+                        formData.delete('custom_bgm');
+                        let ext = fileBgm.name.split('.').pop();
+                        formData.append('custom_bgm', fileBgm, `bgm_${Date.now()}_${Math.floor(Math.random()*1000)}.${ext}`);
+                    }
+                    // ---------------------------------------------------------------
+                    
                     if (this.narrationMode === 'audio' && this.recordedAudioBlob) {
                         let mime = this.recordedAudioBlob.type.toLowerCase();
                         let ext = mime.includes('mp4') ? 'mp4' : (mime.includes('ogg') ? 'ogg' : 'webm');
-                        formData.append('custom_audio', this.recordedAudioBlob, 'rekaman.' + ext);
+                        formData.append('custom_audio', this.recordedAudioBlob, `rekaman_${Date.now()}.${ext}`);
                     }
                     
                     let xhr = new XMLHttpRequest();
