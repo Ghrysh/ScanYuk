@@ -29,11 +29,13 @@ class QrCodeController extends Controller
                 $cleanName = preg_replace('/^[0-9]+_/', '', $filename);
                 $cleanName = ucwords(str_replace(['-', '_', '.glb'], [' ', ' ', ''], $cleanName));
 
-                ArAsset::updateOrCreate(
-                    ['name' => $cleanName],
+                // PERBAIKAN 1: Gunakan firstOrCreate dan cocokkan berdasarkan file_path. 
+                // Jangan pakai updateOrCreate berdasarkan name, karena akan MENIMPA URL AR LAMA!
+                ArAsset::firstOrCreate(
+                    ['file_path' => $fileUrl],
                     [
+                        'name' => $cleanName,
                         'user_id' => auth()->id() ?? 1, 
-                        'file_path' => $fileUrl,
                         'is_public' => true,
                     ]
                 );
@@ -103,7 +105,8 @@ class QrCodeController extends Controller
             if ($request->hasFile('custom_bgm')) {
                 $bgmFile = $request->file('custom_bgm');
                 $ext = $bgmFile->getClientOriginalExtension() ?: 'mp3';
-                $bgmName = time() . '_bgm_' . Str::random(5) . '.' . $ext;
+                // PERBAIKAN 2: Tambahkan uniqid() agar benar-benar unik
+                $bgmName = time() . '_' . uniqid() . '_bgm.' . $ext;
                 
                 $bgmContent = file_get_contents($bgmFile->getRealPath());
                 $uploadBgm = Storage::disk('s3')->put('bg_sounds/' . $bgmName, $bgmContent);
@@ -124,7 +127,7 @@ class QrCodeController extends Controller
             if ($request->narration_mode === 'audio' && $request->hasFile('custom_audio')) {
                 $audioFile = $request->file('custom_audio');
                 $ext = $audioFile->getClientOriginalExtension() ?: 'webm';
-                $audioName = time() . '_voice_' . Str::random(5) . '.' . $ext;
+                $audioName = time() . '_' . uniqid() . '_voice.' . $ext;
                 
                 $audioContent = file_get_contents($audioFile->getRealPath());
                 $uploadAudio = Storage::disk('s3')->put('custom_voices/' . $audioName, $audioContent);
@@ -145,7 +148,9 @@ class QrCodeController extends Controller
             } else {
                 if ($request->hasFile('file_3d')) {
                     $file = $request->file('file_3d');
-                    $filename = time() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
+                    
+                    // PERBAIKAN 3: Tambahkan uniqid() untuk memastikan file lama TIDAK PERNAH tertimpa
+                    $filename = time() . '_' . uniqid() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
 
                     $fileContent = file_get_contents($file->getRealPath());
                     $upload = Storage::disk('s3')->put('3D/' . $filename, $fileContent);
@@ -214,12 +219,9 @@ class QrCodeController extends Controller
     {
         if ($qrCode->user_id !== Auth::id()) abort(403);
         
-        // ─── PERBAIKAN: LOGIKA URL BERDASARKAN TIPE AR ───
         if ($qrCode->ar_type === 'marker') {
-            // Jika tipe marker, arahkan langsung ke halaman viewer marker project tersebut
             $apiUrl = route('ar.view', ['project' => $qrCode->ar_project_id]);
         } else {
-            // Jika tipe biasa (2D/3D/AI), arahkan ke scanner universal bawaan
             $apiUrl = url('/scan-ar?id=' . $qrCode->uuid);
         }
         

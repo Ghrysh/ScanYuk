@@ -59,33 +59,20 @@ class UserDashboardController extends Controller
         // Pilih script berdasarkan opsi mode dari user
         $scriptName = ($mode === 'extrude') ? 'run_extrude.py' : 'run_triposr.py';
         $scriptPath = $scriptDir . '/' . $scriptName;
-
         $logPath = storage_path('logs/python_ai.log');
         $hfHome = storage_path('app/public/ai_models');
         if (!file_exists($hfHome)) mkdir($hfHome, 0777, true);
 
-        // Kodingan yang benar (dengan Fix Cache):
+        // PERBAIKAN: Tambahkan symbol '&' di belakang agar berjalan di Background (Async)
         $command = "export U2NET_HOME=" . escapeshellarg($hfHome) . 
                    " && export HF_HOME=" . escapeshellarg($hfHome) . 
                    " && export NUMBA_CACHE_DIR=/tmp" . 
                    " && export MPLCONFIGDIR=/tmp" . 
                    " && export XDG_CACHE_HOME=/tmp" . 
                    " && cd " . escapeshellarg($scriptDir) . 
-                   " && python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " 2>&1";
+                   " && python3 " . escapeshellarg($scriptPath) . " " . escapeshellarg($fullInputPath) . " " . escapeshellarg($fullOutputPath) . " > " . escapeshellarg($logPath) . " 2>&1 &";
         
-        // JALANKAN SECARA LANGSUNG (Synchronous)
-        // PHP akan diam menunggu hasil dari Python
-        exec($command, $output, $return_var);
-
-        // Jika return_var tidak 0, berarti ada error
-        if ($return_var !== 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Python Gagal',
-                'error_detail' => $output, // Ini akan menampilkan isi error asli!
-                'exit_code' => $return_var
-            ], 500);
-        }
+        exec($command);
 
         return response()->json(['success' => true, 'job_id' => $job->id]);
     }
