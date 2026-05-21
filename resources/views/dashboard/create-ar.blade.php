@@ -647,7 +647,14 @@
                                         <div class="bg-teal-500 h-1.5 md:h-2 rounded-full" :style="`width: ${previewProgress}%`"></div>
                                     </div>
                                 </div>   
-                                <model-viewer id="preview-model-viewer" :src="previewData.src" auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer>
+                                <!-- PERUBAHAN DI SINI: Menyisipkan transform scale, rotasi, & animasi ke tag model-viewer -->
+                                <model-viewer id="preview-model-viewer" :src="previewData.src" 
+                                    :auto-rotate="previewOrbit" 
+                                    camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"
+                                    :scale="previewScale" 
+                                    :orientation="previewRotation" 
+                                    :animation-name="previewAnim !== '*' ? previewAnim : null">
+                                </model-viewer>
                             </div>
                         </template>
 
@@ -1177,6 +1184,11 @@
                 init() {
                     this.loadVoices();
                     
+                    // TAMBAHAN: Listener untuk memantau perubahan pengaturan AR dari modal ThreeJS
+                    window.addEventListener('transform-updated', () => {
+                        this.updatePreviewTransforms();
+                    });
+
                     this.library3dList.forEach(item => {
                         this.modelStates[item.id] = { 
                             state: 'idle', progress: 0, url: null, path: item.path,
@@ -1188,7 +1200,6 @@
                         this.sortAndStartQueue();
                     }, 1000);
 
-                    // TAMBAHAN: Otomatis render 3D ketika URL model tersedia
                     this.$watch('getPreviewModelUrl()', (url) => {
                         if (url) {
                             setTimeout(() => {
@@ -1196,6 +1207,29 @@
                             }, 300);
                         }
                     });
+                },
+
+                // TAMBAHAN: State untuk menangkap nilai dari modal posisioning 
+                previewScale: '1 1 1',
+                previewRotation: '0deg 0deg 0deg',
+                previewAnim: '*',
+                previewOrbit: false,
+
+                // Fungsi untuk menyinkronkan data form hidden dengan Alpine Modal Preview
+                updatePreviewTransforms() {
+                    const scale = document.getElementById('form-scale')?.value || 1;
+                    this.previewScale = `${scale} ${scale} ${scale}`;
+                    
+                    const rotRaw = document.getElementById('form-rotation')?.value;
+                    if(rotRaw) {
+                        try {
+                            let r = JSON.parse(rotRaw);
+                            this.previewRotation = `${r[0]}deg ${r[1]}deg ${r[2]}deg`;
+                        } catch(e){}
+                    }
+                    
+                    this.previewAnim = document.getElementById('form-anim-clip')?.value || '*';
+                    this.previewOrbit = document.getElementById('form-orbit-active')?.value === '1';
                 },
 
                 getPreviewModelUrl() {
@@ -1509,7 +1543,6 @@
                     this.isGenerating = true; this.progress = 0; this.uploadError = null;
                     let formData = new FormData(e.target);
                     
-                    // --- MENCEGAH FILE TERTIMPA DI SERVER DENGAN RENAME OTOMATIS ---
                     let file3d = document.getElementById('glb-upload')?.files[0];
                     if (file3d && this.arType === '3d') {
                         formData.delete('file_3d');
@@ -1530,7 +1563,6 @@
                         let ext = fileBgm.name.split('.').pop();
                         formData.append('custom_bgm', fileBgm, `bgm_${Date.now()}_${Math.floor(Math.random()*1000)}.${ext}`);
                     }
-                    // ---------------------------------------------------------------
                     
                     if (this.narrationMode === 'audio' && this.recordedAudioBlob) {
                         let mime = this.recordedAudioBlob.type.toLowerCase();
@@ -1598,6 +1630,9 @@
                     this.isPreviewLoading = true;
                     this.previewProgress = 0;
                     this.stopAllAudio();
+                    
+                    // Panggil update ini saat modal mau dibuka agar rotasi terupdate ke model-viewer
+                    this.updatePreviewTransforms(); 
 
                     this.syncAndPlayModal();
                 },
@@ -2071,6 +2106,8 @@
             document.getElementById('form-rotation').value = JSON.stringify(window.threeState.rotation);
             document.getElementById('form-scale').value = window.threeState.scale;
             
+            window.dispatchEvent(new CustomEvent('transform-updated'));
+
             window.applyTransformToModel();
         };
 
@@ -2119,24 +2156,28 @@
                 if (pivotGroup) { pivotGroup.position.set(0, 0, 0); pivotGroup.rotation.set(0, 0, 0); }
             }
             document.getElementById('form-orbit-active').value = window.orbitState.active ? 1 : 0;
+            window.dispatchEvent(new CustomEvent('transform-updated'));
         };
 
         window.toggleOrbitDir = () => { 
             window.orbitState.dir *= -1; 
             document.getElementById('orbit-dir-icon').style.transform = window.orbitState.dir === 1 ? '' : 'scaleX(-1)'; 
             document.getElementById('form-orbit-dir').value = window.orbitState.dir;
+            window.dispatchEvent(new CustomEvent('transform-updated'));
         };
         
         document.getElementById('orbit-speed')?.addEventListener('input', function() { 
             window.orbitState.speed = parseFloat(this.value); 
             document.getElementById('orbit-speed-val').textContent = this.value + '×'; 
             document.getElementById('form-orbit-speed').value = this.value;
+            window.dispatchEvent(new CustomEvent('transform-updated'));
         });
         
         document.getElementById('orbit-radius')?.addEventListener('input', function() { 
             window.orbitState.radius = parseFloat(this.value); 
             document.getElementById('orbit-radius-val').textContent = this.value; 
             document.getElementById('form-orbit-radius').value = this.value;
+            window.dispatchEvent(new CustomEvent('transform-updated'));
         });
         
         window.switchAnimClip = (i) => { 
@@ -2145,6 +2186,7 @@
             activeAction = mixer.clipAction(allClips[i]); 
             activeAction.reset().fadeIn(0.3).play(); 
             document.getElementById('form-anim-clip').value = allClips[i].name;
+            window.dispatchEvent(new CustomEvent('transform-updated'));
         };
     </script>
 

@@ -49,12 +49,22 @@
         <p class="text-slate-400 text-xs mt-1" x-text="loadingStatusText"></p>
     </div>
 
+    <!-- PERBAIKAN: Binding Posisi, Skala, Rotasi, & Animasi ke UI -->
     <div id="ar-overlay-container">
-        <img x-show="arData.type === '2d'" id="main-ar-2d" :src="arData.src" class="w-full h-full object-contain filter drop-shadow(0 25px 25px rgba(0,0,0,0.8))">
+        <!-- Overlay untuk AR 2D -->
+        <img x-show="arData.type === '2d'" id="main-ar-2d" :src="arData.src" 
+             class="w-full h-full object-contain filter drop-shadow(0 25px 25px rgba(0,0,0,0.8))"
+             :style="`margin-left: ${arData.posX * 50}px; margin-top: ${-arData.posY * 50}px;`">
+             
+        <!-- Overlay untuk AR 3D -->
         <model-viewer 
             x-show="arData.type === '3d'" 
             id="main-ar-viewer"
             :src="arData.src" 
+            :scale="arData.scale"
+            :auto-rotate="arData.orbitActive"
+            :animation-name="arData.animClip !== '*' ? arData.animClip : null"
+            :style="`margin-left: ${arData.posX * 50}px; margin-top: ${-arData.posY * 50}px;`"
             disable-zoom 
             disable-pan
             interaction-prompt="none"
@@ -97,7 +107,15 @@
                 video: null, canvasElement: null, canvas: null, arOverlayContainer: null,
                 isFetching: false, arActive: false, errorMessage: '', arCache: {}, currentQrUrl: null, lastFoundTime: 0, audioBlocked: false,
                 
-                arData: { type: '2d', src: '' },
+                // PERBAIKAN: Tambahan state untuk menyimpan nilai transform dari Database
+                arData: { 
+                    type: '2d', src: '',
+                    scale: '1 1 1', scaleRaw: 1,
+                    baseRotX: 0, baseRotY: 0, baseRotZ: 0,
+                    posX: 0, posY: 0, posZ: 0,
+                    orbitActive: false, animClip: '*'
+                },
+
                 bgmPlayer: null,
                 narrationPlayer: null,
                 
@@ -255,15 +273,22 @@
 
                         this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
 
+                        // PERBAIKAN: Menggabungkan Pitch & Yaw gerakan Camera dengan Rotasi Database
                         if (this.arData.type === '3d') {
                             const viewer = document.getElementById('main-ar-viewer');
                             if (viewer) {
-                                viewer.setAttribute('orientation', `0deg ${this.curPitch}deg ${this.curYaw}deg`);
+                                let fPitch = this.arData.baseRotX + this.curPitch;
+                                let fYaw = this.arData.baseRotY + this.curYaw;
+                                let fRoll = this.arData.baseRotZ;
+                                viewer.setAttribute('orientation', `${fPitch}deg ${fYaw}deg ${fRoll}deg`);
                             }
                         } else if (this.arData.type === '2d') {
                             const img2d = document.getElementById('main-ar-2d');
                             if (img2d) {
-                                img2d.style.transform = `perspective(600px) rotateX(${-this.curPitch}deg) rotateY(${this.curYaw}deg)`;
+                                let fPitch = this.arData.baseRotX - this.curPitch;
+                                let fYaw = this.arData.baseRotY + this.curYaw;
+                                let fRoll = this.arData.baseRotZ;
+                                img2d.style.transform = `perspective(600px) rotateX(${fPitch}deg) rotateY(${fYaw}deg) rotateZ(${fRoll}deg) scale(${this.arData.scaleRaw})`;
                             }
                         }
                     }
@@ -280,7 +305,28 @@
                             const type = result.data.ar_type;
                             const src = type === '3d' ? result.data.file_3d_url : result.data.image_url;
                             
-                            this.arData = { type: type, src: src };
+                            // PERBAIKAN: Extract Scale, Position, Rotation dari API
+                            let dbScale = result.data.scale ? parseFloat(result.data.scale) : 1;
+                            let dbRot = [0,0,0];
+                            let dbPos = [0,0,0];
+
+                            try { if(result.data.rotation) dbRot = JSON.parse(result.data.rotation); } catch(e){}
+                            try { if(result.data.position) dbPos = JSON.parse(result.data.position); } catch(e){}
+                            
+                            this.arData = { 
+                                type: type, 
+                                src: src,
+                                scale: `${dbScale} ${dbScale} ${dbScale}`,
+                                scaleRaw: dbScale,
+                                baseRotX: parseFloat(dbRot[0]) || 0,
+                                baseRotY: parseFloat(dbRot[1]) || 0,
+                                baseRotZ: parseFloat(dbRot[2]) || 0,
+                                posX: parseFloat(dbPos[0]) || 0,
+                                posY: parseFloat(dbPos[1]) || 0,
+                                posZ: parseFloat(dbPos[2]) || 0,
+                                orbitActive: result.data.orbit_active == 1 || result.data.orbit_active == true,
+                                animClip: result.data.anim_clip || '*'
+                            };
                             
                             this.arCache[url] = { 
                                 narration: result.data.narration, 

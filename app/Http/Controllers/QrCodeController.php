@@ -85,6 +85,15 @@ class QrCodeController extends Controller
                 'file_3d' => 'nullable|file|max:51200',
                 'asset_name' => 'nullable|string|max:100', 
                 
+                'scale' => 'nullable',
+                'position' => 'nullable',
+                'rotation' => 'nullable',
+                'orbit_active' => 'nullable',
+                'orbit_speed' => 'nullable',
+                'orbit_radius' => 'nullable',
+                'orbit_dir' => 'nullable',
+                'anim_clip' => 'nullable',
+                
                 'narration_mode' => 'nullable|in:text,audio',
                 'narration' => 'nullable|string',
                 'ai_voice' => 'nullable|string',
@@ -99,6 +108,15 @@ class QrCodeController extends Controller
             $qrCode->user_id = auth()->id();
             $qrCode->title = $request->title;
             $qrCode->ar_type = $request->ar_type;
+
+            $qrCode->scale = $request->scale ?? 1;
+            $qrCode->position = $request->position ?? '[0,0,0]';
+            $qrCode->rotation = $request->rotation ?? '[0,0,0]';
+            $qrCode->orbit_active = $request->orbit_active ?? 0;
+            $qrCode->orbit_speed = $request->orbit_speed ?? 0.5;
+            $qrCode->orbit_radius = $request->orbit_radius ?? 1.5;
+            $qrCode->orbit_dir = $request->orbit_dir ?? 1;
+            $qrCode->anim_clip = $request->anim_clip ?? '*';
 
             $bgmPathToSave = $request->bgm_path; 
 

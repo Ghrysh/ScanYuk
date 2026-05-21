@@ -9,6 +9,7 @@ class ScanController extends Controller
 {
     public function scanQr($uuid)
     {
+        // 1. Tambahkan parameter default untuk scan versi Demo
         if ($uuid === 'demo-scanyuk') {
             return response()->json([
                 'status' => 'success',
@@ -20,7 +21,14 @@ class ScanController extends Controller
                     'custom_audio_url' => null,
                     'image_url' => null,
                     'file_3d_url' => url('/demo/logo.glb'),
-                    'bgm_url' => url('/demo/future.mp3')
+                    'bgm_url' => url('/demo/future.mp3'),
+                    
+                    // Default transform untuk demo
+                    'scale' => 1,
+                    'position' => '[0,0,0]',
+                    'rotation' => '[0,0,0]',
+                    'orbit_active' => false,
+                    'anim_clip' => '*'
                 ]
             ]);
         }
@@ -89,6 +97,7 @@ class ScanController extends Controller
             }
         }
 
+        // 2. PERBAIKAN: Masukkan atribut transform ke array output
         $arData = [
             'title' => $qr->title,
             'ar_type' => $qr->ar_type ?? '2d',
@@ -98,6 +107,16 @@ class ScanController extends Controller
             'image_url' => $qr->image_path ? asset('storage/' . $qr->image_path) : null,
             'file_3d_url' => null,
             'bgm_url' => $bgmUrl,
+            
+            // Atribut Transform & Animasi
+            'scale' => $qr->scale ?? 1,
+            'position' => $qr->position ?? '[0,0,0]',
+            'rotation' => $qr->rotation ?? '[0,0,0]',
+            'orbit_active' => $qr->orbit_active ?? 0,
+            'orbit_speed' => $qr->orbit_speed ?? 0.5,
+            'orbit_radius' => $qr->orbit_radius ?? 1.5,
+            'orbit_dir' => $qr->orbit_dir ?? 1,
+            'anim_clip' => $qr->anim_clip ?? '*',
         ];
 
         if ($arData['ar_type'] === '3d' && !empty($qr->ar_asset_id)) {
