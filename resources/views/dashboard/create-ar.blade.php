@@ -653,6 +653,7 @@
                                     camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"
                                     :scale="previewScale" 
                                     :orientation="previewRotation" 
+                                    camera-orbit="0deg 90deg auto"
                                     :animation-name="previewAnim !== '*' ? previewAnim : null">
                                 </model-viewer>
                             </div>

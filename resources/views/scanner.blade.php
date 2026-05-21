@@ -62,6 +62,7 @@
             id="main-ar-viewer"
             :src="arData.src" 
             :scale="arData.scale"
+            :orientation="`${arData.baseRotX}deg ${arData.baseRotY}deg ${arData.baseRotZ}deg`"
             :auto-rotate="arData.orbitActive"
             :animation-name="arData.animClip !== '*' ? arData.animClip : null"
             :style="`margin-left: ${arData.posX * 50}px; margin-top: ${-arData.posY * 50}px;`"
@@ -273,14 +274,17 @@
 
                         this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
 
-                        // PERBAIKAN: Menggabungkan Pitch & Yaw gerakan Camera dengan Rotasi Database
+                        // PERBAIKAN MATEMATIKA: 
+                        // Rotasi Base dikunci di atribut 'orientation' pada HTML.
+                        // Tracking Kamera memutar sekeliling objek dengan 'camera-orbit'.
                         if (this.arData.type === '3d') {
                             const viewer = document.getElementById('main-ar-viewer');
                             if (viewer) {
-                                let fPitch = this.arData.baseRotX + this.curPitch;
-                                let fYaw = this.arData.baseRotY + this.curYaw;
-                                let fRoll = this.arData.baseRotZ;
-                                viewer.setAttribute('orientation', `${fPitch}deg ${fYaw}deg ${fRoll}deg`);
+                                // 90 adalah sudut lurus menghadap objek. 
+                                // Jika HP miring ke atas (pitch naik), kamera memutar ke bawah memandang ke atas.
+                                let orbitPitch = 90 - this.curPitch;
+                                let orbitYaw = -this.curYaw; 
+                                viewer.setAttribute('camera-orbit', `${orbitYaw}deg ${orbitPitch}deg auto`);
                             }
                         } else if (this.arData.type === '2d') {
                             const img2d = document.getElementById('main-ar-2d');
