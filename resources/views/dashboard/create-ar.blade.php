@@ -1225,7 +1225,9 @@
                     if(rotRaw) {
                         try {
                             let r = JSON.parse(rotRaw);
-                            this.previewRotation = `${r[0]}deg ${r[1]}deg ${r[2]}deg`;
+                            // PERBAIKAN: model-viewer meminta format "roll pitch yaw" (Z X Y)
+                            // r[0] adalah X, r[1] adalah Y, r[2] adalah Z
+                            this.previewRotation = `${r[2]}deg ${r[0]}deg ${r[1]}deg`;
                         } catch(e){}
                     }
                     
