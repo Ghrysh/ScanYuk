@@ -268,7 +268,7 @@
     <div class="step-panel" id="step-3">
         <div class="bg-white border border-slate-200 rounded-3xl shadow-sm overflow-hidden">
             <div class="px-6 py-4 border-b border-slate-100 flex items-center gap-2 font-bold text-slate-800">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                 Step 3 — Preview 3D & Atur Posisi
             </div>
             <div class="p-6">
@@ -278,11 +278,11 @@
                     {{-- Preview canvas --}}
                     <div class="lg:col-span-7">
                         <div class="w-full bg-slate-900 rounded-2xl overflow-hidden relative shadow-inner border border-slate-800" style="height: 400px;">
-                            <canvas id="canvas-3d" class="w-full h-full block"></canvas>
+                            <canvas id="marker-canvas-3d" class="w-full h-full block"></canvas>
                             <div class="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-black/60 text-white/80 text-[10px] px-3 py-1 rounded-full pointer-events-none backdrop-blur-sm">
                                 Drag rotate &nbsp;&middot;&nbsp; Scroll zoom
                             </div>
-                            <div id="canvas-loading" class="absolute inset-0 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm">
+                            <div id="marker-canvas-loading" class="absolute inset-0 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm">
                                 <div class="text-center">
                                     <div class="inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
                                     <p class="text-xs text-slate-300">Memuat model 3D...</p>
@@ -294,8 +294,8 @@
                         <div class="mt-4 bg-slate-50 border border-slate-200 rounded-xl p-4">
                             <h6 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ukuran (Scale)</h6>
                             <div class="flex items-center gap-3">
-                                <input type="range" class="w-full accent-teal-500" id="scale-slider" min="0.05" max="5" step="0.05" value="1">
-                                <span id="scale-display" class="min-w-[40px] text-right text-sm font-bold text-teal-600">1.00</span>
+                                <input type="range" class="w-full accent-teal-500" id="marker-scale-slider" min="0.05" max="5" step="0.05" value="1">
+                                <span id="marker-scale-display" class="min-w-[40px] text-right text-sm font-bold text-teal-600">1.00</span>
                             </div>
                         </div>
                     </div>
@@ -308,15 +308,15 @@
                             <div class="grid grid-cols-3 gap-2">
                                 <div class="flex flex-col gap-1">
                                     <span class="text-[10px] font-bold text-center rounded bg-red-100 text-red-600 py-0.5">X</span>
-                                    <input type="number" id="pos-x" value="0" step="0.1" oninput="applyTransformFromForm()" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
+                                    <input type="number" id="marker-pos-x" value="0" step="0.1" oninput="window.markerApplyTransformFromForm()" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
                                 </div>
                                 <div class="flex flex-col gap-1">
                                     <span class="text-[10px] font-bold text-center rounded bg-green-100 text-green-600 py-0.5">Y</span>
-                                    <input type="number" id="pos-y" value="0" step="0.1" oninput="applyTransformFromForm()" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
+                                    <input type="number" id="marker-pos-y" value="0" step="0.1" oninput="window.markerApplyTransformFromForm()" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
                                 </div>
                                 <div class="flex flex-col gap-1">
                                     <span class="text-[10px] font-bold text-center rounded bg-blue-100 text-blue-600 py-0.5">Z</span>
-                                    <input type="number" id="pos-z" value="0" step="0.1" oninput="applyTransformFromForm()" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
+                                    <input type="number" id="marker-pos-z" value="0" step="0.1" oninput="window.markerApplyTransformFromForm()" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
                                 </div>
                             </div>
                         </div>
@@ -327,50 +327,50 @@
                             <div class="grid grid-cols-3 gap-2">
                                 <div class="flex flex-col gap-1">
                                     <span class="text-[10px] font-bold text-center rounded bg-red-100 text-red-600 py-0.5">X</span>
-                                    <input type="number" id="rot-x" value="0" step="1" oninput="applyTransformFromForm()" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
+                                    <input type="number" id="marker-rot-x" value="0" step="1" oninput="window.markerApplyTransformFromForm()" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
                                 </div>
                                 <div class="flex flex-col gap-1">
                                     <span class="text-[10px] font-bold text-center rounded bg-green-100 text-green-600 py-0.5">Y</span>
-                                    <input type="number" id="rot-y" value="0" step="1" oninput="applyTransformFromForm()" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
+                                    <input type="number" id="marker-rot-y" value="0" step="1" oninput="window.markerApplyTransformFromForm()" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
                                 </div>
                                 <div class="flex flex-col gap-1">
                                     <span class="text-[10px] font-bold text-center rounded bg-blue-100 text-blue-600 py-0.5">Z</span>
-                                    <input type="number" id="rot-z" value="0" step="1" oninput="applyTransformFromForm()" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
+                                    <input type="number" id="marker-rot-z" value="0" step="1" oninput="window.markerApplyTransformFromForm()" class="w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-sm text-center focus:ring-1 focus:ring-teal-500 outline-none">
                                 </div>
                             </div>
                         </div>
 
                         {{-- Orbit animation panel --}}
-                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4" id="orbit-panel">
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4" id="marker-orbit-panel">
                             <h6 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Orbit Keliling Marker</h6>
                             <div class="flex items-center gap-2 mb-3">
-                                <button id="btn-orbit" class="flex-1 bg-white border border-slate-300 text-slate-700 text-xs font-bold py-1.5 rounded-lg shadow-sm hover:bg-slate-50" onclick="toggleOrbit()">
-                                    <i class="bi bi-play-circle" id="orbit-icon"></i> Mulai Orbit
+                                <button id="marker-btn-orbit" class="flex-1 bg-white border border-slate-300 text-slate-700 text-xs font-bold py-1.5 rounded-lg shadow-sm hover:bg-slate-50" onclick="window.markerToggleOrbit()">
+                                    <i class="bi bi-play-circle" id="marker-orbit-icon"></i> Mulai Orbit
                                 </button>
-                                <button class="bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg shadow-sm hover:bg-slate-50" onclick="toggleOrbitDir()" title="Balik arah">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="orbit-dir-icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                <button class="bg-white border border-slate-300 text-slate-700 px-3 py-1.5 rounded-lg shadow-sm hover:bg-slate-50" onclick="window.markerToggleOrbitDir()" title="Balik arah">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="marker-orbit-dir-icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                                 </button>
                             </div>
                             <div class="flex items-center gap-2 mb-2">
                                 <span class="text-[10px] text-slate-500 min-w-[35px]">Speed</span>
-                                <input type="range" class="w-full accent-teal-500" id="orbit-speed" min="0.1" max="3" step="0.1" value="0.5">
-                                <span id="orbit-speed-val" class="text-xs font-bold text-teal-600 min-w-[25px] text-right">0.5×</span>
+                                <input type="range" class="w-full accent-teal-500" id="marker-orbit-speed" min="0.1" max="3" step="0.1" value="0.5">
+                                <span id="marker-orbit-speed-val" class="text-xs font-bold text-teal-600 min-w-[25px] text-right">0.5×</span>
                             </div>
                             <div class="flex items-center gap-2">
                                 <span class="text-[10px] text-slate-500 min-w-[35px]">Radius</span>
-                                <input type="range" class="w-full accent-teal-500" id="orbit-radius" min="0.5" max="4" step="0.1" value="1.5">
-                                <span id="orbit-radius-val" class="text-xs font-bold text-teal-600 min-w-[25px] text-right">1.5</span>
+                                <input type="range" class="w-full accent-teal-500" id="marker-orbit-radius" min="0.5" max="4" step="0.1" value="1.5">
+                                <span id="marker-orbit-radius-val" class="text-xs font-bold text-teal-600 min-w-[25px] text-right">1.5</span>
                             </div>
                         </div>
 
                         {{-- Anim Clip --}}
-                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4" id="anim-clip-panel" style="display:none">
+                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-4" id="marker-anim-clip-panel" style="display:none">
                             <h6 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Animasi Aktif</h6>
-                            <select id="anim-clip-select" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-teal-500 outline-none" onchange="switchAnimClip(this.value)">
+                            <select id="marker-anim-clip-select" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-1 focus:ring-teal-500 outline-none" onchange="window.markerSwitchAnimClip(this.value)">
                             </select>
                         </div>
 
-                        <button class="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 border border-slate-200 bg-white rounded-xl shadow-sm transition" onclick="resetTransform()">
+                        <button class="w-full py-2 text-xs font-bold text-slate-500 hover:text-slate-800 border border-slate-200 bg-white rounded-xl shadow-sm transition" onclick="window.markerResetTransform()">
                             Reset Posisi & Skala
                         </button>
                         
@@ -491,61 +491,23 @@ import { GLTFLoader }    from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader }   from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-// ─── STATE ───────────────────────────────────────────────────────────────────
-const state = {
-    step: 1,
-    // Marker
-    markerId: null,
-    markerStatus: null,
-    markerImageUrl: null,
-    markerPollingTimer: null,
-    // Mode
-    mode: 'template',
-    // Template
-    selectedTemplateId: null,
-    selectedTemplateName: null,
-    selectedTemplateUrl: null,
-    templateConfig: {},
-    // GLTF
-    gltfFile: null,
-    gltfBlob: null,
-    // Blend
-    blendProjectId: null,   // server-created project id after async conversion
-    blendGlbUrl: null,       // GLB url returned after conversion
-    blendPollingTimer: null,
-    blendStatus: null,       // null | uploading | processing | done | failed
-    // Transform
-    scale: 1.0,
-    position: [0, 0, 0],
-    rotation: [0, 0, 0],
-};
+window.markerThreeState = { scale: 1.0, position: [0, 0, 0], rotation: [0, 0, 0] };
+window.markerOrbitState = { active: false, speed: 0.5, dir: 1, radius: 1.5, angle: 0 };
 
-// ─── THREE.JS ─────────────────────────────────────────────────────────────────
 let renderer, scene, camera, orbitControls, mixer, clock, animFrame;
 let previewModel = null;
-let markerPlane  = null;  // marker sebagai objek 3D di scene
-let pivotGroup   = null;  // group untuk orbit: model dimasukkan ke sini
-let allClips     = [];    // semua AnimationClip dari GLB
-let activeAction = null;  // AnimationAction yang sedang play
-
-// Orbit state
-const orbitState = {
-    active:  false,
-    speed:   0.5,    // rad/s
-    dir:     1,      // 1 = CW, -1 = CCW
-    radius:  1.5,
-    angle:   0,
-};
+let markerPlane  = null;  
+let pivotGroup   = null;  
+let allClips     = [];    
+let activeAction = null;  
 
 function initThree() {
-    const canvas = document.getElementById('canvas-3d');
+    const canvas = document.getElementById('marker-canvas-3d');
     const wrap = canvas.parentElement;
 
-    // Ambil ukuran nyata; offsetWidth lebih reliable saat elemen baru visible
     const W = wrap.offsetWidth  || wrap.clientWidth  || 600;
     const H = wrap.offsetHeight || wrap.clientHeight || 400;
 
-    // Jika renderer sudah ada (user balik ke step 3), cukup resize — jangan init ulang
     if (renderer) {
         renderer.setSize(W, H);
         camera.aspect = W / H;
@@ -557,19 +519,16 @@ function initThree() {
     renderer.setSize(W, H);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
-    // SRGBColorSpace wajib agar warna GLB Blender tampil benar
     renderer.outputColorSpace  = THREE.SRGBColorSpace;
-    // LinearToneMapping = tidak ada perubahan warna — paling akurat untuk preview
     renderer.toneMapping       = THREE.LinearToneMapping;
     renderer.toneMappingExposure = 1.0;
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0f172a); // Tailwind slate-900
+    scene.background = new THREE.Color(0x0f172a); 
 
     camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 500);
     camera.position.set(0, 1.5, 4);
 
-    // Lights
     const amb = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(amb);
     const dir = new THREE.DirectionalLight(0xffffff, 1.2);
@@ -579,7 +538,6 @@ function initThree() {
     fill.position.set(-5, 2, -5);
     scene.add(fill);
 
-    // Grid tipis sebagai lantai referensi
     const grid = new THREE.GridHelper(6, 12, 0x334155, 0x1e293b);
     scene.add(grid);
 
@@ -587,7 +545,6 @@ function initThree() {
     orbitControls.enableDamping = true;
     orbitControls.dampingFactor = 0.08;
 
-    // Listen for orbit changes to update form fields
     orbitControls.addEventListener('change', () => {
         if (previewModel) syncFormFromModel();
     });
@@ -600,17 +557,12 @@ function initThree() {
 
         if (mixer) mixer.update(delta);
 
-        // Orbit: putar pivotGroup mengelilingi Y axis (di atas marker)
-        if (orbitState.active && pivotGroup) {
-            orbitState.angle += orbitState.speed * orbitState.dir * delta;
-
-            // Posisi model pada lingkaran orbit
-            const r = orbitState.radius;
-            pivotGroup.position.x = Math.sin(orbitState.angle) * r;
-            pivotGroup.position.z = Math.cos(orbitState.angle) * r;
-
-            // Model selalu menghadap ke tengah marker (pusat orbit)
-            pivotGroup.rotation.y = orbitState.angle;
+        if (window.markerOrbitState.active && pivotGroup) {
+            window.markerOrbitState.angle += window.markerOrbitState.speed * window.markerOrbitState.dir * delta;
+            const r = window.markerOrbitState.radius;
+            pivotGroup.position.x = Math.sin(window.markerOrbitState.angle) * r;
+            pivotGroup.position.z = Math.cos(window.markerOrbitState.angle) * r;
+            pivotGroup.rotation.y = window.markerOrbitState.angle;
         }
 
         orbitControls.update();
@@ -626,219 +578,247 @@ function initThree() {
     });
 }
 
-// DRACOLoader shared instance (Blender sering export dengan Draco compression)
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/');
 
-            function loadModelIntoPreview(url) {
-                initThree(); 
-                
-                const loadingEl = document.getElementById('canvas-loading');
-                if (loadingEl) {
-                    loadingEl.style.display = 'flex';
-                    loadingEl.innerHTML = `
-                        <div class="text-center">
-                            <div class="inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                            <p class="text-xs text-slate-300">Memuat model 3D...</p>
-                        </div>
-                    `;
+window.loadModelIntoPreview = (url) => {
+    initThree(); 
+    
+    const loadingEl = document.getElementById('marker-canvas-loading');
+    if (loadingEl) {
+        loadingEl.style.display = 'flex';
+        loadingEl.innerHTML = `
+            <div class="text-center">
+                <div class="inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                <p class="text-xs text-slate-300">Memuat model 3D...</p>
+            </div>
+        `;
+    }
+
+    const loadTimeout = setTimeout(() => {
+        if (loadingEl && loadingEl.style.display !== 'none') {
+            loadingEl.innerHTML = `
+                <div class="text-center bg-white p-3 rounded-xl shadow-lg border border-red-100 max-w-[90%] mx-auto">
+                    <p class="text-red-500 text-[11px] font-bold mb-2">Timeout memuat model 3D.</p>
+                    <button type="button" onclick="document.getElementById('marker-canvas-loading').style.display='none'" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[10px] font-bold transition">Tutup</button>
+                </div>`;
+        }
+    }, 30000);
+
+    if (previewModel) { scene.remove(previewModel); previewModel = null; }
+    if (mixer) { mixer.stopAllAction(); mixer = null; }
+    if (pivotGroup) { scene.remove(pivotGroup); pivotGroup = null; }
+
+    const loader = new GLTFLoader(); 
+    loader.setDRACOLoader(dracoLoader);
+    
+    loader.register(function () {
+        return { 
+            name: 'KHR_materials_pbrSpecularGlossiness', 
+            extendMaterialParams: function () { return Promise.resolve(); } 
+        };
+    });
+
+    loader.load(url, (gltf) => {
+        clearTimeout(loadTimeout);
+        previewModel = gltf.scene;
+
+        if (!previewModel.scale.x || !isFinite(previewModel.scale.x)) previewModel.scale.set(1,1,1);
+
+        previewModel.updateMatrixWorld(true);
+
+        previewModel.traverse((node) => {
+            if (node.isMesh || node.isSkinnedMesh) {
+                if (!node.isSkinnedMesh) {
+                    node.castShadow = true; 
+                    node.receiveShadow = true;
                 }
-
-                // Timeout fallback — cegah stuck loading selamanya
-                const loadTimeout = setTimeout(() => {
-                    if (loadingEl && loadingEl.style.display !== 'none') {
-                        loadingEl.innerHTML = `
-                            <div class="text-center bg-white p-3 rounded-xl shadow-lg border border-red-100 max-w-[90%] mx-auto">
-                                <p class="text-red-500 text-[11px] font-bold mb-2">Timeout memuat model 3D.<br>File mungkin terlalu besar atau format tidak didukung.</p>
-                                <button type="button" onclick="document.getElementById('canvas-loading').style.display='none'" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[10px] font-bold transition">Tutup</button>
-                            </div>`;
-                    }
-                }, 30000); // 30 detik timeout
-
-                if (previewModel) { scene.remove(previewModel); previewModel = null; }
-                if (mixer) { mixer.stopAllAction(); mixer = null; }
-                if (pivotGroup) { scene.remove(pivotGroup); pivotGroup = null; }
-
-                const loader = new GLTFLoader(); 
-                loader.setDRACOLoader(dracoLoader);
-                
-                // Bypass KHR extension agar tidak crash untuk model lawas
-                loader.register(function () {
-                    return { 
-                        name: 'KHR_materials_pbrSpecularGlossiness', 
-                        extendMaterialParams: function () { return Promise.resolve(); } 
-                    };
-                });
-
-                loader.load(url, (gltf) => {
-                    clearTimeout(loadTimeout);
-                    console.log("DETEKTIF: BERHASIL! GLTF sudah di tangan.");
-                    
-                    previewModel = gltf.scene;
-
-                    if (!previewModel.scale.x || !isFinite(previewModel.scale.x)) previewModel.scale.set(1,1,1);
-
-                    previewModel.updateMatrixWorld(true);
-
-                    previewModel.traverse((node) => {
-                        if (node.isMesh || node.isSkinnedMesh) {
-                            if (!node.isSkinnedMesh) {
-                                node.castShadow = true; 
-                                node.receiveShadow = true;
-                            }
-                            if (node.material) {
-                                const mats = Array.isArray(node.material) ? node.material : [node.material];
-                                mats.forEach(mat => {
-                                    if (mat) mat.needsUpdate = true;
-                                });
-                            }
-                        }
+                if (node.material) {
+                    const mats = Array.isArray(node.material) ? node.material : [node.material];
+                    mats.forEach(mat => {
+                        if (mat) mat.needsUpdate = true;
                     });
-
-                    const box = new THREE.Box3().setFromObject(previewModel);
-                    if (box.isEmpty()) {
-                        console.warn("DETEKTIF: Model kosong/invisible!");
-                    }
-                    const size = box.getSize(new THREE.Vector3());
-                    const center = box.getCenter(new THREE.Vector3());
-                    
-                    let maxDim = Math.max(size.x, size.y, size.z);
-                    if (!maxDim || !isFinite(maxDim) || maxDim === 0) maxDim = 1;
-                    const norm = 1.2 / maxDim;
-                    
-                    previewModel.scale.setScalar(norm);
-
-                    pivotGroup = new THREE.Group(); 
-                    pivotGroup.add(previewModel); 
-                    scene.add(pivotGroup);
-                    console.log("DETEKTIF: Model berhasil di-add ke scene.");
-                    
-                    const bottomY = isFinite(box.min.y) ? box.min.y * norm : 0;
-                    const centerX = isFinite(center.x) ? center.x * norm : 0;
-                    const centerZ = isFinite(center.z) ? center.z * norm : 0;
-                    previewModel.position.set(-centerX, -bottomY, -centerZ);
-                    
-                    previewModel.userData = { _baseScale: norm, _bottomY: -bottomY };
-
-                    window.orbitState.active = false; 
-                    window.orbitState.angle = 0;
-                    const btnOrbit = document.getElementById('btn-orbit');
-                    if (btnOrbit) {
-                        btnOrbit.innerHTML = '<i class="bi bi-play-circle" id="orbit-icon"></i> Mulai Orbit';
-                    }
-
-                    pivotGroup = new THREE.Group(); 
-                    pivotGroup.add(previewModel); 
-                    scene.add(pivotGroup);
-
-                    allClips = gltf.animations || [];
-                    const panel = document.getElementById('anim-clip-panel');
-                    if (allClips.length > 0) {
-                        mixer = new THREE.AnimationMixer(previewModel);
-                        activeAction = mixer.clipAction(allClips[0]); 
-                        activeAction.play();
-                        const sel = document.getElementById('anim-clip-select');
-                        if (sel) sel.innerHTML = allClips.map((c, i) => `<option value="${i}">${c.name || 'Clip ' + (i+1)}</option>`).join('');
-                        if (panel) panel.style.display = '';
-                    } else {
-                        if (panel) panel.style.display = 'none';
-                    }
-
-                    window.applyTransformToModel();
-                    if(loadingEl) loadingEl.style.display = 'none';
-                    console.log("DETEKTIF: Loading Selesai - harusnya sudah muncul.");
-                    
-                }, undefined, (err) => {
-                    clearTimeout(loadTimeout);
-                    console.error('Error load 3D:', err);
-                    if (loadingEl) {
-                        loadingEl.innerHTML = `
-                            <div class="text-center bg-white p-3 rounded-xl shadow-lg border border-red-100 max-w-[90%] mx-auto">
-                                <p class="text-red-500 text-[11px] font-bold mb-2">Gagal memuat model 3D.<br>Pastikan format file valid (.glb).</p>
-                                <button type="button" onclick="document.getElementById('canvas-loading').style.display='none'" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[10px] font-bold transition">Tutup</button>
-                            </div>`;
-                    }
-                });
+                }
             }
+        });
 
+        const box = new THREE.Box3().setFromObject(previewModel);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        
+        let maxDim = Math.max(size.x, size.y, size.z);
+        if (!maxDim || !isFinite(maxDim) || maxDim === 0) maxDim = 1;
+        const norm = 1.2 / maxDim;
+        
+        previewModel.scale.setScalar(norm);
 
-/** Apply form values → 3D model */
-window.applyTransformFromForm = () => {
-    state.position = [
-        parseFloat(document.getElementById('pos-x').value) || 0,
-        parseFloat(document.getElementById('pos-y').value) || 0,
-        parseFloat(document.getElementById('pos-z').value) || 0,
-    ];
-    state.rotation = [
-        parseFloat(document.getElementById('rot-x').value) || 0,
-        parseFloat(document.getElementById('rot-y').value) || 0,
-        parseFloat(document.getElementById('rot-z').value) || 0,
-    ];
-    applyTransformToModel();
+        const bottomY = isFinite(box.min.y) ? box.min.y * norm : 0;
+        const centerX = isFinite(center.x) ? center.x * norm : 0;
+        const centerZ = isFinite(center.z) ? center.z * norm : 0;
+        previewModel.position.set(-centerX, -bottomY, -centerZ);
+        
+        previewModel.userData = { _baseScale: norm, _bottomY: -bottomY };
+
+        window.markerOrbitState.active = false; 
+        window.markerOrbitState.angle = 0;
+        const btnOrbit = document.getElementById('marker-btn-orbit');
+        if (btnOrbit) {
+            btnOrbit.innerHTML = '<i class="bi bi-play-circle" id="marker-orbit-icon"></i> Mulai Orbit';
+        }
+
+        pivotGroup = new THREE.Group(); 
+        pivotGroup.add(previewModel); 
+        scene.add(pivotGroup);
+
+        allClips = gltf.animations || [];
+        const panel = document.getElementById('marker-anim-clip-panel');
+        if (allClips.length > 0) {
+            mixer = new THREE.AnimationMixer(previewModel);
+            activeAction = mixer.clipAction(allClips[0]); 
+            activeAction.play();
+            const sel = document.getElementById('marker-anim-clip-select');
+            if (sel) sel.innerHTML = allClips.map((c, i) => `<option value="${i}">${c.name || 'Clip ' + (i+1)}</option>`).join('');
+            if (panel) panel.style.display = '';
+        } else {
+            if (panel) panel.style.display = 'none';
+        }
+
+        window.markerApplyTransformToModel();
+        if(loadingEl) loadingEl.style.display = 'none';
+        
+    }, undefined, (err) => {
+        clearTimeout(loadTimeout);
+        if (loadingEl) {
+            loadingEl.innerHTML = `
+                <div class="text-center bg-white p-3 rounded-xl shadow-lg border border-red-100 max-w-[90%] mx-auto">
+                    <p class="text-red-500 text-[11px] font-bold mb-2">Gagal memuat model 3D.<br>Pastikan format file valid (.glb).</p>
+                    <button type="button" onclick="document.getElementById('marker-canvas-loading').style.display='none'" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[10px] font-bold transition">Tutup</button>
+                </div>`;
+        }
+    });
 };
 
-function applyTransformToModel() {
+window.markerApplyTransformFromForm = () => {
+    window.markerThreeState.position = [
+        parseFloat(document.getElementById('marker-pos-x').value) || 0,
+        parseFloat(document.getElementById('marker-pos-y').value) || 0,
+        parseFloat(document.getElementById('marker-pos-z').value) || 0,
+    ];
+    window.markerThreeState.rotation = [
+        parseFloat(document.getElementById('marker-rot-x').value) || 0,
+        parseFloat(document.getElementById('marker-rot-y').value) || 0,
+        parseFloat(document.getElementById('marker-rot-z').value) || 0,
+    ];
+    window.markerApplyTransformToModel();
+};
+
+window.markerApplyTransformToModel = () => {
     if (!previewModel) return;
     const baseY = previewModel.userData._bottomY || 0;
 
-    // Posisi & rotasi pada previewModel (lokal di dalam pivotGroup)
     previewModel.position.set(
-        state.position[0],
-        state.position[1] + baseY,
-        state.position[2]
+        window.markerThreeState.position[0],
+        window.markerThreeState.position[1] + baseY,
+        window.markerThreeState.position[2]
     );
     previewModel.rotation.set(
-        THREE.MathUtils.degToRad(state.rotation[0]),
-        THREE.MathUtils.degToRad(state.rotation[1]),
-        THREE.MathUtils.degToRad(state.rotation[2])
+        THREE.MathUtils.degToRad(window.markerThreeState.rotation[0]),
+        THREE.MathUtils.degToRad(window.markerThreeState.rotation[1]),
+        THREE.MathUtils.degToRad(window.markerThreeState.rotation[2])
     );
     const base = previewModel.userData._baseScale || 1;
-    previewModel.scale.setScalar(state.scale * base);
+    previewModel.scale.setScalar(window.markerThreeState.scale * base);
 
-    // Saat tidak orbit: pivotGroup ikut posisi state
-    if (!orbitState.active && pivotGroup) {
+    if (!window.markerOrbitState.active && pivotGroup) {
         pivotGroup.position.set(0, 0, 0);
         pivotGroup.rotation.set(0, 0, 0);
     }
-}
+};
 
-/** Read 3D model transform → update form fields */
 function syncFormFromModel() {
     if (!previewModel) return;
     const p      = previewModel.position;
     const bottomY = previewModel.userData._bottomY || 0;
 
-    document.getElementById('pos-x').value = p.x.toFixed(2);
-    document.getElementById('pos-y').value = (p.y - bottomY).toFixed(2);
-    document.getElementById('pos-z').value = p.z.toFixed(2);
+    document.getElementById('marker-pos-x').value = p.x.toFixed(2);
+    document.getElementById('marker-pos-y').value = (p.y - bottomY).toFixed(2);
+    document.getElementById('marker-pos-z').value = p.z.toFixed(2);
 
     const r = previewModel.rotation;
-    document.getElementById('rot-x').value = THREE.MathUtils.radToDeg(r.x).toFixed(1);
-    document.getElementById('rot-y').value = THREE.MathUtils.radToDeg(r.y).toFixed(1);
-    document.getElementById('rot-z').value = THREE.MathUtils.radToDeg(r.z).toFixed(1);
+    document.getElementById('marker-rot-x').value = THREE.MathUtils.radToDeg(r.x).toFixed(1);
+    document.getElementById('marker-rot-y').value = THREE.MathUtils.radToDeg(r.y).toFixed(1);
+    document.getElementById('marker-rot-z').value = THREE.MathUtils.radToDeg(r.z).toFixed(1);
 }
 
-window.resetTransform = () => {
-    state.position = [0, 0, 0];
-    state.rotation = [0, 0, 0];
-    state.scale = 1;
-    document.getElementById('pos-x').value = 0;
-    document.getElementById('pos-y').value = 0;
-    document.getElementById('pos-z').value = 0;
-    document.getElementById('rot-x').value = 0;
-    document.getElementById('rot-y').value = 0;
-    document.getElementById('rot-z').value = 0;
-    document.getElementById('scale-slider').value = 1;
-    document.getElementById('scale-display').textContent = '1.00';
-    applyTransformToModel();
+window.markerResetTransform = () => {
+    window.markerThreeState.position = [0, 0, 0];
+    window.markerThreeState.rotation = [0, 0, 0];
+    window.markerThreeState.scale = 1;
+    document.getElementById('marker-pos-x').value = 0;
+    document.getElementById('marker-pos-y').value = 0;
+    document.getElementById('marker-pos-z').value = 0;
+    document.getElementById('marker-rot-x').value = 0;
+    document.getElementById('marker-rot-y').value = 0;
+    document.getElementById('marker-rot-z').value = 0;
+    document.getElementById('marker-scale-slider').value = 1;
+    document.getElementById('marker-scale-display').textContent = '1.00';
+    window.markerApplyTransformToModel();
 };
 
-// Scale slider
-document.getElementById('scale-slider').addEventListener('input', function () {
-    state.scale = parseFloat(this.value);
-    document.getElementById('scale-display').textContent = state.scale.toFixed(2);
-    applyTransformToModel();
+document.getElementById('marker-scale-slider')?.addEventListener('input', function () {
+    window.markerThreeState.scale = parseFloat(this.value);
+    document.getElementById('marker-scale-display').textContent = window.markerThreeState.scale.toFixed(2);
+    window.markerApplyTransformToModel();
 });
+
+window.markerToggleOrbit = () => {
+    window.markerOrbitState.active = !window.markerOrbitState.active;
+    const btn  = document.getElementById('marker-btn-orbit');
+    const icon = document.getElementById('marker-orbit-icon');
+
+    if (window.markerOrbitState.active) {
+        icon.className  = 'bi bi-pause-circle';
+        btn.innerHTML   = '<i class="bi bi-pause-circle" id="marker-orbit-icon"></i> Pause Orbit';
+        btn.classList.add('bg-teal-50', 'text-teal-700', 'border-teal-500');
+        
+        window.markerOrbitState.angle = 0;
+        if (pivotGroup) {
+            pivotGroup.position.set(0, 0, window.markerOrbitState.radius);
+            pivotGroup.rotation.y = 0;
+        }
+    } else {
+        icon.className  = 'bi bi-play-circle';
+        btn.innerHTML   = '<i class="bi bi-play-circle" id="marker-orbit-icon"></i> Mulai Orbit';
+        btn.classList.remove('bg-teal-50', 'text-teal-700', 'border-teal-500');
+
+        if (pivotGroup) {
+            pivotGroup.position.set(0, 0, 0);
+            pivotGroup.rotation.set(0, 0, 0);
+        }
+    }
+};
+
+window.markerToggleOrbitDir = () => {
+    window.markerOrbitState.dir *= -1;
+    document.getElementById('marker-orbit-dir-icon').style.transform = window.markerOrbitState.dir === 1 ? '' : 'scaleX(-1)';
+};
+
+document.getElementById('marker-orbit-speed')?.addEventListener('input', function () {
+    window.markerOrbitState.speed = parseFloat(this.value);
+    document.getElementById('marker-orbit-speed-val').textContent = this.value + '×';
+});
+
+document.getElementById('marker-orbit-radius')?.addEventListener('input', function () {
+    window.markerOrbitState.radius = parseFloat(this.value);
+    document.getElementById('marker-orbit-radius-val').textContent = this.value;
+});
+
+window.markerSwitchAnimClip = (index) => {
+    if (!mixer || !allClips[index]) return;
+    if (activeAction) activeAction.fadeOut(0.3);
+    activeAction = mixer.clipAction(allClips[index]);
+    activeAction.reset().fadeIn(0.3).play();
+};
 
 // ─── STEP NAVIGATION ─────────────────────────────────────────────────────────
 window.goToStep = (target) => {
