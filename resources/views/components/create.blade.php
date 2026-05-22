@@ -633,100 +633,71 @@ dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/dr
 function loadModelIntoPreview(url) {
     document.getElementById('canvas-loading').style.display = 'flex';
 
-    // Remove old model
     if (previewModel) { scene.remove(previewModel); previewModel = null; }
     if (mixer) { mixer.stopAllAction(); mixer = null; }
 
     const loader = new GLTFLoader();
-    loader.setDRACOLoader(dracoLoader); // handle Draco-compressed GLB
+    loader.setDRACOLoader(dracoLoader);
 
     loader.load(url, (gltf) => {
-        previewModel = gltf.scene;
-
-        // Fix material dari GLB Blender
-        previewModel.traverse((node) => {
-            if (!node.isMesh) return;
-            node.castShadow    = true;
-            node.receiveShadow = true;
-
-            const mats = Array.isArray(node.material) ? node.material : [node.material];
-            mats.forEach(mat => {
-                if (!mat) return;
-
-                // Pastikan material flag benar
-                mat.side = THREE.FrontSide;
-
-                // Vertex colors
-                if (node.geometry?.attributes?.color) {
-                    mat.vertexColors = true;
-                }
-
-                mat.needsUpdate = true;
+        try {
+            previewModel = gltf.scene;
+            previewModel.traverse((node) => {
+                if (!node.isMesh) return;
+                node.castShadow = true; node.receiveShadow = true;
+                const mats = Array.isArray(node.material) ? node.material : [node.material];
+                mats.forEach(mat => {
+                    if (!mat) return;
+                    mat.side = THREE.FrontSide;
+                    if (node.geometry?.attributes?.color) mat.vertexColors = true;
+                    mat.needsUpdate = true;
+                });
             });
-        });
 
-        // Normalize ukuran ke ~1.2 unit
-        const box    = new THREE.Box3().setFromObject(previewModel);
-        const center = box.getCenter(new THREE.Vector3());
-        const size   = box.getSize(new THREE.Vector3());
-        const maxDim = Math.max(size.x, size.y, size.z) || 1;
-        const norm   = 1.2 / maxDim;
+            const box = new THREE.Box3().setFromObject(previewModel);
+            const center = box.getCenter(new THREE.Vector3());
+            const size = box.getSize(new THREE.Vector3());
+            const maxDim = Math.max(size.x, size.y, size.z) || 1;
+            const norm = 1.2 / maxDim;
 
-        previewModel.scale.setScalar(norm);
+            previewModel.scale.setScalar(norm);
+            const bottomY = box.min.y * norm;
+            previewModel.position.set(-center.x * norm, -bottomY, -center.z * norm);
+            previewModel.userData._baseScale = norm;
+            previewModel.userData._bottomY = -bottomY;
 
-        // Center XZ, tapi Y: taruh bagian bawah model tepat di Y=0 (di atas marker)
-        const bottomY = box.min.y * norm;
-        previewModel.position.set(
-            -center.x * norm,
-            -bottomY,           // angkat agar kaki model menyentuh marker
-            -center.z * norm
-        );
+            orbitState.active = false; orbitState.angle = 0;
+            const orbitBtn = document.getElementById('btn-orbit');
+            if (orbitBtn) {
+                orbitBtn.innerHTML = '<i class="bi bi-play-circle" id="orbit-icon"></i> Mulai Orbit';
+                orbitBtn.style.borderColor = ''; orbitBtn.style.color = '';
+            }
 
-        // Simpan base scale agar slider scale relatif terhadap ini
-        previewModel.userData._baseScale = norm;
-        previewModel.userData._bottomY   = -bottomY;
+            if (pivotGroup) scene.remove(pivotGroup);
+            pivotGroup = new THREE.Group();
+            pivotGroup.add(previewModel);
+            scene.add(pivotGroup);
 
-        // Reset orbit state saat model baru dimuat
-        orbitState.active = false;
-        orbitState.angle  = 0;
-        const orbitBtn = document.getElementById('btn-orbit');
-        if (orbitBtn) {
-            orbitBtn.innerHTML   = '<i class="bi bi-play-circle" id="orbit-icon"></i> Mulai Orbit';
-            orbitBtn.style.borderColor = '';
-            orbitBtn.style.color = '';
+            allClips = gltf.animations;
+            if (allClips.length > 0) {
+                mixer = new THREE.AnimationMixer(previewModel);
+                activeAction = mixer.clipAction(allClips[0]); activeAction.play();
+                const select = document.getElementById('anim-clip-select');
+                select.innerHTML = allClips.map((clip, i) => `<option value="${i}">${clip.name}</option>`).join('');
+                document.getElementById('anim-clip-panel').style.display = '';
+            } else {
+                document.getElementById('anim-clip-panel').style.display = 'none';
+            }
+
+            applyTransformToModel();
+            document.getElementById('canvas-loading').style.display = 'none';
+        } catch(err) {
+            console.error('Error saat merender GLTF:', err);
+            document.getElementById('canvas-loading').innerHTML = '<p class="text-red-500 text-xs px-3">Gagal merender model 3D.</p>';
         }
-
-        // Wrap model dalam pivotGroup agar orbit tidak konflik dengan posisi model
-        if (pivotGroup) scene.remove(pivotGroup);
-        pivotGroup = new THREE.Group();
-        pivotGroup.add(previewModel);
-        scene.add(pivotGroup);
-
-        // Animasi
-        allClips = gltf.animations;
-        if (allClips.length > 0) {
-            mixer = new THREE.AnimationMixer(previewModel);
-
-            // Play clip pertama secara default
-            activeAction = mixer.clipAction(allClips[0]);
-            activeAction.play();
-
-            // Populate clip selector
-            const select = document.getElementById('anim-clip-select');
-            select.innerHTML = allClips.map((clip, i) =>
-                `<option value="${i}">${clip.name}</option>`
-            ).join('');
-            document.getElementById('anim-clip-panel').style.display = '';
-        } else {
-            document.getElementById('anim-clip-panel').style.display = 'none';
-        }
-
-        applyTransformToModel();
-        document.getElementById('canvas-loading').style.display = 'none';
     }, undefined, (err) => {
         console.error('GLB load error:', err);
-        document.getElementById('canvas-loading').innerHTML =
-            '<p class="text-red-500 text-xs px-3">Gagal memuat model 3D.<br>Pastikan file GLB valid.</p>';
+        document.getElementById('canvas-loading').innerHTML = '<p class="text-red-500 text-xs px-3">Gagal memuat model 3D.<br>Pastikan file GLB valid.</p>';
     });
 }
 
@@ -1495,7 +1466,6 @@ async function checkFileSize(id, url) {
 
 // Fungsi Download & Pause manual (Stream)
 window.toggleDownload = async (id, event) => {
-    // Mencegah klik tombol merembet ke pilihan radio
     if(event) { event.preventDefault(); event.stopPropagation(); }
     
     const mState = window.modelStates[id];
@@ -1514,7 +1484,6 @@ window.toggleDownload = async (id, event) => {
             let downloaded = 0;
             let chunks = [];
             
-            // Proses unduh sedikit demi sedikit (chunk)
             while(true) {
                 const {done, value} = await reader.read();
                 if(done) break;
@@ -1525,26 +1494,19 @@ window.toggleDownload = async (id, event) => {
                 updateItemPreview(id);
             }
             
-            // Satukan file dan jadikan URL Blob agar tidak perlu download ulang
-            const blob = new Blob(chunks);
+            // PERBAIKAN: Identitas file ditambahkan di sini
+            const blob = new Blob(chunks, { type: 'model/gltf-binary' });
             mState.blobUrl = URL.createObjectURL(blob);
             mState.state = 'loaded';
             updateItemPreview(id);
             
         } catch(e) {
-            // Jika dipause (dibatalkan sengaja)
-            if (e.name === 'AbortError') {
-                mState.state = 'paused';
-            } else {
-                mState.state = 'idle';
-            }
+            if (e.name === 'AbortError') mState.state = 'paused';
+            else mState.state = 'idle';
             updateItemPreview(id);
         }
     } else if (mState.state === 'downloading') {
-        // Eksekusi Pause
-        if(window.abortControllers[id]) {
-            window.abortControllers[id].abort(); 
-        }
+        if(window.abortControllers[id]) window.abortControllers[id].abort(); 
     }
 };
 
@@ -1687,19 +1649,30 @@ window.select3DPack = (id) => {
     state.selectedTemplateId = id;
     state.selectedTemplateName = selectedItem.name;
 
-    // WAJIB menggunakan blobUrl agar tidak kena blokir CORS di Step 3
     if (window.modelStates[id] && window.modelStates[id].state === 'loaded' && window.modelStates[id].blobUrl) {
         state.selectedTemplateUrl = window.modelStates[id].blobUrl;
     } else {
-        // Jika belum selesai diunduh, beri peringatan
         if (window.modelStates[id] && window.modelStates[id].state !== 'loaded') {
             alert("Model sedang diunduh. Harap tunggu indikator selesai (warna hijau) sebelum ke Step 3.");
         }
         state.selectedTemplateUrl = validUrl;
     }
 
-    // PERBAIKAN: Gunakan fungsi filter utama agar tab Animasi tidak berubah ke Model
-    window.filter3DPack();
+    // PERBAIKAN: Ganti border langsung via DOM. Tidak ada lagi re-render grid yang merusak Tab!
+    document.querySelectorAll('#template-grid label').forEach(label => {
+        label.classList.remove('border-teal-500', 'ring-2', 'ring-teal-500', 'shadow-md');
+        label.classList.add('border-slate-200');
+        const radio = label.querySelector('input[type="radio"]');
+        if(radio) radio.checked = false;
+    });
+
+    const selectedLabel = document.querySelector(`label[onclick="select3DPack(${id})"]`);
+    if (selectedLabel) {
+        selectedLabel.classList.remove('border-slate-200');
+        selectedLabel.classList.add('border-teal-500', 'ring-2', 'ring-teal-500', 'shadow-md');
+        const radio = selectedLabel.querySelector('input[type="radio"]');
+        if(radio) radio.checked = true;
+    }
     
     checkStep2(); 
 };
