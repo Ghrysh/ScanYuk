@@ -182,6 +182,10 @@
                         <div class="text-center text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest">ATAU</div>
                         <div class="p-4 md:p-5 border border-slate-200 rounded-xl bg-slate-50" :class="upload3dName ? 'opacity-50 grayscale' : ''">
                             <label class="block text-sm font-bold text-slate-900 mb-2">Opsi 2: Pilih dari Library ScanYuk</label>
+                            <div class="flex p-1 bg-slate-200/50 rounded-lg w-fit mb-4 gap-1 border border-slate-200" :class="upload3dName ? 'pointer-events-none opacity-50' : ''">
+                                <button type="button" @click="active3dTab = 'model'" :class="active3dTab === 'model' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="px-4 py-1.5 rounded-md text-xs sm:text-sm transition-all whitespace-nowrap">3D Model</button>
+                                <button type="button" @click="active3dTab = 'animasi'" :class="active3dTab === 'animasi' ? 'bg-white text-teal-600 shadow-sm font-bold' : 'text-slate-500 hover:text-slate-700'" class="px-4 py-1.5 rounded-md text-xs sm:text-sm transition-all whitespace-nowrap">3D Animasi</button>
+                            </div>
                             <div class="relative mb-4">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="absolute left-3 top-2.5 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                                 <input type="text" x-model="search3d" placeholder="Cari objek 3D..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:border-teal-500 outline-none" :disabled="upload3dName !== ''">
@@ -1248,7 +1252,7 @@
                     return null;
                 },
 
-                mainTab: 'custom', arType: '2d', title: '',
+                mainTab: 'custom', arType: '2d', title: '', active3dTab: 'model',
                 imageUrl2d: null, upload3dName: '', upload3dDisplayName: '',
                 selectedLibrary3d: '', local3dUrl: null, 
                 
@@ -1444,7 +1448,14 @@
                     }
                 },
 
-                filtered3d() { return this.library3dList.filter(i => (i.name || '').toLowerCase().includes(this.search3d.toLowerCase())); },
+                filtered3d() { 
+                    return this.library3dList.filter(i => {
+                        let matchesSearch = (i.name || '').toLowerCase().includes(this.search3d.toLowerCase());
+                        let isAnimasi = i.path && i.path.includes('3d_animasi');
+                        let matchesTab = this.active3dTab === 'animasi' ? isAnimasi : !isAnimasi;
+                        return matchesSearch && matchesTab;
+                    });
+                },
                 filteredMusic() { return this.musicList.filter(i => (i.name || '').toLowerCase().includes(this.searchMusic.toLowerCase())); },
                 filteredTemplates() { return this.templates.filter(i => (i.title || '').toLowerCase().includes(this.searchTemplate.toLowerCase()) || (i.narration || '').toLowerCase().includes(this.searchTemplate.toLowerCase())); },
 
