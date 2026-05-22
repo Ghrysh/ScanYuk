@@ -240,16 +240,7 @@
                                             </div>
 
                                             <template x-if="modelStates[item.id]?.state === 'loaded'">
-                                                <model-viewer 
-                                                    :src="modelStates[item.id].url" 
-                                                    class="w-full h-full" 
-                                                    disable-zoom 
-                                                    disable-pan 
-                                                    shadow-intensity="0" 
-                                                    exposure="1"
-                                                    environment-image="neutral" 
-                                                    loading="eager">
-                                                </model-viewer>
+                                                <model-viewer :src="modelStates[item.id].url" autoplay class="w-full h-full" disable-zoom disable-pan shadow-intensity="0" exposure="1" environment-image="neutral" loading="eager"></model-viewer>
                                             </template>
                                         </div>
                                         
@@ -588,7 +579,7 @@
                         <div class="h-32 md:h-40 bg-slate-100 flex items-center justify-center relative overflow-hidden pointer-events-none-children">
                             <template x-if="tpl.ar_type === '2d'"><img :src="getAssetUrl(tpl.file_path)" class="w-full h-full object-cover"></template>
                             <template x-if="tpl.ar_type === '3d'">
-                                <model-viewer :src="getAssetUrl(tpl.file_path)" class="w-full h-full" disable-zoom disable-pan auto-rotate exposure="1.2"></model-viewer>
+                                <model-viewer :src="getAssetUrl(tpl.file_path)" autoplay class="w-full h-full" disable-zoom disable-pan auto-rotate exposure="1.2"></model-viewer>
                             </template>
                             <div class="absolute inset-0 bg-slate-900/10 group-hover:bg-transparent transition-colors"></div>
                             <span class="absolute top-2 left-2 md:top-3 md:left-3 px-2 md:px-2.5 py-0.5 md:py-1 rounded-md text-[10px] md:text-xs font-bold shadow-sm" :class="tpl.ar_type === '3d' ? 'bg-indigo-600 text-white' : 'bg-teal-500 text-white'" x-text="'AR ' + tpl.ar_type.toUpperCase()"></span>
@@ -652,14 +643,7 @@
                                     </div>
                                 </div>   
                                 <!-- PERUBAHAN DI SINI: Menyisipkan transform scale, rotasi, & animasi ke tag model-viewer -->
-                                <model-viewer id="preview-model-viewer" :src="previewData.src" 
-                                    :auto-rotate="previewOrbit" 
-                                    camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"
-                                    :scale="previewScale" 
-                                    :orientation="previewRotation" 
-                                    camera-orbit="0deg 90deg auto"
-                                    :animation-name="previewAnim !== '*' ? previewAnim : null">
-                                </model-viewer>
+                                <model-viewer id="preview-model-viewer" :src="previewData.src" autoplay auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer>
                             </div>
                         </template>
 
@@ -1606,8 +1590,16 @@
                             setTimeout(() => { window.location.href = JSON.parse(xhr.responseText).redirect_url; }, 500);
                         } else {
                             this.isGenerating = false;
-                            try { this.uploadError = JSON.parse(xhr.responseText).error || "Gagal membuat AR"; } 
-                            catch (err) { this.uploadError = "Terjadi kesalahan server (Error " + xhr.status + ")."; }
+                            try {
+                                let res = JSON.parse(xhr.responseText);
+                                if (res.errors) {
+                                    this.uploadError = Object.values(res.errors).flat().join(', ');
+                                } else {
+                                    this.uploadError = res.message || "Gagal membuat AR";
+                                }
+                            } catch (err) {
+                                this.uploadError = "Terjadi kesalahan server (Error " + xhr.status + ").";
+                            }
                         }
                     };
                     xhr.onerror = () => { this.isGenerating = false; this.uploadError = "Koneksi terputus."; };
