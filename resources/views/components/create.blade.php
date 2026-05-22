@@ -486,6 +486,11 @@
 </div>
 
 <script type="module">
+window.onerror = function(message, source, lineno, colno, error) {
+    alert("KODINGAN ERROR! \n\nPesan: " + message + "\nBaris: " + lineno + "\nFile: " + source);
+    return false;
+};
+
 import * as THREE from 'three';
 import { GLTFLoader }    from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader }   from 'three/addons/loaders/DRACOLoader.js';
@@ -1691,19 +1696,22 @@ window.select3DPack = (id) => {
     const selectedItem = window.library3DData.find(item => item.id === id);
     if (!selectedItem) return;
 
-    let rawUrl = selectedItem.path || selectedItem.model_url || selectedItem.file_path || '';
-    let validUrl = rawUrl ? ((rawUrl.startsWith('http') || rawUrl.startsWith('/')) ? rawUrl : '/' + rawUrl) : '';
-
     state.selectedTemplateId = id;
     state.selectedTemplateName = selectedItem.name;
 
     if (window.modelStates[id] && window.modelStates[id].state === 'loaded' && window.modelStates[id].blobUrl) {
         state.selectedTemplateUrl = window.modelStates[id].blobUrl;
+        console.log("-> Menggunakan Blob Lokal (Lancar)");
     } else {
-        if (window.modelStates[id] && window.modelStates[id].state !== 'loaded') {
-            alert("Model sedang diunduh. Harap tunggu indikator selesai (warna hijau) sebelum ke Step 3.");
+
+        state.selectedTemplateUrl = null; 
+        
+        if (window.modelStates[id] && window.modelStates[id].state === 'downloading') {
+            alert("Model sedang diunduh. Harap tunggu sampai icon berubah hijau (selesai).");
+        } else {
+            alert("Harap tunggu file selesai dimuat ke sistem...");
         }
-        state.selectedTemplateUrl = validUrl;
+        return; // Hentikan fungsi di sini, jangan lanjut ke checkStep2
     }
 
     // PERBAIKAN: Ganti border langsung via DOM. Tidak ada lagi re-render grid yang merusak Tab!
