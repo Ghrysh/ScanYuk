@@ -1495,6 +1495,15 @@
 
                     this.customBgmFile = file;
                     this.selectedMusic = '';
+                    
+                    this.isCustomBgm = true;
+
+                    if (this.customBgmUrl) {
+                        URL.revokeObjectURL(this.customBgmUrl);
+                    }
+                    this.customBgmUrl = URL.createObjectURL(file);
+                    
+                    this.previewBgm(this.customBgmUrl);
                 },
                 clearCustomBgm() {
                     this.isCustomBgm = false;
