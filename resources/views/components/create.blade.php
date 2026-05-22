@@ -631,74 +631,103 @@ const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/');
 
 function loadModelIntoPreview(url) {
-    document.getElementById('canvas-loading').style.display = 'flex';
+    const loadingEl = document.getElementById('canvas-loading');
+    if (loadingEl) {
+        loadingEl.style.display = 'flex';
+        loadingEl.innerHTML = `
+            <div class="text-center">
+                <div class="inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                <p class="text-xs text-slate-300">Memuat model 3D...</p>
+            </div>
+        `;
+    }
 
     if (previewModel) { scene.remove(previewModel); previewModel = null; }
     if (mixer) { mixer.stopAllAction(); mixer = null; }
 
-    const loader = new GLTFLoader();
-    loader.setDRACOLoader(dracoLoader);
-
-    loader.load(url, (gltf) => {
-        try {
-            previewModel = gltf.scene;
-            previewModel.traverse((node) => {
-                if (!node.isMesh) return;
-                node.castShadow = true; node.receiveShadow = true;
-                const mats = Array.isArray(node.material) ? node.material : [node.material];
-                mats.forEach(mat => {
-                    if (!mat) return;
-                    mat.side = THREE.FrontSide;
-                    if (node.geometry?.attributes?.color) mat.vertexColors = true;
-                    mat.needsUpdate = true;
-                });
-            });
-
-            const box = new THREE.Box3().setFromObject(previewModel);
-            const center = box.getCenter(new THREE.Vector3());
-            const size = box.getSize(new THREE.Vector3());
-            const maxDim = Math.max(size.x, size.y, size.z) || 1;
-            const norm = 1.2 / maxDim;
-
-            previewModel.scale.setScalar(norm);
-            const bottomY = box.min.y * norm;
-            previewModel.position.set(-center.x * norm, -bottomY, -center.z * norm);
-            previewModel.userData._baseScale = norm;
-            previewModel.userData._bottomY = -bottomY;
-
-            orbitState.active = false; orbitState.angle = 0;
-            const orbitBtn = document.getElementById('btn-orbit');
-            if (orbitBtn) {
-                orbitBtn.innerHTML = '<i class="bi bi-play-circle" id="orbit-icon"></i> Mulai Orbit';
-                orbitBtn.style.borderColor = ''; orbitBtn.style.color = '';
-            }
-
-            if (pivotGroup) scene.remove(pivotGroup);
-            pivotGroup = new THREE.Group();
-            pivotGroup.add(previewModel);
-            scene.add(pivotGroup);
-
-            allClips = gltf.animations;
-            if (allClips.length > 0) {
-                mixer = new THREE.AnimationMixer(previewModel);
-                activeAction = mixer.clipAction(allClips[0]); activeAction.play();
-                const select = document.getElementById('anim-clip-select');
-                select.innerHTML = allClips.map((clip, i) => `<option value="${i}">${clip.name}</option>`).join('');
-                document.getElementById('anim-clip-panel').style.display = '';
-            } else {
-                document.getElementById('anim-clip-panel').style.display = 'none';
-            }
-
-            applyTransformToModel();
-            document.getElementById('canvas-loading').style.display = 'none';
-        } catch(err) {
-            console.error('Error saat merender GLTF:', err);
-            document.getElementById('canvas-loading').innerHTML = '<p class="text-red-500 text-xs px-3">Gagal merender model 3D.</p>';
+    try {
+        const loader = new GLTFLoader();
+        
+        // Deteksi DRACOLoader dengan aman agar tidak memicu Fatal Error
+        if (typeof dracoLoader !== 'undefined') {
+            loader.setDRACOLoader(dracoLoader);
+        } else if (typeof DRACOLoader !== 'undefined') {
+            const tempDraco = new DRACOLoader();
+            tempDraco.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/');
+            loader.setDRACOLoader(tempDraco);
         }
-    }, undefined, (err) => {
-        console.error('GLB load error:', err);
-        document.getElementById('canvas-loading').innerHTML = '<p class="text-red-500 text-xs px-3">Gagal memuat model 3D.<br>Pastikan file GLB valid.</p>';
-    });
+
+        loader.load(url, (gltf) => {
+            try {
+                previewModel = gltf.scene;
+                previewModel.traverse((node) => {
+                    if (!node.isMesh) return;
+                    node.castShadow = true; node.receiveShadow = true;
+                    const mats = Array.isArray(node.material) ? node.material : [node.material];
+                    mats.forEach(mat => {
+                        if (!mat) return;
+                        mat.side = THREE.FrontSide;
+                        mat.needsUpdate = true;
+                    });
+                });
+
+                const box = new THREE.Box3().setFromObject(previewModel);
+                const center = box.getCenter(new THREE.Vector3());
+                const maxDim = Math.max(box.getSize(new THREE.Vector3()).x, box.getSize(new THREE.Vector3()).y, box.getSize(new THREE.Vector3()).z) || 1;
+                const norm = 1.2 / maxDim;
+
+                previewModel.scale.setScalar(norm);
+                const bottomY = box.min.y * norm;
+                previewModel.position.set(-center.x * norm, -bottomY, -center.z * norm);
+                previewModel.userData._baseScale = norm;
+                previewModel.userData._bottomY = -bottomY;
+
+                orbitState.active = false; orbitState.angle = 0;
+                if (document.getElementById('btn-orbit')) {
+                    document.getElementById('btn-orbit').innerHTML = '<i class="bi bi-play-circle" id="orbit-icon"></i> Mulai Orbit';
+                }
+
+                if (pivotGroup) scene.remove(pivotGroup);
+                pivotGroup = new THREE.Group();
+                pivotGroup.add(previewModel);
+                scene.add(pivotGroup);
+
+                allClips = gltf.animations;
+                const panel = document.getElementById('anim-clip-panel');
+                if (allClips && allClips.length > 0) {
+                    mixer = new THREE.AnimationMixer(previewModel);
+                    activeAction = mixer.clipAction(allClips[0]); activeAction.play();
+                    const select = document.getElementById('anim-clip-select');
+                    if(select) select.innerHTML = allClips.map((clip, i) => `<option value="${i}">${clip.name}</option>`).join('');
+                    if(panel) panel.style.display = '';
+                } else {
+                    if(panel) panel.style.display = 'none';
+                }
+
+                applyTransformToModel();
+                if (loadingEl) loadingEl.style.display = 'none';
+            } catch(err) {
+                console.error('Error saat merender GLTF:', err);
+                if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500 text-xs px-3 font-bold bg-white/90 p-2 rounded">Gagal merender model 3D ke Canvas.</p>';
+            }
+        }, undefined, (err) => {
+            console.error('GLB load error:', err);
+            let errorMsg = 'File 3D gagal dimuat atau rusak.';
+            
+            // JIKA MENDETEKSI FORMAT JADUL, TAMPILKAN PESAN INI:
+            if (err && err.message && err.message.includes('KHR_materials_pbrSpecularGlossiness')) {
+                errorMsg = 'Format 3D ini sudah usang (PBR Specular Glossiness). Harap convert file GLB ini ke standar baru (Metallic Roughness) menggunakan Blender.';
+            }
+            
+            if (loadingEl) loadingEl.innerHTML = `
+                <div class="text-center bg-white/95 p-3 rounded-xl shadow-lg border border-red-100 max-w-[90%]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <p class="text-red-600 text-[11px] font-bold leading-relaxed">${errorMsg}</p>
+                </div>`;
+        });
+    } catch (e) {
+        if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500 text-xs px-3 bg-white/90 p-2 rounded">Sistem 3D Viewer gagal dimuat.</p>';
+    }
 }
 
 /** Apply form values → 3D model */
