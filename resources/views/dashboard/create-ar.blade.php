@@ -2069,48 +2069,106 @@
             } animate();
         }
 
+        // DRACOLoader shared instance (Menggunakan path persis seperti referensi Anda yang aman)
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/');
 
-        window.loadModelIntoPreview = (url) => {
-            initThree();
+        function loadModelIntoPreview(url) {
+            // Pastikan environment 3D disiapkan ulang sebelum load
+            initThree(); 
+            
             const loadingEl = document.getElementById('canvas-loading');
-            if(loadingEl) loadingEl.style.display = 'flex';
+            if (loadingEl) {
+                loadingEl.style.display = 'flex';
+                loadingEl.innerHTML = `
+                    <div class="text-center">
+                        <div class="inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                        <p class="text-xs text-slate-300">Memuat model 3D...</p>
+                    </div>
+                `;
+            }
+
             if (previewModel) { scene.remove(previewModel); previewModel = null; }
             if (mixer) { mixer.stopAllAction(); mixer = null; }
 
-            const loader = new GLTFLoader(); loader.setDRACOLoader(dracoLoader);
+            const loader = new GLTFLoader(); 
+            loader.setDRACOLoader(dracoLoader);
+            
+            // Trik Bypass KHR: Mencegah Three.js crash jika modelnya berformat lawas
+            loader.register(function () {
+                return { 
+                    name: 'KHR_materials_pbrSpecularGlossiness', 
+                    extendMaterialParams: function () { return Promise.resolve(); } 
+                };
+            });
+
             loader.load(url, (gltf) => {
                 previewModel = gltf.scene;
+                
+                // PERBAIKAN UTAMA: Traversal material yang lebih aman (Diambil dari kode referensi)
                 previewModel.traverse((node) => {
-                    if (node.isMesh && node.material) { node.material.side = THREE.FrontSide; node.material.needsUpdate = true; }
+                    if (node.isMesh && node.material) { 
+                        node.material.side = THREE.FrontSide; 
+                        node.material.needsUpdate = true; 
+                        node.castShadow = true; 
+                        node.receiveShadow = true;
+                    }
                 });
 
                 const box = new THREE.Box3().setFromObject(previewModel);
                 const center = box.getCenter(new THREE.Vector3());
-                const norm = 1.2 / (Math.max(box.getSize(new THREE.Vector3()).x, box.getSize(new THREE.Vector3()).y, box.getSize(new THREE.Vector3()).z) || 1);
+                const maxDim = Math.max(box.getSize(new THREE.Vector3()).x, box.getSize(new THREE.Vector3()).y, box.getSize(new THREE.Vector3()).z) || 1;
+                const norm = 1.2 / maxDim;
                 
                 previewModel.scale.setScalar(norm);
                 const bottomY = box.min.y * norm;
                 previewModel.position.set(-center.x * norm, -bottomY, -center.z * norm);
+                
+                // Simpan ukuran bawaan objek
                 previewModel.userData = { _baseScale: norm, _bottomY: -bottomY };
 
+                orbitState.active = false; 
+                orbitState.angle = 0;
+                const btnOrbit = document.getElementById('btn-orbit');
+                if (btnOrbit) {
+                    btnOrbit.innerHTML = '<i class="bi bi-play-circle" id="orbit-icon"></i> Mulai Orbit';
+                }
+
                 if (pivotGroup) scene.remove(pivotGroup);
-                pivotGroup = new THREE.Group(); pivotGroup.add(previewModel); scene.add(pivotGroup);
+                pivotGroup = new THREE.Group(); 
+                pivotGroup.add(previewModel); 
+                scene.add(pivotGroup);
 
                 allClips = gltf.animations;
-                if (allClips.length > 0) {
+                const panel = document.getElementById('anim-clip-panel');
+                if (allClips && allClips.length > 0) {
                     mixer = new THREE.AnimationMixer(previewModel);
-                    activeAction = mixer.clipAction(allClips[0]); activeAction.play();
+                    activeAction = mixer.clipAction(allClips[0]); 
+                    activeAction.play();
                     const sel = document.getElementById('anim-clip-select');
                     if(sel) sel.innerHTML = allClips.map((c, i) => `<option value="${i}">${c.name}</option>`).join('');
-                    document.getElementById('anim-clip-panel').style.display = '';
-                } else document.getElementById('anim-clip-panel').style.display = 'none';
+                    if(panel) panel.style.display = '';
+                } else {
+                    if(panel) panel.style.display = 'none';
+                }
 
-                window.applyTransformToModel();
+                applyTransformToModel();
+                
+                // Hapus layar loading
                 if(loadingEl) loadingEl.style.display = 'none';
+                
+            }, undefined, (err) => {
+                console.error('Error load 3D:', err);
+                // Cegah stuck jika benar-benar gagal loading
+                if(loadingEl) {
+                    loadingEl.innerHTML = `
+                        <div class="text-center bg-white p-3 rounded-xl shadow-lg border border-red-100 max-w-[90%] mx-auto">
+                            <p class="text-red-500 text-[11px] font-bold mb-2">Gagal memuat model 3D.</p>
+                            <button type="button" onclick="document.getElementById('canvas-loading').style.display='none'" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[10px] font-bold transition">Tutup</button>
+                        </div>`;
+                }
             });
-        };
+        }
 
         window.applyTransformFromForm = () => {
             window.threeState.position = [parseFloat(document.getElementById('pos-x').value)||0, parseFloat(document.getElementById('pos-y').value)||0, parseFloat(document.getElementById('pos-z').value)||0];
