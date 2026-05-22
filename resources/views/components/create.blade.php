@@ -631,152 +631,128 @@ const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
 
 function loadModelIntoPreview(url) {
-    const loadingEl = document.getElementById('canvas-loading');
-    if (loadingEl) {
-        loadingEl.style.display = 'flex';
-        loadingEl.innerHTML = `
-            <div class="text-center">
-                <div class="inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                <p id="loading-3d-text" class="text-xs text-slate-300">Memuat model 3D...</p>
-            </div>
-        `;
-    }
+            // Pastikan environment 3D disiapkan ulang sebelum load
+            initThree(); 
+            
+            const loadingEl = document.getElementById('canvas-loading');
+            if (loadingEl) {
+                loadingEl.style.display = 'flex';
+                loadingEl.innerHTML = `
+                    <div class="text-center">
+                        <div class="inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                        <p class="text-xs text-slate-300">Memuat model 3D...</p>
+                    </div>
+                `;
+            }
 
-    if (previewModel) { scene.remove(previewModel); previewModel = null; }
-    if (mixer) { mixer.stopAllAction(); mixer = null; }
+            if (previewModel) { scene.remove(previewModel); previewModel = null; }
+            if (mixer) { mixer.stopAllAction(); mixer = null; }
 
-    try {
-        const loader = new GLTFLoader();
-        
-        // ─── PERBAIKAN BUG: BYPASS FORMAT 3D JADUL ───
-        // Menipu Three.js agar mengabaikan format KHR_materials_pbrSpecularGlossiness
-        // sehingga proses render tidak hang/crash.
-        loader.register(function (parser) {
-            return {
-                name: 'KHR_materials_pbrSpecularGlossiness',
-                extendMaterialParams: function () {
-                    return Promise.resolve();
-                }
-            };
-        });
-
-        // Deteksi DRACOLoader dengan aman
-        if (typeof dracoLoader !== 'undefined') {
+            const loader = new GLTFLoader(); 
             loader.setDRACOLoader(dracoLoader);
-        } else if (typeof DRACOLoader !== 'undefined') {
-            const tempDraco = new DRACOLoader();
-            tempDraco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
-            loader.setDRACOLoader(tempDraco);
-        }
+            
+            // Trik Bypass KHR: Mencegah Three.js crash jika modelnya berformat lawas
+            loader.register(function () {
+                return { 
+                    name: 'KHR_materials_pbrSpecularGlossiness', 
+                    extendMaterialParams: function () { return Promise.resolve(); } 
+                };
+            });
 
-        loader.load(url, (gltf) => {
-            try {
+            loader.load(url, (gltf) => {
                 previewModel = gltf.scene;
                 
-                // 1. Perbaikan pada Traverse (Bayangan dan Material)
+                // PENTING 1: Update matrix dulu agar perhitungan bounding box animasi tidak NaN/Infinity
+                previewModel.updateMatrixWorld(true);
+
+                // PENTING 2: Traversal material & bayangan yang aman untuk Animasi (SkinnedMesh)
                 previewModel.traverse((node) => {
                     if (node.isMesh || node.isSkinnedMesh) {
-                        // Jangan paksa castShadow pada SkinnedMesh (animasi) karena berat dan rawan nge-hang
+                        // Jangan nyalakan castShadow untuk SkinnedMesh (Model Anime/Karakter). 
+                        // Itu membuat kalkulasi GPU terlalu berat dan tab browser "hang" / stuck loading.
                         if (!node.isSkinnedMesh) {
                             node.castShadow = true; 
                             node.receiveShadow = true;
                         }
                         
-                        const mats = Array.isArray(node.material) ? node.material : [node.material];
-                        mats.forEach(mat => {
-                            if (!mat) return;
-                            // Jangan ubah side menjadi FrontSide secara paksa jika model anime punya material transparan (baju/rambut)
-                            // mat.side = THREE.FrontSide; // <-- HAPUS / MATIKAN BARIS INI
-                            mat.needsUpdate = true;
-                        });
+                        // Biarkan material anime apa adanya, jangan dipaksa ke THREE.FrontSide
+                        if (node.material) {
+                            const mats = Array.isArray(node.material) ? node.material : [node.material];
+                            mats.forEach(mat => {
+                                if (mat) mat.needsUpdate = true;
+                            });
+                        }
                     }
                 });
 
-                // 2. Perbaikan pada perhitungan Bounding Box (Scale & Posisi)
-                // Memaksa Three.js mengupdate matrix sebelum menghitung box (penting untuk model animasi)
-                previewModel.updateMatrixWorld(true);
-                
                 const box = new THREE.Box3().setFromObject(previewModel);
-                const size = box.getSize(new THREE.Vector3());
-                const center = box.getCenter(new THREE.Vector3());
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                const center = new THREE.Vector3();
+                box.getCenter(center);
                 
-                // Mencegah nilai Infinity atau NaN jika model rusak/kosong
+                // PENTING 3: Mencegah error Skala (Infinity) jika rig/tulang animasi berantakan
                 let maxDim = Math.max(size.x, size.y, size.z);
                 if (!maxDim || !isFinite(maxDim) || maxDim === 0) {
                     maxDim = 1;
                 }
-                
-                // Jika model animasi terlalu raksasa, normalkan dengan batas rasional
                 const norm = 1.2 / maxDim;
-
+                
                 previewModel.scale.setScalar(norm);
-                const bottomY = box.min.y * norm;
-                previewModel.position.set(-center.x * norm, -bottomY, -center.z * norm);
-                previewModel.userData._baseScale = norm;
-                previewModel.userData._bottomY = -bottomY;
+                
+                // PENTING 4: Mencegah posisi Y melayang jauh dan memvalidasi nilainya
+                const bottomY = isFinite(box.min.y) ? box.min.y * norm : 0;
+                const centerX = isFinite(center.x) ? center.x * norm : 0;
+                const centerZ = isFinite(center.z) ? center.z * norm : 0;
 
-                orbitState.active = false; orbitState.angle = 0;
-                if (document.getElementById('btn-orbit')) {
-                    document.getElementById('btn-orbit').innerHTML = '<i class="bi bi-play-circle" id="orbit-icon"></i> Mulai Orbit';
+                previewModel.position.set(-centerX, -bottomY, -centerZ);
+                
+                // Simpan ukuran bawaan objek
+                previewModel.userData = { _baseScale: norm, _bottomY: -bottomY };
+
+                window.orbitState.active = false; 
+                window.orbitState.angle = 0;
+                const btnOrbit = document.getElementById('btn-orbit');
+                if (btnOrbit) {
+                    btnOrbit.innerHTML = '<i class="bi bi-play-circle" id="orbit-icon"></i> Mulai Orbit';
                 }
 
                 if (pivotGroup) scene.remove(pivotGroup);
-                pivotGroup = new THREE.Group();
-                pivotGroup.add(previewModel);
+                pivotGroup = new THREE.Group(); 
+                pivotGroup.add(previewModel); 
                 scene.add(pivotGroup);
 
+                // Aktifkan Animasi Geraknya
                 allClips = gltf.animations;
                 const panel = document.getElementById('anim-clip-panel');
                 if (allClips && allClips.length > 0) {
                     mixer = new THREE.AnimationMixer(previewModel);
-                    activeAction = mixer.clipAction(allClips[0]); activeAction.play();
-                    const select = document.getElementById('anim-clip-select');
-                    if(select) select.innerHTML = allClips.map((clip, i) => `<option value="${i}">${clip.name}</option>`).join('');
+                    activeAction = mixer.clipAction(allClips[0]); 
+                    activeAction.play();
+                    const sel = document.getElementById('anim-clip-select');
+                    if(sel) sel.innerHTML = allClips.map((c, i) => `<option value="${i}">${c.name}</option>`).join('');
                     if(panel) panel.style.display = '';
                 } else {
                     if(panel) panel.style.display = 'none';
                 }
 
-                applyTransformToModel();
-                if (loadingEl) loadingEl.style.display = 'none';
-            } catch(err) {
-                console.error('Error saat merender GLTF:', err);
-                if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500 text-xs px-3 font-bold bg-white/90 p-2 rounded">Gagal merender model 3D ke Canvas.</p>';
-            }
-        }, 
-        (xhr) => {
-            // Cegah teks loading menimpa pesan error jika sudah gagal
-            if (xhr.lengthComputable && loadingEl && !loadingEl.innerHTML.includes('Gagal')) {
-                const percent = Math.round((xhr.loaded / xhr.total) * 100);
-                const textEl = document.getElementById('loading-3d-text');
-                if (textEl) textEl.textContent = `Memuat model 3D... ${percent}%`;
-            }
-        }, 
-        (err) => {
-            console.error('GLB load error:', err);
-            
-            // JIKA TETAP GAGAL: Ubah box loading jadi tombol error yang bisa di-klik kembali
-            if (loadingEl) {
-                loadingEl.style.display = 'flex';
-                let errorMsg = 'File 3D gagal dimuat atau format tidak didukung.';
+                window.applyTransformToModel();
                 
-                if (err.message && err.message.includes('KHR_materials_pbrSpecularGlossiness')) {
-                    errorMsg = 'Format 3D ini sudah usang. Warnanya mungkin tidak akan tampil sempurna. Mohon export ulang melalui Blender sebagai .glb (Metallic Roughness).';
+                // Hapus layar loading sukses
+                if(loadingEl) loadingEl.style.display = 'none';
+                
+            }, undefined, (err) => {
+                console.error('Error load 3D:', err);
+                // Menangkap error jika GLB benar-benar rusak (agar loading tidak berputar abadi)
+                if(loadingEl) {
+                    loadingEl.innerHTML = `
+                        <div class="text-center bg-white p-3 rounded-xl shadow-lg border border-red-100 max-w-[90%] mx-auto">
+                            <p class="text-red-500 text-[11px] font-bold mb-2">Gagal memuat model 3D.</p>
+                            <button type="button" onclick="document.getElementById('canvas-loading').style.display='none'" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[10px] font-bold transition">Tutup Box</button>
+                        </div>`;
                 }
-                
-                loadingEl.innerHTML = `
-                    <div class="text-center bg-white/95 p-4 rounded-xl shadow-lg border border-red-200 max-w-[80%] mx-auto">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                        <p class="text-red-600 text-[11px] font-bold leading-relaxed mb-3">${errorMsg}</p>
-                        <button type="button" onclick="document.getElementById('canvas-loading').style.display='none'; goToStep(2);" class="px-4 py-1.5 bg-red-100 text-red-700 rounded-lg text-[10px] font-bold hover:bg-red-200 transition">Pilih Model Lain</button>
-                    </div>`;
-            }
-        });
-    } catch (e) {
-        console.error(e);
-        if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500 text-xs px-3 bg-white/90 p-2 rounded">Sistem 3D Viewer gagal dimuat.</p>';
-    }
-}
+            });
+        }
 
 /** Apply form values → 3D model */
 window.applyTransformFromForm = () => {
