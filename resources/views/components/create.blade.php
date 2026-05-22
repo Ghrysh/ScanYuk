@@ -648,12 +648,23 @@ function loadModelIntoPreview(url) {
     try {
         const loader = new GLTFLoader();
         
-        // Deteksi DRACOLoader dengan aman agar tidak memicu Fatal Error
+        // ─── PERBAIKAN BUG: BYPASS FORMAT 3D JADUL ───
+        // Menipu Three.js agar mengabaikan format KHR_materials_pbrSpecularGlossiness
+        // sehingga proses render tidak hang/crash.
+        loader.register(function (parser) {
+            return {
+                name: 'KHR_materials_pbrSpecularGlossiness',
+                extendMaterialParams: function () {
+                    return Promise.resolve();
+                }
+            };
+        });
+
+        // Deteksi DRACOLoader dengan aman
         if (typeof dracoLoader !== 'undefined') {
             loader.setDRACOLoader(dracoLoader);
         } else if (typeof DRACOLoader !== 'undefined') {
             const tempDraco = new DRACOLoader();
-            // PERBAIKAN: Gunakan gstatic karena unpkg sering diblokir CORS pada Web Worker
             tempDraco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
             loader.setDRACOLoader(tempDraco);
         }
@@ -712,32 +723,36 @@ function loadModelIntoPreview(url) {
                 if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500 text-xs px-3 font-bold bg-white/90 p-2 rounded">Gagal merender model 3D ke Canvas.</p>';
             }
         }, 
-        // PERBAIKAN: Tambahkan Tracker Progress agar aplikasi tidak terasa "Stuck"
         (xhr) => {
-            if (xhr.lengthComputable && loadingEl) {
+            // Cegah teks loading menimpa pesan error jika sudah gagal
+            if (xhr.lengthComputable && loadingEl && !loadingEl.innerHTML.includes('Gagal')) {
                 const percent = Math.round((xhr.loaded / xhr.total) * 100);
                 const textEl = document.getElementById('loading-3d-text');
-                if (textEl) {
-                    textEl.textContent = `Memuat model 3D... ${percent}%`;
-                }
+                if (textEl) textEl.textContent = `Memuat model 3D... ${percent}%`;
             }
         }, 
         (err) => {
             console.error('GLB load error:', err);
-            let errorMsg = 'File 3D gagal dimuat atau rusak.';
             
-            // JIKA MENDETEKSI FORMAT JADUL, TAMPILKAN PESAN INI:
-            if (err && err.message && err.message.includes('KHR_materials_pbrSpecularGlossiness')) {
-                errorMsg = 'Format 3D ini sudah usang (PBR Specular Glossiness). Harap convert file GLB ini ke standar baru (Metallic Roughness) menggunakan Blender.';
+            // JIKA TETAP GAGAL: Ubah box loading jadi tombol error yang bisa di-klik kembali
+            if (loadingEl) {
+                loadingEl.style.display = 'flex';
+                let errorMsg = 'File 3D gagal dimuat atau format tidak didukung.';
+                
+                if (err.message && err.message.includes('KHR_materials_pbrSpecularGlossiness')) {
+                    errorMsg = 'Format 3D ini sudah usang. Warnanya mungkin tidak akan tampil sempurna. Mohon export ulang melalui Blender sebagai .glb (Metallic Roughness).';
+                }
+                
+                loadingEl.innerHTML = `
+                    <div class="text-center bg-white/95 p-4 rounded-xl shadow-lg border border-red-200 max-w-[80%] mx-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <p class="text-red-600 text-[11px] font-bold leading-relaxed mb-3">${errorMsg}</p>
+                        <button type="button" onclick="document.getElementById('canvas-loading').style.display='none'; goToStep(2);" class="px-4 py-1.5 bg-red-100 text-red-700 rounded-lg text-[10px] font-bold hover:bg-red-200 transition">Pilih Model Lain</button>
+                    </div>`;
             }
-            
-            if (loadingEl) loadingEl.innerHTML = `
-                <div class="text-center bg-white/95 p-3 rounded-xl shadow-lg border border-red-100 max-w-[90%]">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                    <p class="text-red-600 text-[11px] font-bold leading-relaxed">${errorMsg}</p>
-                </div>`;
         });
     } catch (e) {
+        console.error(e);
         if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500 text-xs px-3 bg-white/90 p-2 rounded">Sistem 3D Viewer gagal dimuat.</p>';
     }
 }
@@ -1237,7 +1252,7 @@ function loadMarkerPlane() {
         const ctx = canvas.getContext('2d');
         ctx.font = '700 48px Arial'; ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(text, canvas.width / 2, canvas.height / 2);
-        const texture = new THREE.CanvasTexture(canvas); texture.encoding = THREE.sRGBColorSpace;
+        const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace;
         const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: false, depthWrite: false });
         const sprite = new THREE.Sprite(material); sprite.scale.set(0.3, 0.15, 1);
         return sprite;
