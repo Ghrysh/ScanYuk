@@ -628,9 +628,127 @@ function initThree() {
 
 // DRACOLoader shared instance (Blender sering export dengan Draco compression)
 const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/');
 
-function loadModelIntoPreview(url) {
+            function loadModelIntoPreview(url) {
+                initThree(); 
+                
+                const loadingEl = document.getElementById('canvas-loading');
+                if (loadingEl) {
+                    loadingEl.style.display = 'flex';
+                    loadingEl.innerHTML = `
+                        <div class="text-center">
+                            <div class="inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                            <p class="text-xs text-slate-300">Memuat model 3D...</p>
+                        </div>
+                    `;
+                }
+
+                // Timeout fallback — cegah stuck loading selamanya
+                const loadTimeout = setTimeout(() => {
+                    if (loadingEl && loadingEl.style.display !== 'none') {
+                        loadingEl.innerHTML = `
+                            <div class="text-center bg-white p-3 rounded-xl shadow-lg border border-red-100 max-w-[90%] mx-auto">
+                                <p class="text-red-500 text-[11px] font-bold mb-2">Timeout memuat model 3D.<br>File mungkin terlalu besar atau format tidak didukung.</p>
+                                <button type="button" onclick="document.getElementById('canvas-loading').style.display='none'" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[10px] font-bold transition">Tutup</button>
+                            </div>`;
+                    }
+                }, 30000); // 30 detik timeout
+
+                if (previewModel) { scene.remove(previewModel); previewModel = null; }
+                if (mixer) { mixer.stopAllAction(); mixer = null; }
+                if (pivotGroup) { scene.remove(pivotGroup); pivotGroup = null; }
+
+                const loader = new GLTFLoader(); 
+                loader.setDRACOLoader(dracoLoader);
+                
+                loader.register(function () {
+                    return { 
+                        name: 'KHR_materials_pbrSpecularGlossiness', 
+                        extendMaterialParams: function () { return Promise.resolve(); } 
+                    };
+                });
+
+                loader.load(url, (gltf) => {
+                    clearTimeout(loadTimeout);
+                    
+                    previewModel = gltf.scene;
+                    previewModel.updateMatrixWorld(true);
+
+                    // Traversal yang aman untuk semua tipe mesh termasuk SkinnedMesh animasi
+                    previewModel.traverse((node) => {
+                        if (node.isMesh || node.isSkinnedMesh) {
+                            // PENTING: Jangan paksa castShadow pada SkinnedMesh — bisa freeze browser
+                            if (!node.isSkinnedMesh) {
+                                node.castShadow = true; 
+                                node.receiveShadow = true;
+                            }
+                            if (node.material) {
+                                const mats = Array.isArray(node.material) ? node.material : [node.material];
+                                mats.forEach(mat => {
+                                    if (mat) mat.needsUpdate = true;
+                                });
+                            }
+                        }
+                    });
+
+                    // Hitung bounding box dengan proteksi NaN/Infinity (umum pada SkinnedMesh)
+                    const box = new THREE.Box3().setFromObject(previewModel);
+                    const size = box.getSize(new THREE.Vector3());
+                    const center = box.getCenter(new THREE.Vector3());
+                    
+                    let maxDim = Math.max(size.x, size.y, size.z);
+                    if (!maxDim || !isFinite(maxDim) || maxDim === 0) maxDim = 1;
+                    const norm = 1.2 / maxDim;
+                    
+                    previewModel.scale.setScalar(norm);
+                    
+                    const bottomY = isFinite(box.min.y) ? box.min.y * norm : 0;
+                    const centerX = isFinite(center.x) ? center.x * norm : 0;
+                    const centerZ = isFinite(center.z) ? center.z * norm : 0;
+                    previewModel.position.set(-centerX, -bottomY, -centerZ);
+                    
+                    previewModel.userData = { _baseScale: norm, _bottomY: -bottomY };
+
+                    window.orbitState.active = false; 
+                    window.orbitState.angle = 0;
+                    const btnOrbit = document.getElementById('btn-orbit');
+                    if (btnOrbit) {
+                        btnOrbit.innerHTML = '<i class="bi bi-play-circle" id="orbit-icon"></i> Mulai Orbit';
+                    }
+
+                    pivotGroup = new THREE.Group(); 
+                    pivotGroup.add(previewModel); 
+                    scene.add(pivotGroup);
+
+                    allClips = gltf.animations || [];
+                    const panel = document.getElementById('anim-clip-panel');
+                    if (allClips.length > 0) {
+                        mixer = new THREE.AnimationMixer(previewModel);
+                        activeAction = mixer.clipAction(allClips[0]); 
+                        activeAction.play();
+                        const sel = document.getElementById('anim-clip-select');
+                        if (sel) sel.innerHTML = allClips.map((c, i) => `<option value="${i}">${c.name || 'Clip ' + (i+1)}</option>`).join('');
+                        if (panel) panel.style.display = '';
+                    } else {
+                        if (panel) panel.style.display = 'none';
+                    }
+
+                    window.applyTransformToModel();
+                    if (loadingEl) loadingEl.style.display = 'none';
+                    
+                }, undefined, (err) => {
+                    clearTimeout(loadTimeout);
+                    console.error('Error load 3D:', err);
+                    if (loadingEl) {
+                        loadingEl.innerHTML = `
+                            <div class="text-center bg-white p-3 rounded-xl shadow-lg border border-red-100 max-w-[90%] mx-auto">
+                                <p class="text-red-500 text-[11px] font-bold mb-2">Gagal memuat model 3D.<br>Pastikan format file valid (.glb).</p>
+                                <button type="button" onclick="document.getElementById('canvas-loading').style.display='none'" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded text-[10px] font-bold transition">Tutup</button>
+                            </div>`;
+                    }
+                });
+            }
             // Pastikan environment 3D disiapkan ulang sebelum load
             initThree(); 
             
