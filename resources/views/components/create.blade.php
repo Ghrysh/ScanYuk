@@ -491,6 +491,14 @@ import { GLTFLoader }    from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader }   from 'three/addons/loaders/DRACOLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+window.state = {
+    step: 1, mode: 'template', markerId: null, markerImageUrl: null, markerStatus: null,
+    markerPollingTimer: null, selectedTemplateId: null, selectedTemplateName: null, selectedTemplateUrl: null,
+    gltfFile: null, gltfBlob: null, blendProjectId: null, blendStatus: null, blendGlbUrl: null,
+    blendPollingTimer: null, scale: 1, position: [0, 0, 0], rotation: [0, 0, 0]
+};
+const state = window.state;
+
 window.markerThreeState = { scale: 1.0, position: [0, 0, 0], rotation: [0, 0, 0] };
 window.markerOrbitState = { active: false, speed: 0.5, dir: 1, radius: 1.5, angle: 0 };
 
@@ -1378,10 +1386,10 @@ window.submitGenerate = () => {
     document.getElementById('form-scale').value        = scaleAR;
     document.getElementById('form-position').value     = JSON.stringify([state.position[0],posYAR,state.position[2],]);
     document.getElementById('form-rotation').value     = JSON.stringify(state.rotation);
-    document.getElementById('form-orbit-active').value = orbitState.active ? '1' : '0';
-    document.getElementById('form-orbit-speed').value  = orbitState.speed;
-    document.getElementById('form-orbit-radius').value = orbitState.radius;
-    document.getElementById('form-orbit-dir').value    = orbitState.dir;
+    document.getElementById('form-orbit-active').value = window.markerOrbitState.active ? '1' : '0';
+    document.getElementById('form-orbit-speed').value  = window.markerOrbitState.speed;
+    document.getElementById('form-orbit-radius').value = window.markerOrbitState.radius;
+    document.getElementById('form-orbit-dir').value    = window.markerOrbitState.dir;
     
     const clipSel = document.getElementById('anim-clip-select');
     let animClipValue = '*';
