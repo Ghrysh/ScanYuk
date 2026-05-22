@@ -1686,17 +1686,16 @@ window.select3DPack = (id) => {
     state.selectedTemplateId = id;
     state.selectedTemplateName = selectedItem.name;
 
-    // PERBAIKAN PENTING: Gunakan blobUrl yang sudah di-download, agar Step 3 (Preview) tidak error CORS/stuck!
+    // Gunakan blobUrl yang sudah di-download agar tidak error CORS
     if (window.modelStates[id] && window.modelStates[id].state === 'loaded' && window.modelStates[id].blobUrl) {
         state.selectedTemplateUrl = window.modelStates[id].blobUrl;
     } else {
         state.selectedTemplateUrl = validUrl;
     }
 
-    render3DPacks(document.getElementById('search-3d').value 
-        ? window.library3DData.filter(item => item.name.toLowerCase().includes(document.getElementById('search-3d').value.toLowerCase()))
-        : window.library3DData
-    );
+    // PERBAIKAN: Panggil filter utama agar tab dan hasil pencarian tetap terjaga saat item diklik
+    window.filter3DPack();
+    
     checkStep2(); 
 };
 
