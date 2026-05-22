@@ -662,6 +662,7 @@ dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/dr
                 const loader = new GLTFLoader(); 
                 loader.setDRACOLoader(dracoLoader);
                 
+                // Bypass KHR extension agar tidak crash untuk model lawas
                 loader.register(function () {
                     return { 
                         name: 'KHR_materials_pbrSpecularGlossiness', 
@@ -675,10 +676,8 @@ dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/dr
                     previewModel = gltf.scene;
                     previewModel.updateMatrixWorld(true);
 
-                    // Traversal yang aman untuk semua tipe mesh termasuk SkinnedMesh animasi
                     previewModel.traverse((node) => {
                         if (node.isMesh || node.isSkinnedMesh) {
-                            // PENTING: Jangan paksa castShadow pada SkinnedMesh — bisa freeze browser
                             if (!node.isSkinnedMesh) {
                                 node.castShadow = true; 
                                 node.receiveShadow = true;
@@ -692,7 +691,6 @@ dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/dr
                         }
                     });
 
-                    // Hitung bounding box dengan proteksi NaN/Infinity (umum pada SkinnedMesh)
                     const box = new THREE.Box3().setFromObject(previewModel);
                     const size = box.getSize(new THREE.Vector3());
                     const center = box.getCenter(new THREE.Vector3());
@@ -870,7 +868,6 @@ dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/dr
                         </div>`;
                 }
             });
-        }
 
 /** Apply form values → 3D model */
 window.applyTransformFromForm = () => {
