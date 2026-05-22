@@ -1192,7 +1192,7 @@
                     this.$watch('getPreviewModelUrl()', (url) => {
                         if (url) {
                             setTimeout(() => {
-                                if (window.loadModelIntoPreview) window.loadModelIntoPreview(url);
+                                if (window.customLoadModelIntoPreview) window.customLoadModelIntoPreview(url);
                             }, 300);
                         }
                     });
@@ -2073,7 +2073,7 @@
         const dracoLoader = new DRACOLoader();
         dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/');
 
-        function loadModelIntoPreview(url) {
+        window.customLoadModelIntoPreview = (url) => {
             // Pastikan environment 3D disiapkan ulang sebelum load
             initThree(); 
             

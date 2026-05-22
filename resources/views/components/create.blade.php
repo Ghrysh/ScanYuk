@@ -1569,7 +1569,7 @@ function updateItemPreview(id) {
     if (mState.state === 'checking') {
         html = `<div class="text-[10px] text-slate-400 font-bold animate-pulse">Menghitung ukuran...</div>`;
     } else if (mState.state === 'loaded') {
-        html = `<model-viewer src="${mState.blobUrl || mState.validUrl}" class="w-full h-full" disable-zoom disable-pan shadow-intensity="0" exposure="1" environment-image="neutral" auto-rotate></model-viewer>`;
+        html = `<model-viewer src="${mState.blobUrl || mState.validUrl}" autoplay class="w-full h-full" disable-zoom disable-pan shadow-intensity="0" exposure="1" environment-image="neutral" auto-rotate></model-viewer>`;
     } else if (mState.state === 'idle') {
         html = `
         <div onclick="toggleDownload(${id}, event)" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-100/90 cursor-pointer hover:bg-slate-200 transition-colors">
