@@ -708,8 +708,8 @@ dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/dr
                     
                     previewModel.userData = { _baseScale: norm, _bottomY: -bottomY };
 
-                    orbitState.active = false; 
-                    orbitState.angle = 0;
+                    window.orbitState.active = false; 
+                    window.orbitState.angle = 0;
                     const btnOrbit = document.getElementById('btn-orbit');
                     if (btnOrbit) {
                         btnOrbit.innerHTML = '<i class="bi bi-play-circle" id="orbit-icon"></i> Mulai Orbit';
@@ -732,7 +732,7 @@ dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/dr
                         if (panel) panel.style.display = 'none';
                     }
 
-                    applyTransformToModel();
+                    window.applyTransformToModel();
                     if (loadingEl) loadingEl.style.display = 'none';
                     
                 }, undefined, (err) => {
