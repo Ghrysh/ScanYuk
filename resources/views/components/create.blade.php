@@ -628,7 +628,7 @@ function initThree() {
 
 // DRACOLoader shared instance (Blender sering export dengan Draco compression)
 const dracoLoader = new DRACOLoader();
-dracoLoader.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/');
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
 
 function loadModelIntoPreview(url) {
     const loadingEl = document.getElementById('canvas-loading');
@@ -637,7 +637,7 @@ function loadModelIntoPreview(url) {
         loadingEl.innerHTML = `
             <div class="text-center">
                 <div class="inline-block w-8 h-8 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-2"></div>
-                <p class="text-xs text-slate-300">Memuat model 3D...</p>
+                <p id="loading-3d-text" class="text-xs text-slate-300">Memuat model 3D...</p>
             </div>
         `;
     }
@@ -653,7 +653,8 @@ function loadModelIntoPreview(url) {
             loader.setDRACOLoader(dracoLoader);
         } else if (typeof DRACOLoader !== 'undefined') {
             const tempDraco = new DRACOLoader();
-            tempDraco.setDecoderPath('https://unpkg.com/three@0.160.0/examples/jsm/libs/draco/gltf/');
+            // PERBAIKAN: Gunakan gstatic karena unpkg sering diblokir CORS pada Web Worker
+            tempDraco.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
             loader.setDRACOLoader(tempDraco);
         }
 
@@ -710,7 +711,18 @@ function loadModelIntoPreview(url) {
                 console.error('Error saat merender GLTF:', err);
                 if (loadingEl) loadingEl.innerHTML = '<p class="text-red-500 text-xs px-3 font-bold bg-white/90 p-2 rounded">Gagal merender model 3D ke Canvas.</p>';
             }
-        }, undefined, (err) => {
+        }, 
+        // PERBAIKAN: Tambahkan Tracker Progress agar aplikasi tidak terasa "Stuck"
+        (xhr) => {
+            if (xhr.lengthComputable && loadingEl) {
+                const percent = Math.round((xhr.loaded / xhr.total) * 100);
+                const textEl = document.getElementById('loading-3d-text');
+                if (textEl) {
+                    textEl.textContent = `Memuat model 3D... ${percent}%`;
+                }
+            }
+        }, 
+        (err) => {
             console.error('GLB load error:', err);
             let errorMsg = 'File 3D gagal dimuat atau rusak.';
             
