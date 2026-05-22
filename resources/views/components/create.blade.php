@@ -672,20 +672,41 @@ function loadModelIntoPreview(url) {
         loader.load(url, (gltf) => {
             try {
                 previewModel = gltf.scene;
+                
+                // 1. Perbaikan pada Traverse (Bayangan dan Material)
                 previewModel.traverse((node) => {
-                    if (!node.isMesh) return;
-                    node.castShadow = true; node.receiveShadow = true;
-                    const mats = Array.isArray(node.material) ? node.material : [node.material];
-                    mats.forEach(mat => {
-                        if (!mat) return;
-                        mat.side = THREE.FrontSide;
-                        mat.needsUpdate = true;
-                    });
+                    if (node.isMesh || node.isSkinnedMesh) {
+                        // Jangan paksa castShadow pada SkinnedMesh (animasi) karena berat dan rawan nge-hang
+                        if (!node.isSkinnedMesh) {
+                            node.castShadow = true; 
+                            node.receiveShadow = true;
+                        }
+                        
+                        const mats = Array.isArray(node.material) ? node.material : [node.material];
+                        mats.forEach(mat => {
+                            if (!mat) return;
+                            // Jangan ubah side menjadi FrontSide secara paksa jika model anime punya material transparan (baju/rambut)
+                            // mat.side = THREE.FrontSide; // <-- HAPUS / MATIKAN BARIS INI
+                            mat.needsUpdate = true;
+                        });
+                    }
                 });
 
+                // 2. Perbaikan pada perhitungan Bounding Box (Scale & Posisi)
+                // Memaksa Three.js mengupdate matrix sebelum menghitung box (penting untuk model animasi)
+                previewModel.updateMatrixWorld(true);
+                
                 const box = new THREE.Box3().setFromObject(previewModel);
+                const size = box.getSize(new THREE.Vector3());
                 const center = box.getCenter(new THREE.Vector3());
-                const maxDim = Math.max(box.getSize(new THREE.Vector3()).x, box.getSize(new THREE.Vector3()).y, box.getSize(new THREE.Vector3()).z) || 1;
+                
+                // Mencegah nilai Infinity atau NaN jika model rusak/kosong
+                let maxDim = Math.max(size.x, size.y, size.z);
+                if (!maxDim || !isFinite(maxDim) || maxDim === 0) {
+                    maxDim = 1;
+                }
+                
+                // Jika model animasi terlalu raksasa, normalkan dengan batas rasional
                 const norm = 1.2 / maxDim;
 
                 previewModel.scale.setScalar(norm);
