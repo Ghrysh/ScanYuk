@@ -1687,14 +1687,18 @@ window.select3DPack = (id) => {
     state.selectedTemplateId = id;
     state.selectedTemplateName = selectedItem.name;
 
-    // Gunakan blobUrl yang sudah di-download agar tidak error CORS
+    // WAJIB menggunakan blobUrl agar tidak kena blokir CORS di Step 3
     if (window.modelStates[id] && window.modelStates[id].state === 'loaded' && window.modelStates[id].blobUrl) {
         state.selectedTemplateUrl = window.modelStates[id].blobUrl;
     } else {
+        // Jika belum selesai diunduh, beri peringatan
+        if (window.modelStates[id] && window.modelStates[id].state !== 'loaded') {
+            alert("Model sedang diunduh. Harap tunggu indikator selesai (warna hijau) sebelum ke Step 3.");
+        }
         state.selectedTemplateUrl = validUrl;
     }
 
-    // PERBAIKAN: Panggil filter utama agar tab dan hasil pencarian tetap terjaga saat item diklik
+    // PERBAIKAN: Gunakan fungsi filter utama agar tab Animasi tidak berubah ke Model
     window.filter3DPack();
     
     checkStep2(); 
