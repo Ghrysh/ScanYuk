@@ -1480,16 +1480,17 @@ async function checkFileSize(id, url) {
         const size = parseInt(res.headers.get('content-length') || '0', 10);
         window.modelStates[id].total = size;
         
-        // Jika ukuran di bawah batas, langsung jadikan 'loaded'
+        window.modelStates[id].state = 'idle'; // Selalu set idle dulu
+        updateItemPreview(id);
+        
+        // AUTO DOWNLOAD JIKA KECIL (Agar jadi Blob dan tidak macet di Step 3)
         if (size > 0 && size <= (MAX_AUTO_DOWNLOAD_MB * 1024 * 1024)) {
-            window.modelStates[id].state = 'loaded';
-        } else {
-            window.modelStates[id].state = 'idle';
+            window.toggleDownload(id, null); 
         }
     } catch(e) {
         window.modelStates[id].state = 'idle';
+        updateItemPreview(id);
     }
-    updateItemPreview(id); // Perbarui tampilan kotaknya saja
 }
 
 // Fungsi Download & Pause manual (Stream)
