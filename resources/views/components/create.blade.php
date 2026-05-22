@@ -1600,8 +1600,9 @@ function updateItemPreview(id) {
     box.innerHTML = html;
 }
 
-// --- TAMBAHAN LOGIKA TAB LIBRARY ---
-window.activeLibTab = 'model'; // State baru
+// --- MULAI DARI SINI: LOGIKA TAB & FILTER YANG SUDAH DIBERSIHKAN ---
+
+window.activeLibTab = 'model';
 
 window.switchLibTab = (tab) => {
     window.activeLibTab = tab;
@@ -1612,24 +1613,9 @@ window.switchLibTab = (tab) => {
     btnModel.className = tab === 'model' ? 'px-4 py-1.5 rounded-md text-sm font-bold bg-white text-teal-600 shadow-sm transition-all' : 'px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all';
     btnAnimasi.className = tab === 'animasi' ? 'px-4 py-1.5 rounded-md text-sm font-bold bg-white text-teal-600 shadow-sm transition-all' : 'px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all';
     
-    window.filter3DPack(); // Render ulang grid
+    window.filter3DPack();
 };
 
-// Update fungsi filter yang sudah ada:
-window.filter3DPack = () => {
-    const query = document.getElementById('search-3d').value.toLowerCase();
-    const filtered = window.library3DData.filter(item => {
-        let rawUrl = item.path || item.model_url || item.file_path || '';
-        let matchesSearch = (item.name || '').toLowerCase().includes(query);
-        let isAnimasi = rawUrl.includes('3d_animasi'); // Deteksi folder
-        let matchesTab = window.activeLibTab === 'animasi' ? isAnimasi : !isAnimasi;
-        
-        return matchesSearch && matchesTab;
-    });
-    render3DPacks(filtered);
-};
-
-// --- GANTI FUNGSI loadTemplateLibrary LAMA JADI INI ---
 window.loadTemplateLibrary = () => {
     const grid = document.getElementById('template-grid');
     if (!grid) return;
@@ -1637,37 +1623,19 @@ window.loadTemplateLibrary = () => {
         grid.innerHTML = '<div class="text-sm text-slate-500 col-span-full text-center py-4">Belum ada objek 3D.</div>';
         return;
     }
-    window.filter3DPack(); // Arahkan ke filter agar tab langsung berfungsi di awal
+    window.filter3DPack();
 };
 
-// --- GANTI FUNGSI filter3DPack LAMA JADI INI ---
 window.filter3DPack = () => {
     const query = document.getElementById('search-3d').value.toLowerCase();
     const filtered = window.library3DData.filter(item => {
         let rawUrl = item.path || item.model_url || item.file_path || '';
         let matchesSearch = (item.name || '').toLowerCase().includes(query);
-        let isAnimasi = rawUrl.includes('3d_animasi');
+        let isAnimasi = rawUrl.includes('3d_animasi'); 
         let matchesTab = window.activeLibTab === 'animasi' ? isAnimasi : !isAnimasi;
         
         return matchesSearch && matchesTab;
     });
-    render3DPacks(filtered);
-};
-
-// Fungsi Render Utama Grid
-window.loadTemplateLibrary = () => {
-    const grid = document.getElementById('template-grid');
-    if (!grid) return;
-    if (!window.library3DData || window.library3DData.length === 0) {
-        grid.innerHTML = '<div class="text-sm text-slate-500 col-span-full text-center py-4">Belum ada objek 3D.</div>';
-        return;
-    }
-    render3DPacks(window.library3DData);
-};
-
-window.filter3DPack = () => {
-    const query = document.getElementById('search-3d').value.toLowerCase();
-    const filtered = window.library3DData.filter(item => item.name.toLowerCase().includes(query));
     render3DPacks(filtered);
 };
 
@@ -1685,17 +1653,17 @@ function render3DPacks(items) {
         let rawUrl = item.path || item.model_url || item.file_path || '';
         let validUrl = rawUrl ? ((rawUrl.startsWith('http') || rawUrl.startsWith('/')) ? rawUrl : '/' + rawUrl) : '';
 
-        // Setup State (Jika belum ada)
+        // Setup State Cek Download
         if (!window.modelStates[item.id]) {
             window.modelStates[item.id] = { state: 'checking', total: 0, progress: 0, validUrl: validUrl, blobUrl: null };
-            checkFileSize(item.id, validUrl); // Lempar tugas cek ukuran di background
+            checkFileSize(item.id, validUrl); 
         }
 
         return `
         <label class="flex flex-col bg-white border ${isSelected ? 'border-teal-500 ring-2 ring-teal-500 shadow-md' : 'border-slate-200'} rounded-xl cursor-pointer hover:border-teal-500 hover:shadow-md transition-all overflow-hidden" onclick="select3DPack(${item.id})">
             
             <div id="preview-box-${item.id}" class="h-24 md:h-32 bg-slate-100 relative flex items-center justify-center overflow-hidden">
-                </div>
+            </div>
             
             <div class="p-2 border-t border-slate-100 flex items-start gap-1 pointer-events-none">
                 <input type="radio" name="library3d" value="${item.id}" class="mt-0.5 text-teal-500 focus:ring-teal-500" ${isSelected ? 'checked' : ''}>
@@ -1705,7 +1673,6 @@ function render3DPacks(items) {
         `;
     }).join('');
 
-    // Trigger UI update untuk menggambar icon Download / Progress bar di dalam kotak
     items.forEach(item => updateItemPreview(item.id));
 }
 
@@ -1718,9 +1685,14 @@ window.select3DPack = (id) => {
 
     state.selectedTemplateId = id;
     state.selectedTemplateName = selectedItem.name;
-    state.selectedTemplateUrl = validUrl;
 
-    // Render ulang hanya gridnya (untuk memindah outline hijau radio button)
+    // PERBAIKAN PENTING: Gunakan blobUrl yang sudah di-download, agar Step 3 (Preview) tidak error CORS/stuck!
+    if (window.modelStates[id] && window.modelStates[id].state === 'loaded' && window.modelStates[id].blobUrl) {
+        state.selectedTemplateUrl = window.modelStates[id].blobUrl;
+    } else {
+        state.selectedTemplateUrl = validUrl;
+    }
+
     render3DPacks(document.getElementById('search-3d').value 
         ? window.library3DData.filter(item => item.name.toLowerCase().includes(document.getElementById('search-3d').value.toLowerCase()))
         : window.library3DData
@@ -1728,7 +1700,7 @@ window.select3DPack = (id) => {
     checkStep2(); 
 };
 
-// Pastikan tab otomatis terbuka saat halaman dimuat
+// Pastikan inisialisasi awal saat pertama kali load
 document.addEventListener('DOMContentLoaded', () => {
     window.loadTemplateLibrary();
     window.switchMode('template');
