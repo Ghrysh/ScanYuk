@@ -1601,22 +1601,32 @@ function updateItemPreview(id) {
 }
 
 // --- TAMBAHAN LOGIKA TAB LIBRARY ---
-window.activeLibTab = 'model';
+window.activeLibTab = 'model'; // State baru
 
 window.switchLibTab = (tab) => {
     window.activeLibTab = tab;
     const btnModel = document.getElementById('tab-lib-model');
     const btnAnimasi = document.getElementById('tab-lib-animasi');
     
-    if (tab === 'model') {
-        btnModel.className = 'px-4 py-1.5 rounded-md text-sm font-bold bg-white text-teal-600 shadow-sm transition-all';
-        btnAnimasi.className = 'px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all';
-    } else {
-        btnAnimasi.className = 'px-4 py-1.5 rounded-md text-sm font-bold bg-white text-teal-600 shadow-sm transition-all';
-        btnModel.className = 'px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all';
-    }
+    // Update style tombol
+    btnModel.className = tab === 'model' ? 'px-4 py-1.5 rounded-md text-sm font-bold bg-white text-teal-600 shadow-sm transition-all' : 'px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all';
+    btnAnimasi.className = tab === 'animasi' ? 'px-4 py-1.5 rounded-md text-sm font-bold bg-white text-teal-600 shadow-sm transition-all' : 'px-4 py-1.5 rounded-md text-sm font-medium text-slate-500 hover:text-slate-700 transition-all';
     
     window.filter3DPack(); // Render ulang grid
+};
+
+// Update fungsi filter yang sudah ada:
+window.filter3DPack = () => {
+    const query = document.getElementById('search-3d').value.toLowerCase();
+    const filtered = window.library3DData.filter(item => {
+        let rawUrl = item.path || item.model_url || item.file_path || '';
+        let matchesSearch = (item.name || '').toLowerCase().includes(query);
+        let isAnimasi = rawUrl.includes('3d_animasi'); // Deteksi folder
+        let matchesTab = window.activeLibTab === 'animasi' ? isAnimasi : !isAnimasi;
+        
+        return matchesSearch && matchesTab;
+    });
+    render3DPacks(filtered);
 };
 
 // --- GANTI FUNGSI loadTemplateLibrary LAMA JADI INI ---
