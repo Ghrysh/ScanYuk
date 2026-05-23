@@ -122,7 +122,7 @@
                 <button @click="activeTab = activeTab === 3 ? null : 3" class="w-full px-6 py-5 flex items-center justify-between bg-transparent text-left focus:outline-none">
                     <div class="flex items-center gap-4">
                         <div class="w-8 h-8 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center font-bold">3</div>
-                        <span class="font-bold text-slate-800 text-lg">Cara Membuat AR Code</span>
+                        <span class="font-bold text-slate-800 text-lg">Cara Membuat AR</span>
                     </div>
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400 transition-transform duration-300" :class="activeTab === 3 ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 </button>
@@ -139,14 +139,48 @@
                 <button @click="activeTab = activeTab === 4 ? null : 4" class="w-full px-6 py-5 flex items-center justify-between bg-transparent text-left focus:outline-none">
                     <div class="flex items-center gap-4">
                         <div class="w-8 h-8 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center font-bold">4</div>
-                        <span class="font-bold text-slate-800 text-lg">Cara Melakukan Scan QR</span>
+                        <span class="font-bold text-slate-800 text-lg">Cara Membuat Object Marker AR</span>
                     </div>
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400 transition-transform duration-300" :class="activeTab === 4 ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
                 </button>
                 <div x-show="activeTab === 4" x-collapse x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
                     <div class="p-6 pt-0 border-t border-slate-100 mt-2">
                         <video controls class="w-full rounded-xl bg-slate-900 border border-slate-200">
+                            <source src="{{ asset('video/scanyuk-marker.mp4') }}" type="video/mp4">
+                        </video>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all duration-300" :class="activeTab === 5 ? 'shadow-lg border-teal-200 ring-1 ring-teal-500' : 'hover:border-slate-300'">
+                <button @click="activeTab = activeTab === 5 ? null : 5" class="w-full px-6 py-5 flex items-center justify-between bg-transparent text-left focus:outline-none">
+                    <div class="flex items-center gap-4">
+                        <div class="w-8 h-8 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center font-bold">5</div>
+                        <span class="font-bold text-slate-800 text-lg">Cara Melakukan Scan QR</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400 transition-transform duration-300" :class="activeTab === 5 ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                <div x-show="activeTab === 5" x-collapse x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
+                    <div class="p-6 pt-0 border-t border-slate-100 mt-2">
+                        <video controls class="w-full rounded-xl bg-slate-900 border border-slate-200">
                             <source src="{{ asset('video/scanyuk-scan.mp4') }}" type="video/mp4">
+                        </video>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden transition-all duration-300" :class="activeTab === 6 ? 'shadow-lg border-teal-200 ring-1 ring-teal-500' : 'hover:border-slate-300'">
+                <button @click="activeTab = activeTab === 6 ? null : 6" class="w-full px-6 py-5 flex items-center justify-between bg-transparent text-left focus:outline-none">
+                    <div class="flex items-center gap-4">
+                        <div class="w-8 h-8 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center font-bold">6</div>
+                        <span class="font-bold text-slate-800 text-lg">Cara Melakukan Scan Object AR</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-400 transition-transform duration-300" :class="activeTab === 6 ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                <div x-show="activeTab === 6" x-collapse x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" style="display: none;">
+                    <div class="p-6 pt-0 border-t border-slate-100 mt-2">
+                        <video controls class="w-full rounded-xl bg-slate-900 border border-slate-200">
+                            <source src="{{ asset('video/scanyuk-scanMarker.mp4') }}" type="video/mp4">
                         </video>
                     </div>
                 </div>
