@@ -999,7 +999,7 @@ window.deleteMarker = async (markerId) => {
     if (!confirm('Apakah Anda yakin ingin menghapus marker ini?')) return;
     
     try {
-        const res = await fetch(`/api/marker/${markerId}`, {
+        const res = await fetch(`/api/markers/${markerId}`, {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
