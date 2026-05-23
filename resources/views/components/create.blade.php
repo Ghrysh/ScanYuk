@@ -1296,17 +1296,18 @@ function populateGenerateReview() {
     else if (state.mode === 'blend')   modelName = `Project #${state.blendProjectId}`;
     document.getElementById('gen-model').textContent = modelName;
 
-    const s = parseFloat(document.getElementById('scale-slider').value);
+    // PERBAIKAN: Membaca ID input yang sudah menggunakan awalan marker-
+    const s = parseFloat(document.getElementById('marker-scale-slider').value) || 1;
     state.scale = s;
     state.position = [
-        parseFloat(document.getElementById('pos-x').value)||0,
-        parseFloat(document.getElementById('pos-y').value)||0,
-        parseFloat(document.getElementById('pos-z').value)||0,
+        parseFloat(document.getElementById('marker-pos-x').value) || 0,
+        parseFloat(document.getElementById('marker-pos-y').value) || 0,
+        parseFloat(document.getElementById('marker-pos-z').value) || 0,
     ];
     state.rotation = [
-        parseFloat(document.getElementById('rot-x').value)||0,
-        parseFloat(document.getElementById('rot-y').value)||0,
-        parseFloat(document.getElementById('rot-z').value)||0,
+        parseFloat(document.getElementById('marker-rot-x').value) || 0,
+        parseFloat(document.getElementById('marker-rot-y').value) || 0,
+        parseFloat(document.getElementById('marker-rot-z').value) || 0,
     ];
 
     document.getElementById('gen-scale').textContent    = s.toFixed(2);
@@ -1384,14 +1385,15 @@ window.submitGenerate = () => {
     document.getElementById('form-marker-id').value  = state.markerId;
     document.getElementById('form-type').value        = state.mode;
     document.getElementById('form-scale').value        = scaleAR;
-    document.getElementById('form-position').value     = JSON.stringify([state.position[0],posYAR,state.position[2],]);
+    document.getElementById('form-position').value     = JSON.stringify([state.position[0], posYAR, state.position[2]]);
     document.getElementById('form-rotation').value     = JSON.stringify(state.rotation);
     document.getElementById('form-orbit-active').value = window.markerOrbitState.active ? '1' : '0';
     document.getElementById('form-orbit-speed').value  = window.markerOrbitState.speed;
     document.getElementById('form-orbit-radius').value = window.markerOrbitState.radius;
     document.getElementById('form-orbit-dir').value    = window.markerOrbitState.dir;
     
-    const clipSel = document.getElementById('anim-clip-select');
+    // PERBAIKAN: Mengubah target ke marker-anim-clip-select agar nama animasi tersimpan
+    const clipSel = document.getElementById('marker-anim-clip-select');
     let animClipValue = '*';
     if (Array.isArray(allClips) && allClips.length === 1) {
         animClipValue = allClips[0].name || '*';
@@ -1439,17 +1441,15 @@ window.submitGenerate = () => {
     const progressBar = document.getElementById('gen-progress-bar');
     const progressPercent = document.getElementById('gen-progress-percent');
     
-    // Tampilkan modal progress
     modal.classList.remove('hidden');
     
     const xhr = new XMLHttpRequest();
     xhr.open('POST', form.action, true);
     xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     
-    // Track persentase unggahan data / file glb
     xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
-            const percent = Math.round((e.loaded / e.total) * 92); // Sisakan 8% untuk proses kompilasi server
+            const percent = Math.round((e.loaded / e.total) * 92);
             progressBar.style.width = percent + '%';
             progressPercent.textContent = percent + '%';
         }
@@ -1459,7 +1459,6 @@ window.submitGenerate = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
             progressBar.style.width = '100%';
             progressPercent.textContent = '100%';
-            // Sukses! Alihkan halaman langsung ke dashboard user
             setTimeout(() => {
                 window.location.href = JSON.parse(xhr.responseText).redirect_url;
             }, 500);
