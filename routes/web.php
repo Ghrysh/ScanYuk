@@ -159,7 +159,7 @@ Route::middleware(['auth'])->group(function () {
 
         Route::get('/dashboard/ar/result/{project}', [App\Http\Controllers\ArProjectController::class, 'result'])->name('ar.result');
 
-        Route::delete('/markers/{marker}', [\App\Http\Controllers\MarkerController::class, 'destroy'])->name('marker.destroy');
+        Route::delete('/api/markers/{marker}', [\App\Http\Controllers\MarkerController::class, 'destroy'])->name('marker.destroy');
     });
 
     Route::post('/checkout', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
