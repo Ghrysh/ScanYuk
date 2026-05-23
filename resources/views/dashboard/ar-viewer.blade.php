@@ -597,15 +597,40 @@
                 ar-adaptive-pov="enabled: {{ $orbitActive ? 'false' : 'true' }}"
                 ar-orbit-pivot="active: {{ $orbitActive ? 'true' : 'false' }}; speed: {{ $orbitSpeed }}; dir: {{ $orbitDir }}">
 
+                {{-- 1. BLOK PHP UNTUK MEMBERSIHKAN DATA JSON & ANGKA --}}
+                @php
+                    // Amankan Format Angka (Wajib titik desimal, cegah koma dari locale server)
+                    $safeScale = number_format(floatval($scale ?? 1), 5, '.', '');
+                    $safeRadius = number_format(floatval($orbitRadius ?? 1.5), 5, '.', '');
+
+                    // Decode String JSON dari database menjadi Array sesungguhnya
+                    $posArr = is_string($position) ? json_decode($position, true) : $position;
+                    $rotArr = is_string($rotation) ? json_decode($rotation, true) : $rotation;
+
+                    // Fallback jika data kosong/gagal decode
+                    if (!is_array($posArr) || count($posArr) < 3) $posArr = [0, 0, 0];
+                    if (!is_array($rotArr) || count($rotArr) < 3) $rotArr = [0, 0, 0];
+
+                    // Format koordinat X, Y, Z masing-masing
+                    $posX = number_format(floatval($posArr[0]), 5, '.', '');
+                    $posY = number_format(floatval($posArr[1]), 5, '.', '');
+                    $posZ = number_format(floatval($posArr[2]), 5, '.', '');
+
+                    $rotX = number_format(floatval($rotArr[0]), 5, '.', '');
+                    $rotY = number_format(floatval($rotArr[1]), 5, '.', '');
+                    $rotZ = number_format(floatval($rotArr[2]), 5, '.', '');
+                @endphp
+
+                {{-- 2. TERAPKAN VARIABEL BERSIH KE A-FRAME --}}
                 <a-entity
                     id="model-container"
                     @if($orbitActive)
-                    position="{{ floatval($orbitRadius) }} 0 0"
+                    position="{{ $safeRadius }} 0 0"
                     @else
-                    position="{{ implode(' ', array_map('floatval', (array)$position)) }}"
+                    position="{{ $posX }} {{ $posY }} {{ $posZ }}"
                     @endif
-                    rotation="{{ implode(' ', array_map('floatval', (array)$rotation)) }}"
-                    scale="{{ floatval($scale) }} {{ floatval($scale) }} {{ floatval($scale) }}"
+                    rotation="{{ $rotX }} {{ $rotY }} {{ $rotZ }}"
+                    scale="{{ $safeScale }} {{ $safeScale }} {{ $safeScale }}"
                     animation-mixer="clip: {{ $animClip }}; loop: repeat; crossFadeDuration: 0.3"
                     ar-depth-fix>
                 </a-entity>
