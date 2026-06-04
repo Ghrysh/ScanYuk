@@ -33,13 +33,27 @@
         }
     </style>
 </head>
-<body class="font-sans antialiased text-slate-600 bg-white bg-grid-pattern min-h-screen flex items-center justify-center p-4 relative" x-data="{ otpSent: {{ old('otpSent', 'false') }}, showPassword: false, showConfirm: false }">
+<body class="font-sans antialiased text-slate-600 bg-white bg-grid-pattern min-h-screen flex items-center justify-center p-4 relative" x-data="{ otpSent: {{ old('otpSent') === 'true' ? 'true' : 'false' }}, showPassword: false, showConfirm: false }">
 
     @if(session('success'))
     <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 6000)" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] flex items-center p-4 mb-4 text-teal-800 rounded-2xl bg-white border border-teal-200 shadow-xl shadow-teal-100/50" role="alert">
         <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-white bg-teal-500 rounded-full"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg></div>
         <div class="ms-3 text-sm font-bold pr-4">{{ session('success') }}</div>
         <button type="button" @click="show = false" class="ms-auto -mx-1.5 -my-1.5 bg-white text-slate-400 rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-900 h-8 w-8"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
+    </div>
+    @endif
+
+    @if($errors->any())
+    <div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 8000)" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 -translate-y-4" x-transition:enter-end="opacity-100 translate-y-0" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] flex items-center p-4 mb-4 text-red-800 rounded-2xl bg-white border border-red-200 shadow-xl shadow-red-100/50 w-11/12 max-w-md" role="alert">
+        <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-white bg-red-500 rounded-full"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg></div>
+        <div class="ms-3 text-sm font-bold pr-4 flex-1">
+            <ul class="list-disc pl-4 space-y-1">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        <button type="button" @click="show = false" class="ms-auto -mx-1.5 -my-1.5 bg-white text-slate-400 rounded-lg p-1.5 hover:bg-slate-100 hover:text-slate-900 h-8 w-8 flex-shrink-0"><svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg></button>
     </div>
     @endif
 
@@ -67,8 +81,10 @@
             </div>
         </div>
 
-<form x-data="registerForm()" @submit.prevent="submitForm($event)" class="space-y-5" action="{{ route('register') }}" method="POST" id="regForm">
+        <form x-data="registerForm()" @submit.prevent="submitForm($event)" class="space-y-5" action="{{ route('register') }}" method="POST" id="regForm">
             @csrf
+
+            <input type="hidden" name="otpSent" :value="otpSent ? 'true' : 'false'">
             
             <input type="hidden" name="plan" value="{{ $plan }}">
             
@@ -156,6 +172,13 @@
                     if (!this.formData.email) {
                         this.emailError = 'Email wajib diisi.'; return;
                     }
+
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(this.formData.email)) {
+                        this.emailError = 'Format email tidak valid (contoh: nama@domain.com).';
+                        return;
+                    }
+
                     this.isLoading = true;
                     this.emailError = '';
 
@@ -175,11 +198,11 @@
                             this.otpSent = true;
                             this.startTimer();
                         } else {
-                            this.emailError = data.errors?.email ? data.errors.email[0] : 'Gagal mengirim OTP.';
+                            this.emailError = data.errors?.email ? data.errors.email[0] : (data.message || 'Gagal mengirim OTP.');
                         }
                     } catch (e) {
                         console.error(e);
-                        this.emailError = 'Terjadi kesalahan jaringan/server.';
+                        this.emailError = 'Terjadi kesalahan jaringan. Coba lagi.';
                     } finally {
                         this.isLoading = false;
                     }
@@ -223,6 +246,19 @@
                 },
 
                 submitForm(e) {
+                    const pwd = document.querySelector('input[name="password"]').value;
+                    const conf = document.querySelector('input[name="password_confirmation"]').value;
+                    
+                    if (!this.formData.name.trim()) {
+                        alert('Nama lengkap tidak boleh kosong atau hanya berisi spasi!');
+                        return;
+                    }
+
+                    if (pwd !== conf) {
+                        alert('Password dan Konfirmasi Password tidak cocok!');
+                        return;
+                    }
+
                     if (this.otpSent && this.otpDigits.join('').length === 6) {
                         e.target.submit();
                     } else if(!this.otpSent) {

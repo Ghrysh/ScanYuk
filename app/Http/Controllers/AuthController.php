@@ -53,6 +53,9 @@ class AuthController extends Controller
             'email' => 'required|email|exists:users,email', 
             'password' => 'required|min:8|confirmed', 
             'token' => 'required'
+        ], [
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
         $email = trim(strtolower($request->email));
@@ -72,6 +75,11 @@ class AuthController extends Controller
         }
 
         $user = User::where('email', $email)->first();
+
+        if (Hash::check($request->password, $user->password)) {
+            return back()->withErrors(['password' => 'Kata sandi baru tidak boleh sama persis dengan kata sandi Anda saat ini.']);
+        }
+
         $user->update(['password' => Hash::make($request->password)]);
         
         DB::table('password_reset_tokens')->where('email', $email)->delete();
@@ -135,7 +143,11 @@ class AuthController extends Controller
 
     public function sendOtp(Request $request) {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email|unique:users,email',
+            'email' => 'required|email:rfc,dns|unique:users,email',
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid (pastikan mengandung @ dan domain yang benar).',
+            'email.unique' => 'Email ini sudah terdaftar di sistem kami.'
         ]);
 
         if ($validator->fails()) {
@@ -164,9 +176,19 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|min:8',
+            'password' => 'required|min:8|confirmed',
             'otp_combined' => 'required|numeric|digits:6',
             'plan' => 'nullable|string'
+        ], [
+            'name.required' => 'Nama lengkap wajib diisi.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email ini sudah terdaftar.',
+            'password.required' => 'Password wajib diisi.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Password dan Konfirmasi Password tidak cocok.',
+            'otp_combined.required' => 'Kode OTP wajib diisi.',
+            'otp_combined.digits' => 'Kode OTP harus 6 digit angka.'
         ]);
 
         $verification = \Illuminate\Support\Facades\DB::table('otp_verifications')
