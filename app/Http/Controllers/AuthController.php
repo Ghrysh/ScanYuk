@@ -23,15 +23,22 @@ class AuthController extends Controller
     }
 
     public function sendResetLink(Request $request) {
-        $request->validate(['email' => 'required|email|exists:users,email'], ['email.exists' => 'Email ini belum terdaftar di sistem.']);
+        $request->validate([
+            'email' => 'required|email|exists:users,email'
+        ], [
+            'email.exists' => 'Email ini belum terdaftar di sistem.'
+        ]);
         
         $email = trim(strtolower($request->email));
         $token = Str::random(60);
 
-        DB::table('password_reset_tokens')->updateOrInsert(
-            ['email' => $email],
-            ['token' => $token, 'created_at' => Carbon::now()]
-        );
+        DB::table('password_reset_tokens')->where('email', $email)->delete();
+
+        DB::table('password_reset_tokens')->insert([
+            'email' => $email,
+            'token' => $token,
+            'created_at' => Carbon::now()
+        ]);
 
         $pid = session()->getId();
         Mail::to($email)->send(new ResetPasswordMail($token, $email, $pid));
