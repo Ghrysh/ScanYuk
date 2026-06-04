@@ -319,8 +319,13 @@
                             try { if(result.data.position) dbPos = JSON.parse(result.data.position); } catch(e){}
 
                             if (url.includes('demo') || src.toLowerCase().includes('logo.glb')) {
-                                dbRot[1] = 90;
-                                console.log('🛠️ Rotasi Demo AR Berhasil Diterapkan!');
+                                setTimeout(() => {
+                                    const viewer = document.querySelector('model-viewer');
+                                    if (viewer) {
+                                        viewer.setAttribute('orientation', '0deg 0deg -90deg');
+                                        console.log('🛠️ Rotasi Paksa YAW -90deg Diterapkan!');
+                                    }
+                                }, 150);
                             }
                             
                             this.arData = { 
