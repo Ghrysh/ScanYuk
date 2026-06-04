@@ -310,17 +310,13 @@
                             const type = result.data.ar_type;
                             const src = type === '3d' ? result.data.file_3d_url : result.data.image_url;
                             
+                            // PERBAIKAN: Extract Scale, Position, Rotation dari API
                             let dbScale = result.data.scale ? parseFloat(result.data.scale) : 1;
                             let dbRot = [0,0,0];
                             let dbPos = [0,0,0];
 
                             try { if(result.data.rotation) dbRot = JSON.parse(result.data.rotation); } catch(e){}
                             try { if(result.data.position) dbPos = JSON.parse(result.data.position); } catch(e){}
-
-                            if (url.includes('demo') || src.toLowerCase().includes('logo.glb')) {
-                                dbRot[1] = -90; 
-                                console.log('🛠️ Rotasi Sumbu Y -90deg Diterapkan ke State Alpine!');
-                            }
                             
                             this.arData = { 
                                 type: type, 
@@ -622,29 +618,6 @@
                 showError(msg) { this.errorMessage = msg; setTimeout(() => { this.errorMessage = ''; }, 4000); }
             }
         }
-    </script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const observer = new MutationObserver(() => {
-                const viewer = document.querySelector('model-viewer');
-                
-                if (viewer && !viewer.hasAttribute('data-demo-patched')) {
-                    viewer.setAttribute('data-demo-patched', 'true');
-                    
-                    viewer.addEventListener('load', () => {
-                        const src = viewer.getAttribute('src') || '';
-                        
-                        if (src.toLowerCase().includes('demo/logo.glb')) {
-                            viewer.setAttribute('orientation', '0deg 90deg 0deg');
-                        } else {
-                            viewer.removeAttribute('orientation');
-                        }
-                    });
-                }
-            });
-
-            observer.observe(document.body, { childList: true, subtree: true });
-        });
     </script>
 </body>
 </html>
