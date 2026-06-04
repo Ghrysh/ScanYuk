@@ -72,6 +72,7 @@
             interaction-prompt="none"
             shadow-intensity="1" 
             loading="eager"
+            power-preference="high-performance"
             class="w-full h-full bg-transparent">
         </model-viewer>
     </div>
@@ -373,7 +374,7 @@
                     if (type === '3d') {
                         promises.push(new Promise((resolve) => {
                             this.$nextTick(() => {
-                                const viewer = document.querySelector('#ar-overlay-container model-viewer');
+                                const viewer = document.querySelector('#main-ar-viewer');
                                 if(!viewer) return resolve();
 
                                 const onProgress = (event) => {
@@ -390,7 +391,7 @@
                                 };
 
                                 const onError = () => {
-                                    console.error("Gagal merender 3D. Pastikan file .glb valid dan bukan 404 HTML.");
+                                    console.error("Gagal merender 3D.");
                                     cleanUp();
                                     resolve();
                                 };
@@ -405,10 +406,12 @@
                                 viewer.addEventListener('load', onLoad);
                                 viewer.addEventListener('error', onError);
 
+                                // PERBAIKAN 1: Perpanjang batas waktu tunggu dari 10 detik menjadi 45 detik
+                                // Agar untuk file besar (>5MB), suara tidak bocor duluan sebelum loading selesai.
                                 setTimeout(() => {
                                     cleanUp();
                                     resolve();
-                                }, 10000); 
+                                }, 45000); 
                             });
                         }));
                     } else {
@@ -477,37 +480,44 @@
                     }
 
                     Promise.all(promises).then(() => {
-                        this.isLoading = false; 
                         this.loadingProgress = 100;
-                        this.arActive = true; 
+                        this.loadingStatusText = 'Mengekstrak AR ke layar...';
 
-                        let playPromises = [];
-                        if (this.bgmPlayer) playPromises.push(this.bgmPlayer.play());
-                        if (this.narrationPlayer) playPromises.push(this.narrationPlayer.play());
+                        // PERBAIKAN 2: Jeda emas (Golden Delay) 600 milidetik
+                        // Kita menahan layar loading sedikit lebih lama setelah 100% agar GPU 
+                        // punya waktu menggambar 3D-nya ke layar sebelum kita memutar musiknya.
+                        setTimeout(() => {
+                            this.isLoading = false; 
+                            this.arActive = true; 
 
-                        const playTTS = () => {
-                            if(!usingRecordedAudio && cache.narration) {
-                                let utterance = new SpeechSynthesisUtterance(cache.narration);
-                                utterance.lang = 'id-ID';
-                                if(cache.ai_voice) {
-                                    let voices = window.speechSynthesis.getVoices();
-                                    let selectedVoice = voices.find(v => v.voiceURI === cache.ai_voice);
-                                    if(selectedVoice) utterance.voice = selectedVoice;
+                            let playPromises = [];
+                            if (this.bgmPlayer) playPromises.push(this.bgmPlayer.play());
+                            if (this.narrationPlayer) playPromises.push(this.narrationPlayer.play());
+
+                            const playTTS = () => {
+                                if(!usingRecordedAudio && cache.narration) {
+                                    let utterance = new SpeechSynthesisUtterance(cache.narration);
+                                    utterance.lang = 'id-ID';
+                                    if(cache.ai_voice) {
+                                        let voices = window.speechSynthesis.getVoices();
+                                        let selectedVoice = voices.find(v => v.voiceURI === cache.ai_voice);
+                                        if(selectedVoice) utterance.voice = selectedVoice;
+                                    }
+                                    window.speechSynthesis.speak(utterance);
                                 }
-                                window.speechSynthesis.speak(utterance);
-                            }
-                        };
+                            };
 
-                        if (playPromises.length > 0) {
-                            Promise.all(playPromises).then(() => {
+                            if (playPromises.length > 0) {
+                                Promise.all(playPromises).then(() => {
+                                    playTTS();
+                                }).catch(e => {
+                                    console.log('Autoplay diblokir browser:', e);
+                                    this.audioBlocked = true; 
+                                });
+                            } else {
                                 playTTS();
-                            }).catch(e => {
-                                console.log('Autoplay diblokir browser:', e);
-                                this.audioBlocked = true; 
-                            });
-                        } else {
-                            playTTS();
-                        }
+                            }
+                        }, 600); 
                     });
                 },
 
