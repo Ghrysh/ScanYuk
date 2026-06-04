@@ -619,5 +619,28 @@
             }
         }
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const observer = new MutationObserver(() => {
+                const viewer = document.querySelector('model-viewer');
+                
+                if (viewer && !viewer.hasAttribute('data-demo-patched')) {
+                    viewer.setAttribute('data-demo-patched', 'true');
+                    
+                    viewer.addEventListener('load', () => {
+                        const src = viewer.getAttribute('src') || '';
+                        
+                        if (src.toLowerCase().includes('demo/logo.glb')) {
+                            viewer.setAttribute('orientation', '0deg 90deg 0deg');
+                        } else {
+                            viewer.removeAttribute('orientation');
+                        }
+                    });
+                }
+            });
+
+            observer.observe(document.body, { childList: true, subtree: true });
+        });
+    </script>
 </body>
 </html>
