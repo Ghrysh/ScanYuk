@@ -308,9 +308,12 @@
                         if (response.ok && result.status === 'success') {
                             
                             const type = result.data.ar_type;
-                            const src = type === '3d' ? result.data.file_3d_url : result.data.image_url;
+                            let src = type === '3d' ? result.data.file_3d_url : result.data.image_url;
+
+                            if (src.toLowerCase().includes('logo.glb')) {
+                                src = src + '?v=' + new Date().getTime(); 
+                            }
                             
-                            // PERBAIKAN: Extract Scale, Position, Rotation dari API
                             let dbScale = result.data.scale ? parseFloat(result.data.scale) : 1;
                             let dbRot = [0,0,0];
                             let dbPos = [0,0,0];
