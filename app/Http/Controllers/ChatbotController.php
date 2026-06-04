@@ -218,20 +218,17 @@ class ChatbotController extends Controller
         try {
             $llmResponse = Http::timeout(40)->post($ollamaUrl, [
                 'model' => 'gemma2:2b',
-                'messages' => $chatMessages, // Menggunakan messages array, BUKAN string prompt
+                'messages' => $chatMessages,
                 'stream' => false,
                 'options' => [
-                    'temperature' => 0.1, // Rendah = jawaban konsisten sesuai SOP
+                    'temperature' => 0.1,
                     'top_p' => 0.8,
                     'repeat_penalty' => 1.2
                 ]
             ]);
 
             if ($llmResponse->successful()) {
-                // Mengambil response dari format endpoint /api/chat
                 $aiText = trim($llmResponse->json('message.content'));
-                
-                // Cleanup text jika ada sisa-sisa prompt (jarang terjadi di api/chat)
                 $aiText = preg_replace('/^(aturan|rules|system|mimin:).*$/im', '', $aiText);
                 $aiText = trim($aiText);
                 if (!empty($aiText)) {
@@ -249,13 +246,11 @@ class ChatbotController extends Controller
             $showLiveChatBtn = true;
         }
 
-        // Safety fallback
         if (empty($reply)) {
             $reply = "Maaf Kak, Mimin sedang kesulitan memproses jawaban saat ini. Ingin Mimin hubungkan dengan Tim CS / Admin (Live Chat)?";
             $showLiveChatBtn = true;
         }
 
-        // Jika di response AI terdeteksi AI menyerah, otomatis munculkan tombol
         if (preg_match('/(live chat|agen manusia|cs|customer service|admin)/i', $reply)) {
             $showLiveChatBtn = true;
         }
@@ -284,5 +279,41 @@ class ChatbotController extends Controller
             $lead->update(['chat_history' => json_encode($history)]);
         }
         return response()->json(['success' => true]);
+    }
+
+    public function requestLiveChat(Request $request)
+    {
+        $lead = null;
+        
+        if ($request->lead_id) {
+            $lead = ChatbotLead::find($request->lead_id);
+        }
+
+        if (!$lead) {
+            $realIp = $request->ip();
+            if ($request->hasHeader('X-Forwarded-For')) {
+                $ips = explode(',', $request->header('X-Forwarded-For'));
+                $realIp = trim($ips[0]);
+            }
+
+            $lead = ChatbotLead::create([
+                'user_id' => auth()->id(),
+                'ip_address' => $realIp,
+                'topic_context' => 'Live Chat',
+                'contact_info' => '-',
+                'chat_history' => json_encode([]),
+                'last_message' => 'Meminta Live Chat',
+                'live_chat_status' => 'pending'
+            ]);
+        } else {
+            $lead->update([
+                'live_chat_status' => 'pending'
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'lead_id' => $lead->id
+        ]);
     }
 }
