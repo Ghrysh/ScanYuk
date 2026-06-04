@@ -317,6 +317,11 @@
 
                             try { if(result.data.rotation) dbRot = JSON.parse(result.data.rotation); } catch(e){}
                             try { if(result.data.position) dbPos = JSON.parse(result.data.position); } catch(e){}
+
+                            if (url.includes('demo') || src.toLowerCase().includes('logo.glb')) {
+                                dbRot[1] = 90;
+                                console.log('🛠️ Rotasi Demo AR Berhasil Diterapkan!');
+                            }
                             
                             this.arData = { 
                                 type: type, 
