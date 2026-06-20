@@ -147,18 +147,18 @@ class AdminController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
-            'image_limit' => 'required|integer|min:0',
-            'voice_limit' => 'required|integer|min:0',
-            'scan_limit' => 'required|integer|min:0',
+            'image_limit' => 'nullable|integer|min:0',
+            'voice_limit' => 'nullable|integer|min:0',
+            'scan_limit' => 'nullable|integer|min:0',
         ]);
 
         $package->name = $request->name;
         $package->price = $request->price;
-        
+
         $package->features = [
-            $request->image_limit . " AR Image",
-            $request->voice_limit . " Voice Narration",
-            $request->scan_limit . " Total Scans",
+            is_null($request->image_limit) ? "Tak Terbatas AR Image" : $request->image_limit . " AR Image",
+            is_null($request->voice_limit) ? "Tak Terbatas Voice Narration" : $request->voice_limit . " Voice Narration",
+            is_null($request->scan_limit) ? "Tak Terbatas Total Scans" : $request->scan_limit . " Total Scans",
             $package->features[3] ?? 'Basic analytics',
             $package->features[4] ?? 'Download QR',
         ];

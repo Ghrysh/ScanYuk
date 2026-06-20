@@ -60,15 +60,22 @@ class ScanController extends Controller
             $packageId = $roleMap[$userRole] ?? 1;
             $package = \App\Models\PricingPackage::find($packageId);
             
+            $isUnlimited = false;
             $maxScans = 0;
+
             if ($package && is_array($package->features) && isset($package->features[2])) {
-                $maxScans = (int) filter_var($package->features[2], FILTER_SANITIZE_NUMBER_INT);
+                $featureText = strtolower($package->features[2]);
+                if (str_contains($featureText, 'tak terbatas') || str_contains($featureText, 'unlimited')) {
+                    $isUnlimited = true;
+                } else {
+                    $maxScans = (int) filter_var($package->features[2], FILTER_SANITIZE_NUMBER_INT);
+                }
             }
 
-            if ($user->scan >= $maxScans) {
+            if (!$isUnlimited && $user->scan >= $maxScans) {
                 return response()->json([
                     'status' => 'limit_reached',
-                    'message' => 'Akun pembuat QR ini telah mencapai batas maksimal scan ('. $maxScans .').'
+                    'message' => 'Akun pembuat QR ini telah mencapai batas maksimal scan.'
                 ], 403);
             }
 

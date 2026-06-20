@@ -5,13 +5,21 @@
 @php
     $features = $currentPackage ? $currentPackage->features : [];
     
-    $imgLimit = (int) filter_var($features[0] ?? 0, FILTER_SANITIZE_NUMBER_INT);
-    $voiceLimit = (int) filter_var($features[1] ?? 0, FILTER_SANITIZE_NUMBER_INT);
-    $scanLimit = (int) filter_var($features[2] ?? 0, FILTER_SANITIZE_NUMBER_INT);
+    $imgFeature = strtolower($features[0] ?? '');
+    $voiceFeature = strtolower($features[1] ?? '');
+    $scanFeature = strtolower($features[2] ?? '');
 
-    $imgPercent = $imgLimit > 0 ? min(($user->image / $imgLimit) * 100, 100) : 0;
-    $voicePercent = $voiceLimit > 0 ? min(($user->voice / $voiceLimit) * 100, 100) : 0;
-    $scanPercent = $scanLimit > 0 ? min(($user->scan / $scanLimit) * 100, 100) : 0;
+    $isImgUnlimited = str_contains($imgFeature, 'tak terbatas') || str_contains($imgFeature, 'unlimited');
+    $isVoiceUnlimited = str_contains($voiceFeature, 'tak terbatas') || str_contains($voiceFeature, 'unlimited');
+    $isScanUnlimited = str_contains($scanFeature, 'tak terbatas') || str_contains($scanFeature, 'unlimited');
+
+    $imgLimit = $isImgUnlimited ? '∞' : (int) filter_var($features[0] ?? 0, FILTER_SANITIZE_NUMBER_INT);
+    $voiceLimit = $isVoiceUnlimited ? '∞' : (int) filter_var($features[1] ?? 0, FILTER_SANITIZE_NUMBER_INT);
+    $scanLimit = $isScanUnlimited ? '∞' : (int) filter_var($features[2] ?? 0, FILTER_SANITIZE_NUMBER_INT);
+
+    $imgPercent = $isImgUnlimited ? 100 : ($imgLimit > 0 ? min(($user->image / $imgLimit) * 100, 100) : 0);
+    $voicePercent = $isVoiceUnlimited ? 100 : ($voiceLimit > 0 ? min(($user->voice / $voiceLimit) * 100, 100) : 0);
+    $scanPercent = $isScanUnlimited ? 100 : ($scanLimit > 0 ? min(($user->scan / $scanLimit) * 100, 100) : 0);
 @endphp
 
 <div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-10" x-data="{ showPackages: false, showLimitModal: false, showWarningModal: false, selectedPkg: null, showDownloadModal: false, selectedQrId: null, isGeneratingFlyer: false, flyerProgress: 0 }">
@@ -26,7 +34,7 @@
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                 Upgrade Paket
             </button>
-            @if($user->image >= $imgLimit)
+            @if(!$isImgUnlimited && $user->image >= $imgLimit)
                 @if($user->role === 'business')
                     <a href="{{ route('contact') }}" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 font-semibold text-sm hover:bg-amber-100 transition-colors shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
@@ -109,10 +117,10 @@
             </div>
             <div>
                 <div class="text-3xl font-extrabold text-slate-900 mb-3">
-                    {{ $user->image }} <span class="text-lg font-medium text-slate-400">/ {{ $imgLimit }}</span>
+                    {{ $user->image }} <span class="text-lg font-medium text-slate-400">/ {!! $imgLimit !!}</span>
                 </div>
                 <div class="w-full bg-slate-100 rounded-full h-2.5">
-                    <div class="bg-teal-500 h-2.5 rounded-full" style="width: {{ $imgPercent }}%"></div>
+                    <div class="{{ $isImgUnlimited ? 'bg-gradient-to-r from-teal-400 to-indigo-500' : 'bg-teal-500' }} h-2.5 rounded-full" style="width: {{ $imgPercent }}%"></div>
                 </div>
             </div>
         </div>
@@ -124,10 +132,10 @@
             </div>
             <div>
                 <div class="text-3xl font-extrabold text-slate-900 mb-3">
-                    {{ $user->voice }} <span class="text-lg font-medium text-slate-400">/ {{ $voiceLimit }}</span>
+                    {{ $user->voice }} <span class="text-lg font-medium text-slate-400">/ {!! $voiceLimit !!}</span>
                 </div>
                 <div class="w-full bg-slate-100 rounded-full h-2.5">
-                    <div class="bg-teal-500 h-2.5 rounded-full" style="width: {{ $voicePercent }}%"></div>
+                    <div class="{{ $isVoiceUnlimited ? 'bg-gradient-to-r from-teal-400 to-indigo-500' : 'bg-teal-500' }} h-2.5 rounded-full" style="width: {{ $voicePercent }}%"></div>
                 </div>
             </div>
         </div>
@@ -139,10 +147,10 @@
             </div>
             <div>
                 <div class="text-3xl font-extrabold text-slate-900 mb-3">
-                    {{ $user->scan }} <span class="text-lg font-medium text-slate-400">/ {{ $scanLimit }}</span>
+                    {{ $user->scan }} <span class="text-lg font-medium text-slate-400">/ {!! $scanLimit !!}</span>
                 </div>
                 <div class="w-full bg-slate-100 rounded-full h-2.5">
-                    <div class="bg-teal-500 h-2.5 rounded-full" style="width: {{ $scanPercent }}%"></div>
+                    <div class="{{ $isScanUnlimited ? 'bg-gradient-to-r from-teal-400 to-indigo-500' : 'bg-teal-500' }} h-2.5 rounded-full" style="width: {{ $scanPercent }}%"></div>
                 </div>
             </div>
         </div>

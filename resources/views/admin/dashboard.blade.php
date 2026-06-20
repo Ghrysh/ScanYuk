@@ -325,9 +325,15 @@
                 this.pkgId = pkg.id;
                 this.pkgName = pkg.name;
                 this.pkgPrice = pkg.price;
-                this.pkgImage = parseInt(pkg.features[0]) || 0;
-                this.pkgVoice = parseInt(pkg.features[1]) || 0;
-                this.pkgScan = parseInt(pkg.features[2]) || 0;
+                
+                let f0 = (pkg.features[0] || '').toLowerCase();
+                let f1 = (pkg.features[1] || '').toLowerCase();
+                let f2 = (pkg.features[2] || '').toLowerCase();
+
+                this.pkgImage = (f0.includes('terbatas') || f0.includes('unlimited')) ? '' : (parseInt(f0) || 0);
+                this.pkgVoice = (f1.includes('terbatas') || f1.includes('unlimited')) ? '' : (parseInt(f1) || 0);
+                this.pkgScan  = (f2.includes('terbatas') || f2.includes('unlimited')) ? '' : (parseInt(f2) || 0);
+                
                 this.showEditModal = true;
             }
         }"
@@ -404,15 +410,15 @@
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Limit Image</label>
-                            <input type="number" name="image_limit" x-model="pkgImage" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none">
+                            <input type="number" name="image_limit" x-model="pkgImage" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none" placeholder="Kosongkan = Unlimited">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Limit Voice</label>
-                            <input type="number" name="voice_limit" x-model="pkgVoice" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none">
+                            <input type="number" name="voice_limit" x-model="pkgVoice" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none" placeholder="Kosongkan = Unlimited">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Total Scan</label>
-                            <input type="number" name="scan_limit" x-model="pkgScan" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none">
+                            <input type="number" name="scan_limit" x-model="pkgScan" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none" placeholder="Kosongkan = Unlimited">
                         </div>
                     </div>
 
