@@ -170,8 +170,26 @@ class QrCodeController extends Controller
                     // PERBAIKAN 3: Tambahkan uniqid() untuk memastikan file lama TIDAK PERNAH tertimpa
                     $filename = time() . '_' . uniqid() . '_' . Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
 
-                    $fileContent = file_get_contents($file->getRealPath());
+                    $tmpDir = storage_path('app/tmp_3d');
+                    if (!file_exists($tmpDir)) {
+                        mkdir($tmpDir, 0755, true);
+                    }
+                    $tmpInPath = $tmpDir . '/' . $filename . '_in.glb';
+                    $tmpOutPath = $tmpDir . '/' . $filename;
+                    
+                    file_put_contents($tmpInPath, file_get_contents($file->getRealPath()));
+
+                    $compressor = new \App\Services\ModelCompressor();
+                    $success = $compressor->compress($tmpInPath, $tmpOutPath);
+                    
+                    $finalPath = $success ? $tmpOutPath : $tmpInPath;
+
+                    $fileContent = file_get_contents($finalPath);
                     $upload = Storage::disk('s3')->put('3D/' . $filename, $fileContent);
+                    
+                    @unlink($tmpInPath);
+                    if (file_exists($tmpOutPath)) @unlink($tmpOutPath);
+                    
                     if (!$upload) throw new \Exception("Gagal menyimpan file 3D ke MinIO.");
 
                     $fileUrl = url('/minio-proxy/3D/' . $filename);

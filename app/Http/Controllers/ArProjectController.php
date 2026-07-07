@@ -154,7 +154,30 @@ class ArProjectController extends Controller
             $request->validate([
                 'model' => ['required', 'file', 'mimes:glb,gltf', 'max:102400'],
             ]);
-            $modelPath = $request->file('model')->store('models', 'public');
+            
+            $file = $request->file('model');
+            $filename = time() . '_' . \Illuminate\Support\Str::slug(pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME)) . '.glb';
+            
+            $tmpDir = storage_path('app/tmp_3d');
+            if (!file_exists($tmpDir)) {
+                mkdir($tmpDir, 0755, true);
+            }
+            $tmpInPath = $tmpDir . '/' . $filename . '_in.glb';
+            $tmpOutPath = $tmpDir . '/' . $filename;
+            
+            file_put_contents($tmpInPath, file_get_contents($file->getRealPath()));
+
+            $compressor = new \App\Services\ModelCompressor();
+            $success = $compressor->compress($tmpInPath, $tmpOutPath);
+            
+            $finalPath = $success ? $tmpOutPath : $tmpInPath;
+            
+            $modelPath = 'models/' . $filename;
+            Storage::disk('public')->put($modelPath, file_get_contents($finalPath));
+            
+            @unlink($tmpInPath);
+            if (file_exists($tmpOutPath)) @unlink($tmpOutPath);
+            
             $data['model_path'] = $modelPath;
             $project = ArProject::create($data);
 
