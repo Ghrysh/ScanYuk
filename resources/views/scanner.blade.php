@@ -110,14 +110,14 @@
                 class="w-full h-full bg-transparent">
                 
                 <!-- TAMAGOTCHI UI (Hotspots) -->
-                <div slot="hotspot-expression" data-position="-0.4 0.7 0" style="pointer-events: none;">
-                    <div id="hotspot-exp-content" x-show="expressionEnabled" class="flex items-start gap-3 w-48" style="transform-origin: center; transform: translate(-50%, -50%);">
+                <div id="hs-exp-wrapper" slot="hotspot-expression" data-position="-0.4 0.7 0" style="pointer-events: none; opacity: 0; transition: opacity 0.3s;">
+                    <div id="hotspot-exp-content" class="flex items-start gap-3 w-48" style="transform-origin: center; transform: translate(-50%, -50%);">
                         <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce shrink-0" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
                     </div>
                 </div>
 
-                <div slot="hotspot-bar" data-position="0.7 0.7 0" style="pointer-events: none;">
-                    <div id="hotspot-bar-content" x-show="expressionEnabled" class="relative" style="transform-origin: center; transform: translate(-50%, -50%);">
+                <div id="hs-bar-wrapper" slot="hotspot-bar" data-position="0.7 0.7 0" style="pointer-events: none; opacity: 0; transition: opacity 0.3s;">
+                    <div id="hotspot-bar-content" class="relative" style="transform-origin: center; transform: translate(-50%, -50%);">
                         <div class="flex flex-col items-center gap-2">
                             <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
                             <div class="w-4 h-32 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
@@ -373,6 +373,12 @@
                         }
 
                         this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
+
+                        // Manual opacity to isolate from Alpine lifecycle
+                        const hsExpWrapper = document.getElementById('hs-exp-wrapper');
+                        const hsBarWrapper = document.getElementById('hs-bar-wrapper');
+                        if (hsExpWrapper) hsExpWrapper.style.opacity = this.expressionEnabled ? '1' : '0';
+                        if (hsBarWrapper) hsBarWrapper.style.opacity = this.expressionEnabled ? '1' : '0';
 
                         // Counter-scale for tamagotchi hotspots so they don't shrink with the container
                         const expContent = document.getElementById('hotspot-exp-content');
@@ -772,6 +778,12 @@
                         const expEl = viewer.querySelector('[slot="hotspot-expression"]');
                         if(expEl) {
                             expEl.setAttribute('data-position', `${pExpX} ${pExpY} ${frontZ}`);
+                            
+                            // FORCE update API
+                            if (typeof viewer.updateHotspot === 'function') {
+                                viewer.updateHotspot({name: 'hotspot-expression', position: `${pExpX} ${pExpY} ${frontZ}`});
+                            }
+                            
                             console.log(`Exp pos: ${pExpX.toFixed(2)}, ${pExpY.toFixed(2)}, ${frontZ.toFixed(2)}`);
                             
                             // Debugging internal transform
@@ -783,6 +795,10 @@
                         const barEl = viewer.querySelector('[slot="hotspot-bar"]');
                         if(barEl) {
                             barEl.setAttribute('data-position', `${pBarX} ${pBarY} ${frontZ}`);
+                            
+                            if (typeof viewer.updateHotspot === 'function') {
+                                viewer.updateHotspot({name: 'hotspot-bar', position: `${pBarX} ${pBarY} ${frontZ}`});
+                            }
                         }
                         
                         // Perbarui QR Code hotspot jika ada
