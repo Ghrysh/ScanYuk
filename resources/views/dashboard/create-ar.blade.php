@@ -362,7 +362,21 @@
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-slate-200">
+                {{-- TAMBAHAN: TAMAGOTCHI MODE TOGGLE --}}
+                <div x-show="arType === '3d'" style="display: none;" class="pt-4 mt-6 border-t border-slate-200">
+                    <label class="flex items-center justify-between cursor-pointer p-4 border border-slate-200 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-bold text-slate-900">Aktifkan Fitur Ekspresi (Tamagotchi Mode)</span>
+                            <span class="text-xs text-slate-500 mt-1">Model 3D akan memiliki perasaan dinamis berdasarkan waktu dan interaksi (Senang, Suntuk, Marah, dll)</span>
+                        </div>
+                        <div class="relative">
+                            <input type="checkbox" name="enable_expression" value="1" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="pt-4 mt-6 border-t border-slate-200">
                     <label class="block text-sm font-bold text-slate-900 mb-4">Background Music / BGM (Opsional)</label>
                     
                     <div class="mb-4 p-3 md:p-4 border border-slate-200 rounded-xl bg-white shadow-sm" :class="selectedMusic !== '' ? 'opacity-50 grayscale' : ''">

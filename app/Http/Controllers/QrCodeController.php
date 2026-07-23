@@ -117,6 +117,7 @@ class QrCodeController extends Controller
             $qrCode->orbit_radius = $request->orbit_radius ?? 1.5;
             $qrCode->orbit_dir = $request->orbit_dir ?? 1;
             $qrCode->anim_clip = $request->anim_clip ?? '*';
+            $qrCode->enable_expression = $request->has('enable_expression') ? true : false;
 
             $bgmPathToSave = $request->bgm_path; 
 

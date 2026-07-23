@@ -124,6 +124,7 @@ class ScanController extends Controller
             'orbit_radius' => $qr->orbit_radius ?? 1.5,
             'orbit_dir' => $qr->orbit_dir ?? 1,
             'anim_clip' => $qr->anim_clip ?? '*',
+            'enable_expression' => (bool) ($qr->enable_expression ?? false),
         ];
 
         if ($arData['ar_type'] === '3d' && !empty($qr->ar_asset_id)) {

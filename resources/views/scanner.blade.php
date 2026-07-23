@@ -84,6 +84,31 @@
         </a>
     </div>
 
+    <!-- TAMAGOTCHI UI -->
+    <div x-show="arActive && expressionEnabled" style="display: none;" class="fixed inset-0 z-40 pointer-events-none">
+        <!-- Expression Bubble (Top Left, below Back button) -->
+        <div class="absolute top-20 left-6 flex items-start gap-3 max-w-[200px]">
+            <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
+            <div class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 relative mt-2">
+                <span x-text="expMessage"></span>
+                <div class="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white/90 border-l-[10px] border-l-transparent"></div>
+            </div>
+        </div>
+
+        <!-- Expression Bar (Right Side) -->
+        <div class="absolute top-1/2 right-6 transform -translate-y-1/2 flex flex-col items-center gap-2">
+            <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
+            <div class="w-4 h-48 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
+                <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
+                     :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
+            </div>
+            <!-- Icon indicator -->
+            <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden">
+                <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
+            </div>
+        </div>
+    </div>
+
     <div x-show="isFetching" style="display: none;" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-black/60 backdrop-blur-xl text-white px-6 py-4 rounded-2xl flex flex-col items-center gap-3 shadow-2xl border border-white/10">
         <svg class="animate-spin h-8 w-8 text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
         <span class="font-medium text-sm tracking-wide">Membuka Portal AR...</span>
@@ -125,6 +150,26 @@
                 curX: 0, curY: 0, curScale: 0, curAngle: 0, curYaw: 0, curPitch: 0,
                 targetX: 0, targetY: 0, targetScale: 0, targetAngle: 0, targetYaw: 0, targetPitch: 0,
                 hasSnaped: false,
+
+                // TAMAGOTCHI STATE
+                expressionEnabled: false,
+                expPoints: 100,
+                expState: 'senang',
+                expMessage: '',
+                expInterval: null,
+                gpsWatchId: null,
+                lastLat: null,
+                lastLon: null,
+                arUuid: null,
+                
+                messages: {
+                    senang: ["Aku senang saat ini", "Halo dunia!", "Terima kasih sudah scan aku!", "Cuaca yang cerah ya!"],
+                    suntuk: ["Aku ingin main", "Bosan nih", "Lama tidak bertemu", "Ayo lakukan sesuatu", "Main yuk!"],
+                    marah: ["Kenapa lama sekali?", "Aku sedang marah", "Jangan tinggalkan aku", "Grrr...", "Kamu jahat!"],
+                    menangis: ["Aku kangen", "Hik hik hik", "Jangan lupakan aku", "Aku kesepian", "Tolong temani aku"],
+                    cape: ["Aku cape", "Hari yang melelahkan", "Butuh istirahat", "Hooaamm..."],
+                    tidur: ["Zzzzz...", "Sedang tidur", "Jangan berisik...", "Sssttt..."]
+                },
 
                 isLoading: false,
                 loadingProgress: 0,
@@ -178,6 +223,11 @@
                             this.lastFoundTime = Date.now();
                             this.currentQrUrl = '/api/scan/' + uuid;
                             
+                            if (this.arUuid !== uuid) {
+                                this.arUuid = uuid;
+                                // Reset tamagotchi cache trigger for new UUID
+                            }
+
                             if (!this.arCache[this.currentQrUrl] && !this.isFetching) {
                                 this.fetchArData(this.currentQrUrl);
                             } 
@@ -185,6 +235,11 @@
                                 if (!this.arActive) {
                                     this.arActive = true;
                                     this.restartAudioFromPause(this.currentQrUrl);
+                                    
+                                    // Start Tamagotchi loop when AR becomes active
+                                    if (this.expressionEnabled) {
+                                        this.initExpression(uuid);
+                                    }
                                 }
                                 this.calculateTarget(code.location);
                             }
@@ -337,6 +392,8 @@
                                 animClip: result.data.anim_clip || '*'
                             };
                             
+                            this.expressionEnabled = result.data.enable_expression === true;
+
                             this.arCache[url] = { 
                                 narration: result.data.narration, 
                                 ai_voice: result.data.ai_voice,
@@ -626,6 +683,144 @@
                     } else {
                         playTTS();
                     }
+                },
+
+                // TAMAGOTCHI LOGIC
+                getExpColor() {
+                    if (this.expPoints >= 75) return '#4ade80'; 
+                    if (this.expPoints >= 35) return '#facc15'; 
+                    if (this.expPoints >= 10) return '#f87171'; 
+                    return '#991b1b'; 
+                },
+
+                initExpression(uuid) {
+                    const storageKey = 'ar_exp_' + uuid;
+                    let savedData = localStorage.getItem(storageKey);
+                    let now = Date.now();
+                    
+                    if (savedData) {
+                        try {
+                            let parsed = JSON.parse(savedData);
+                            this.expPoints = parsed.points;
+                            this.lastLat = parsed.lat || null;
+                            this.lastLon = parsed.lon || null;
+                            
+                            // Depletion (48 hours = 100 points -> 2.0833 points/hr -> 0.0000005787 points/ms)
+                            let timeDiffMs = now - parsed.lastTime;
+                            let pointsToDeduct = timeDiffMs * 0.0000005787;
+                            this.expPoints -= pointsToDeduct;
+                            if (this.expPoints < 0) this.expPoints = 0;
+                        } catch(e) {
+                            this.expPoints = 100;
+                        }
+                    } else {
+                        this.expPoints = 100;
+                    }
+                    
+                    this.updateExpState();
+                    
+                    if (this.expInterval) clearInterval(this.expInterval);
+                    this.expInterval = setInterval(() => {
+                        this.expLoop(storageKey);
+                    }, 1000);
+
+                    // Setup GPS 
+                    if (!this.gpsWatchId && navigator.geolocation) {
+                        this.gpsWatchId = navigator.geolocation.watchPosition((pos) => {
+                            let lat = pos.coords.latitude;
+                            let lon = pos.coords.longitude;
+                            
+                            if (this.lastLat !== null && this.lastLon !== null) {
+                                let dist = this.getDistanceFromLatLonInKm(this.lastLat, this.lastLon, lat, lon) * 1000; // meters
+                                // Boost to 100 if distance > 100m and not already senang
+                                if (dist > 100 && this.expPoints < 75) {
+                                    this.expPoints = 100;
+                                    this.updateExpState();
+                                }
+                            }
+                            
+                            this.lastLat = lat;
+                            this.lastLon = lon;
+                            // Save immediately after location update
+                            localStorage.setItem(storageKey, JSON.stringify({
+                                points: this.expPoints,
+                                lastTime: Date.now(),
+                                lat: this.lastLat,
+                                lon: this.lastLon
+                            }));
+                        }, (err) => {
+                            console.log("GPS denied or error", err);
+                        }, { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 });
+                    }
+                },
+                
+                getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
+                    var R = 6371; 
+                    var dLat = (lat2-lat1) * (Math.PI/180);
+                    var dLon = (lon2-lon1) * (Math.PI/180); 
+                    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                            Math.cos(lat1 * (Math.PI/180)) * Math.cos(lat2 * (Math.PI/180)) * 
+                            Math.sin(dLon/2) * Math.sin(dLon/2); 
+                    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+                    return R * c; 
+                },
+
+                expLoop(storageKey) {
+                    let hour = new Date().getHours();
+                    let isTimeOverride = false;
+                    
+                    if (hour === 6 && this.expPoints < 100) {
+                        this.expPoints = 100; // wake up happy
+                    }
+                    
+                    if (hour >= 21 || hour < 6) {
+                        this.setExpState('tidur');
+                        isTimeOverride = true;
+                    } else if (hour === 20) {
+                        this.setExpState('cape');
+                        isTimeOverride = true;
+                    }
+                    
+                    if (!isTimeOverride) {
+                        // Increment if AR is actively being viewed and points are below Suntuk threshold
+                        if (this.arActive && this.expPoints < 35) {
+                            this.expPoints += 1; 
+                        }
+                        this.updateExpState();
+                    }
+                    
+                    if (this.arActive) {
+                        localStorage.setItem(storageKey, JSON.stringify({
+                            points: this.expPoints,
+                            lastTime: Date.now(),
+                            lat: this.lastLat,
+                            lon: this.lastLon
+                        }));
+                    }
+                },
+                
+                updateExpState() {
+                    let oldState = this.expState;
+                    if (this.expPoints >= 75) this.expState = 'senang';
+                    else if (this.expPoints >= 35) this.expState = 'suntuk';
+                    else if (this.expPoints >= 10) this.expState = 'marah';
+                    else this.expState = 'menangis';
+                    
+                    if (oldState !== this.expState || !this.expMessage) {
+                        this.setRandomMessage(this.expState);
+                    }
+                },
+                
+                setExpState(state) {
+                    if (this.expState !== state) {
+                        this.expState = state;
+                        this.setRandomMessage(state);
+                    }
+                },
+                
+                setRandomMessage(state) {
+                    let msgs = this.messages[state] || ["..."];
+                    this.expMessage = msgs[Math.floor(Math.random() * msgs.length)];
                 },
 
                 showError(msg) { this.errorMessage = msg; setTimeout(() => { this.errorMessage = ''; }, 4000); }
