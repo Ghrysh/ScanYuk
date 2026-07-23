@@ -2073,7 +2073,7 @@
         window.orbitState = { active: false, speed: 0.5, dir: 1, radius: 0.0, angle: 0 };
 
         let renderer, scene, camera, orbitControls, mixer, clock, animFrame;
-        let previewModel = null, activeModelGroup = null, pivotGroup = null, allClips = [], activeAction = null;  
+        let previewModel = null, activeModelGroup = null, pivotGroup = null, allClips = [], activeAction = null, qrPlane = null;  
 
         function initThree() {
             const canvas = document.getElementById('canvas-3d');
@@ -2083,16 +2083,19 @@
 
             if (renderer) { renderer.setSize(W, H); camera.aspect = W / H; camera.updateProjectionMatrix(); return; }
 
-            renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
             renderer.setSize(W, H); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.LinearToneMapping;
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            renderer.outputColorSpace = THREE.SRGBColorSpace;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
 
             scene = new THREE.Scene(); scene.background = new THREE.Color(0x0f172a); 
             camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 500); camera.position.set(0, 1.5, 4);
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-            // QR Plane akan dibuat saat model selesai di-load agar bisa mengukur kedalaman (Z) model
-            let qrPlane = null;
+            
             orbitControls = new OrbitControls(camera, renderer.domElement);
             orbitControls.enableDamping = true; orbitControls.target.set(0, 0.5, 0);
             orbitControls.addEventListener('change', () => { if (previewModel) syncFormFromModel(); });
