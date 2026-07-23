@@ -2194,6 +2194,11 @@
                     qrPlane.position.z = (previewModel.userData._baseZOffset * currentScale) + window.threeState.position[2];
                 }
                 
+                // Pastikan camera & controls update sebelum kalkulasi proyeksi
+                orbitControls.update();
+                if (activeModelGroup) activeModelGroup.updateMatrixWorld(true);
+                camera.updateMatrixWorld();
+                
                 // Update Tamagotchi UI Positions
                 const alpineData = window.Alpine ? Alpine.evaluate(document.body, 'expressionEnabled') : false;
                 const elExp = document.getElementById('tamagotchi-editor-expression');
@@ -2229,7 +2234,7 @@
                     if(elBar) elBar.style.display = 'none';
                 }
                 
-                orbitControls.update(); renderer.render(scene, camera);
+                renderer.render(scene, camera);
             } animate();
         }
 
