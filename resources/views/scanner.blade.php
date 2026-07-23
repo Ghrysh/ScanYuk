@@ -82,12 +82,12 @@
         <!-- TAMAGOTCHI UI — Positioned via CSS, OUTSIDE model-viewer -->
         <div id="tamagotchi-layer" style="position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s;">
             <!-- Ekspresi Wajah (kiri atas model) -->
-            <div id="tama-expression" style="position: absolute; top: -10px; left: -70px;">
-                <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
+            <div id="tama-expression" style="position: absolute; top: 5%; left: 5%;">
+                <img :src="'/ekspresi/' + expState + '.png'" class="w-14 h-14 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
             </div>
 
             <!-- Bar + Pesan (kanan atas model) -->
-            <div id="tama-bar" style="position: absolute; top: -10px; right: -60px;">
+            <div id="tama-bar" style="position: absolute; top: 5%; right: 5%;">
                 <div class="flex flex-col items-center gap-2">
                     <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
                     <div class="w-4 h-32 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
