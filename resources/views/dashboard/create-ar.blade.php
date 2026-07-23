@@ -2091,27 +2091,8 @@
             camera = new THREE.PerspectiveCamera(45, W / H, 0.01, 500); camera.position.set(0, 1.5, 4);
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-            const dir = new THREE.DirectionalLight(0xffffff, 1.2); dir.position.set(5, 8, 5); scene.add(dir);
-            scene.add(new THREE.GridHelper(6, 12, 0x334155, 0x1e293b));
-            
-            // Tambahkan Simulator QR Code 3D ke scene
-            const canvasQr = document.createElement('canvas');
-            canvasQr.width = 512; canvasQr.height = 512;
-            const ctx = canvasQr.getContext('2d');
-            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 512, 512);
-            ctx.lineWidth = 20; ctx.strokeStyle = '#000000'; ctx.strokeRect(20, 20, 472, 472);
-            ctx.fillRect(60, 60, 120, 120); ctx.fillRect(332, 60, 120, 120); ctx.fillRect(60, 332, 120, 120);
-            ctx.fillStyle = '#000000'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center';
-            ctx.fillText('UKURAN ASLI', 256, 236); ctx.fillText('QR CODE', 256, 286);
-            
-            const qrTexture = new THREE.CanvasTexture(canvasQr);
-            const qrGeo = new THREE.PlaneGeometry(1.2, 1.2); // 1.2 units == ukuran asli QR Code
-            const qrMat = new THREE.MeshBasicMaterial({ map: qrTexture, transparent: true, opacity: 0.4, depthWrite: false, side: THREE.DoubleSide });
-            const qrPlane = new THREE.Mesh(qrGeo, qrMat);
-            qrPlane.position.y = 0.6; // Pusat vertikal model-viewer (auto-frame)
-            qrPlane.position.z = 0; // Sejajar dengan origin 
-            scene.add(qrPlane);
-
+            // QR Plane akan dibuat saat model selesai di-load agar bisa mengukur kedalaman (Z) model
+            let qrPlane = null;
             orbitControls = new OrbitControls(camera, renderer.domElement);
             orbitControls.enableDamping = true; orbitControls.target.set(0, 0.5, 0);
             orbitControls.addEventListener('change', () => { if (previewModel) syncFormFromModel(); });
@@ -2208,6 +2189,27 @@
                 
                 // Posisikan agar bagian bawah (min.y) menempel di grid (y=0) dan di tengah
                 normalizationWrapper.position.set(-center.x * norm, -box.min.y * norm, -center.z * norm);
+                
+                // Hapus QR lama jika ada
+                if (qrPlane) scene.remove(qrPlane);
+                
+                // Tambahkan Simulator QR Code 3D ke scene tepat di ujung belakang objek (punggung)
+                const canvasQr = document.createElement('canvas');
+                canvasQr.width = 512; canvasQr.height = 512;
+                const ctx = canvasQr.getContext('2d');
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 512, 512);
+                ctx.lineWidth = 20; ctx.strokeStyle = '#000000'; ctx.strokeRect(20, 20, 472, 472);
+                ctx.fillRect(60, 60, 120, 120); ctx.fillRect(332, 60, 120, 120); ctx.fillRect(60, 332, 120, 120);
+                ctx.fillStyle = '#000000'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center';
+                ctx.fillText('UKURAN ASLI', 256, 236); ctx.fillText('QR CODE', 256, 286);
+                
+                const qrTexture = new THREE.CanvasTexture(canvasQr);
+                const qrGeo = new THREE.PlaneGeometry(1.2, 1.2); 
+                const qrMat = new THREE.MeshBasicMaterial({ map: qrTexture, transparent: true, opacity: 0.4, depthWrite: false, side: THREE.DoubleSide });
+                qrPlane = new THREE.Mesh(qrGeo, qrMat);
+                qrPlane.position.y = 0.6; // Pusat vertikal model-viewer
+                qrPlane.position.z = -((size.z / 2) * norm); // Posisikan tepat di batas punggung objek
+                scene.add(qrPlane);
                 
                 // Simpan original baseScale untuk dikirim ke scanner
                 previewModel.userData = { _baseScale: norm };
