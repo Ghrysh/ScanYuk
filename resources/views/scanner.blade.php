@@ -81,7 +81,7 @@
     </script>
 
     <!-- PERBAIKAN: Binding Posisi, Skala, Rotasi, & Animasi ke UI -->
-    <div x-show="arActive" id="ar-overlay-container" class="transition-opacity duration-300">
+    <div id="ar-overlay-container" class="transition-opacity duration-300" :class="arActive ? 'opacity-100' : 'opacity-0 pointer-events-none'">
         
         <!-- Overlay untuk AR 2D -->
         <img x-show="arData.type === '2d'" id="main-ar-2d" :src="arData.src" 
@@ -89,7 +89,7 @@
              :style="`margin-left: ${arData.posX * 50}px; margin-top: ${-arData.posY * 50}px;`">
              
         <!-- Overlay untuk AR 3D -->
-        <div x-show="arData.type === '3d'" class="w-full h-full absolute inset-0">
+        <div class="w-full h-full absolute inset-0" :class="arData.type === '3d' ? 'opacity-100' : 'opacity-0 pointer-events-none'">
             <model-viewer 
                 id="main-ar-viewer"
                 @load="adjustHotspots($event.target)"
