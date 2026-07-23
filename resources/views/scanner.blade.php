@@ -51,19 +51,13 @@
     <!-- PERBAIKAN: Binding Posisi, Skala, Rotasi, & Animasi ke UI -->
     <div x-show="arActive" id="ar-overlay-container" class="transition-opacity duration-300">
         
-         <!-- DEBUG INFO -->
-         <div style="position:absolute; top:-50px; left:0; background:black; color:lime; font-size:12px; padding:5px; z-index:9999; width:300px;">
-            <div id="debug-hotspot">POS: WAIT...</div>
-            <div id="debug-transform">TRANS: WAIT...</div>
-         </div>
-
         <!-- Overlay untuk AR 2D -->
         <img x-show="arData.type === '2d'" id="main-ar-2d" :src="arData.src" 
              class="w-full h-full object-contain filter drop-shadow(0 25px 25px rgba(0,0,0,0.8))"
              :style="`margin-left: ${arData.posX * 50}px; margin-top: ${-arData.posY * 50}px;`">
              
         <!-- Overlay untuk AR 3D -->
-        <template x-if="arData.type === '3d'">
+        <div x-show="arData.type === '3d'" class="w-full h-full absolute inset-0">
             <model-viewer 
                 id="main-ar-viewer"
                 @load="adjustHotspots($event.target)"
@@ -112,7 +106,7 @@
                     </div>
                 </div>
             </model-viewer>
-        </template>
+        </div>
     </div>
 
     <div class="fixed top-6 left-6 z-40">
@@ -361,6 +355,12 @@
                         if (this.arData.type === '3d') {
                             const viewer = document.getElementById('main-ar-viewer');
                             if (viewer) {
+                                // Robust fallback for model-viewer shadow DOM bugs
+                                if (viewer.modelIsVisible && this._lastAdjustedSrc !== this.arData.src) {
+                                    this.adjustHotspots(viewer);
+                                    this._lastAdjustedSrc = this.arData.src;
+                                }
+
                                 // 90 adalah sudut lurus menghadap objek. 
                                 // Jika HP miring ke atas (pitch naik), kamera memutar ke bawah memandang ke atas.
                                 let orbitPitch = 90 - this.curPitch;
