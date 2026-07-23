@@ -83,7 +83,7 @@
             <div x-show="expressionEnabled" slot="hotspot-bar" data-position="0.7 0.7 0" class="flex items-start gap-3" style="pointer-events: none; transform: translate(-50%, -50%);">
                 <div class="flex flex-col items-center gap-2">
                     <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
-                    <div class="w-4 h-48 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
+                    <div class="w-4 h-32 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
                         <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
                              :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
                     </div>
