@@ -48,6 +48,38 @@
         <p class="text-slate-400 text-xs mt-1" x-text="loadingStatusText"></p>
     </div>
 
+    <!-- VISUAL LOGGER UNTUK DEBUG HP -->
+    <div id="visual-logger" style="position:fixed; bottom:10px; left:10px; right:10px; background:rgba(0,0,0,0.8); color:lime; font-size:10px; padding:10px; z-index:99999; max-height:200px; overflow-y:auto; pointer-events:none; word-wrap:break-word;">
+        --- SYSTEM LOGS ---<br>
+    </div>
+    <script>
+        (function(){
+            var logger = document.getElementById('visual-logger');
+            function logMsg(msg, isErr) {
+                var d = document.createElement('div');
+                d.style.color = isErr ? 'red' : 'lime';
+                d.innerText = msg;
+                logger.appendChild(d);
+                logger.scrollTop = logger.scrollHeight;
+            }
+            var oldLog = console.log;
+            console.log = function() {
+                var args = Array.from(arguments).map(String).join(' ');
+                logMsg('INFO: ' + args, false);
+                oldLog.apply(console, arguments);
+            };
+            var oldErr = console.error;
+            console.error = function() {
+                var args = Array.from(arguments).map(String).join(' ');
+                logMsg('ERR: ' + args, true);
+                oldErr.apply(console, arguments);
+            };
+            window.onerror = function(msg, url, line) {
+                logMsg('FATAL: ' + msg + ' (L:' + line + ')', true);
+            };
+        })();
+    </script>
+
     <!-- PERBAIKAN: Binding Posisi, Skala, Rotasi, & Animasi ke UI -->
     <div x-show="arActive" id="ar-overlay-container" class="transition-opacity duration-300">
         
@@ -723,7 +755,10 @@
                         const center = viewer.getBoundingBoxCenter();
                         const size = viewer.getDimensions();
                         const maxDim = Math.max(size.x, size.y, size.z);
-                        if (maxDim === 0 || isNaN(maxDim)) return; // Prevent division by zero if not fully loaded
+                        if (maxDim === 0 || isNaN(maxDim)) {
+                            console.log('adjustHotspots skip: maxDim 0');
+                            return;
+                        }
                         const norm = 2.0 / maxDim;
                         
                         const pExpX = (-0.4 / norm) + center.x;
@@ -737,6 +772,12 @@
                         const expEl = viewer.querySelector('[slot="hotspot-expression"]');
                         if(expEl) {
                             expEl.setAttribute('data-position', `${pExpX} ${pExpY} ${frontZ}`);
+                            console.log(`Exp pos: ${pExpX.toFixed(2)}, ${pExpY.toFixed(2)}, ${frontZ.toFixed(2)}`);
+                            
+                            // Debugging internal transform
+                            setTimeout(() => {
+                                console.log(`Exp transform: ${expEl.style.transform || 'NONE'}`);
+                            }, 500);
                         }
                         
                         const barEl = viewer.querySelector('[slot="hotspot-bar"]');
