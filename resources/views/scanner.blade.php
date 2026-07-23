@@ -79,13 +79,13 @@
                 
                 <!-- TAMAGOTCHI UI (Hotspots) -->
                 <div slot="hotspot-expression" data-position="-0.4 0.7 0" style="pointer-events: none;">
-                    <div id="hotspot-exp-content" class="flex items-start gap-3 w-48 transition-opacity duration-300" :style="`opacity: ${expressionEnabled ? 1 : 0}; visibility: ${expressionEnabled ? 'visible' : 'hidden'}; transform-origin: center; transform: translate(-50%, -50%);`">
+                    <div id="hotspot-exp-content" x-show="expressionEnabled" class="flex items-start gap-3 w-48" style="transform-origin: center; transform: translate(-50%, -50%);">
                         <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce shrink-0" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
                     </div>
                 </div>
 
                 <div slot="hotspot-bar" data-position="0.7 0.7 0" style="pointer-events: none;">
-                    <div id="hotspot-bar-content" class="relative transition-opacity duration-300" :style="`opacity: ${expressionEnabled ? 1 : 0}; visibility: ${expressionEnabled ? 'visible' : 'hidden'}; transform-origin: center; transform: translate(-50%, -50%);`">
+                    <div id="hotspot-bar-content" x-show="expressionEnabled" class="relative" style="transform-origin: center; transform: translate(-50%, -50%);">
                         <div class="flex flex-col items-center gap-2">
                             <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
                             <div class="w-4 h-32 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
@@ -723,6 +723,7 @@
                         const center = viewer.getBoundingBoxCenter();
                         const size = viewer.getDimensions();
                         const maxDim = Math.max(size.x, size.y, size.z);
+                        if (maxDim === 0 || isNaN(maxDim)) return; // Prevent division by zero if not fully loaded
                         const norm = 2.0 / maxDim;
                         
                         const pExpX = (-0.4 / norm) + center.x;
