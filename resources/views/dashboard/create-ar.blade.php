@@ -2106,10 +2106,10 @@
             
             const qrTexture = new THREE.CanvasTexture(canvasQr);
             const qrGeo = new THREE.PlaneGeometry(1.2, 1.2); // 1.2 units == ukuran asli QR Code
-            const qrMat = new THREE.MeshBasicMaterial({ map: qrTexture, transparent: true, opacity: 0.8, depthWrite: false });
+            const qrMat = new THREE.MeshBasicMaterial({ map: qrTexture, transparent: true, opacity: 0.4, depthWrite: false, side: THREE.DoubleSide });
             const qrPlane = new THREE.Mesh(qrGeo, qrMat);
-            qrPlane.rotation.x = -Math.PI / 2;
-            qrPlane.position.y = 0.005; // Sedikit di atas grid
+            qrPlane.position.y = 0.6; // Pusat vertikal model-viewer (auto-frame)
+            qrPlane.position.z = 0; // Sejajar dengan origin 
             scene.add(qrPlane);
 
             orbitControls = new OrbitControls(camera, renderer.domElement);
