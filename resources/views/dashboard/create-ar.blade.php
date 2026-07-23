@@ -2056,7 +2056,7 @@
         window.orbitState = { active: false, speed: 0.5, dir: 1, radius: 0.0, angle: 0 };
 
         let renderer, scene, camera, orbitControls, mixer, clock, animFrame;
-        let previewModel = null, pivotGroup = null, allClips = [], activeAction = null;  
+        let previewModel = null, activeModelGroup = null, pivotGroup = null, allClips = [], activeAction = null;  
 
         function initThree() {
             const canvas = document.getElementById('canvas-3d');
@@ -2145,20 +2145,24 @@
                 previewModel.updateMatrixWorld(true);
                 const box = new THREE.Box3().setFromObject(previewModel);
                 const center = box.getCenter(new THREE.Vector3());
-                const maxDim = Math.max(box.getSize(new THREE.Vector3()).x, box.getSize(new THREE.Vector3()).y, box.getSize(new THREE.Vector3()).z) || 1;
+                const size = box.getSize(new THREE.Vector3());
+                const maxDim = Math.max(size.x, size.y, size.z) || 1;
                 const norm = 1.2 / maxDim;
                 
-                const intrinsicScale = previewModel.scale.clone();
-                const bottomY = box.min.y * norm;
-                previewModel.userData = { _baseScale: norm, _bottomY: -bottomY, _intrinsicScale: intrinsicScale };
+                // Normalization Wrapper: scales and centers the object without mutating previewModel
+                const normalizationWrapper = new THREE.Group();
+                normalizationWrapper.add(previewModel);
+                normalizationWrapper.scale.setScalar(norm);
                 
-                previewModel.scale.set(
-                    intrinsicScale.x * norm,
-                    intrinsicScale.y * norm,
-                    intrinsicScale.z * norm
-                );
+                // Posisikan agar bagian bawah (min.y) menempel di grid (y=0) dan di tengah
+                normalizationWrapper.position.set(-center.x * norm, -box.min.y * norm, -center.z * norm);
                 
-                previewModel.position.set(-center.x * norm, -bottomY, -center.z * norm);
+                // Simpan original baseScale untuk dikirim ke scanner
+                previewModel.userData = { _baseScale: norm };
+                
+                // activeModelGroup adalah yang akan dimanipulasi oleh input form pengguna
+                activeModelGroup = new THREE.Group();
+                activeModelGroup.add(normalizationWrapper);
 
                 orbitState.active = false; 
                 orbitState.angle = 0;
@@ -2169,7 +2173,7 @@
 
                 if (pivotGroup) scene.remove(pivotGroup);
                 pivotGroup = new THREE.Group(); 
-                pivotGroup.add(previewModel); 
+                pivotGroup.add(activeModelGroup); 
                 scene.add(pivotGroup);
 
                 allClips = gltf.animations;
@@ -2223,35 +2227,24 @@
         };
 
         window.applyTransformToModel = () => {
-            if (!previewModel) return;
-            previewModel.position.set(window.threeState.position[0], window.threeState.position[1] + previewModel.userData._bottomY, window.threeState.position[2]);
-            previewModel.rotation.set(THREE.MathUtils.degToRad(window.threeState.rotation[0]), THREE.MathUtils.degToRad(window.threeState.rotation[1]), THREE.MathUtils.degToRad(window.threeState.rotation[2]));
-            
-            const s = window.threeState.scale * previewModel.userData._baseScale;
-            if (previewModel.userData._intrinsicScale) {
-                previewModel.scale.set(
-                    previewModel.userData._intrinsicScale.x * s,
-                    previewModel.userData._intrinsicScale.y * s,
-                    previewModel.userData._intrinsicScale.z * s
-                );
-            } else {
-                previewModel.scale.setScalar(s);
-            }
+            if (!activeModelGroup) return;
+            activeModelGroup.position.set(window.threeState.position[0], window.threeState.position[1], window.threeState.position[2]);
+            activeModelGroup.rotation.set(THREE.MathUtils.degToRad(window.threeState.rotation[0]), THREE.MathUtils.degToRad(window.threeState.rotation[1]), THREE.MathUtils.degToRad(window.threeState.rotation[2]));
+            activeModelGroup.scale.setScalar(window.threeState.scale);
             
             if (!window.orbitState.active && pivotGroup) { pivotGroup.position.set(0, 0, 0); pivotGroup.rotation.set(0, 0, 0); }
         };
 
         function syncFormFromModel() {
-            if (!previewModel) return;
-            document.getElementById('pos-x').value = previewModel.position.x.toFixed(2);
-            document.getElementById('pos-y').value = (previewModel.position.y - previewModel.userData._bottomY).toFixed(2);
-            document.getElementById('pos-z').value = previewModel.position.z.toFixed(2);
-            document.getElementById('rot-x').value = THREE.MathUtils.radToDeg(previewModel.rotation.x).toFixed(1);
-            document.getElementById('rot-y').value = THREE.MathUtils.radToDeg(previewModel.rotation.y).toFixed(1);
-            document.getElementById('rot-z').value = THREE.MathUtils.radToDeg(previewModel.rotation.z).toFixed(1);
+            if (!activeModelGroup) return;
+            document.getElementById('pos-x').value = activeModelGroup.position.x.toFixed(2);
+            document.getElementById('pos-y').value = activeModelGroup.position.y.toFixed(2);
+            document.getElementById('pos-z').value = activeModelGroup.position.z.toFixed(2);
+            document.getElementById('rot-x').value = THREE.MathUtils.radToDeg(activeModelGroup.rotation.x).toFixed(1);
+            document.getElementById('rot-y').value = THREE.MathUtils.radToDeg(activeModelGroup.rotation.y).toFixed(1);
+            document.getElementById('rot-z').value = THREE.MathUtils.radToDeg(activeModelGroup.rotation.z).toFixed(1);
             
-            let intrinsicX = previewModel.userData._intrinsicScale ? previewModel.userData._intrinsicScale.x : 1;
-            document.getElementById('scale-slider').value = (previewModel.scale.x / (intrinsicX * previewModel.userData._baseScale)).toFixed(2);
+            document.getElementById('scale-slider').value = activeModelGroup.scale.x.toFixed(2);
             document.getElementById('scale-display').textContent = document.getElementById('scale-slider').value;
             window.applyTransformFromForm();
         }
