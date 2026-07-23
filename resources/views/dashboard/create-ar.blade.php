@@ -2191,7 +2191,12 @@
             // Sync values ke Hidden Inputs agar terkirim via Form Submit
             document.getElementById('form-position').value = JSON.stringify(window.threeState.position);
             document.getElementById('form-rotation').value = JSON.stringify(window.threeState.rotation);
-            document.getElementById('form-scale').value = window.threeState.scale;
+            
+            let finalScale = window.threeState.scale;
+            if (previewModel && previewModel.userData && previewModel.userData._baseScale) {
+                finalScale = window.threeState.scale * previewModel.userData._baseScale;
+            }
+            document.getElementById('form-scale').value = finalScale;
             
             window.dispatchEvent(new CustomEvent('transform-updated'));
 

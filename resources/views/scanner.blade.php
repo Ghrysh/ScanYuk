@@ -74,6 +74,27 @@
             loading="eager"
             power-preference="high-performance"
             class="w-full h-full bg-transparent">
+            
+            <!-- TAMAGOTCHI UI (Hotspots) -->
+            <div x-show="expressionEnabled" slot="hotspot-expression" data-position="-0.7 0.7 0" class="flex items-start gap-3 w-48" style="pointer-events: none; transform: translate(-50%, -50%);">
+                <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce shrink-0" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
+                <div class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 relative mt-2">
+                    <span x-text="expMessage"></span>
+                    <div class="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white/90 border-l-[10px] border-l-transparent"></div>
+                </div>
+            </div>
+
+            <div x-show="expressionEnabled" slot="hotspot-bar" data-position="0.7 0 0" class="flex flex-col items-center gap-2" style="pointer-events: none; transform: translate(-50%, -50%);">
+                <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
+                <div class="w-4 h-48 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
+                    <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
+                         :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
+                </div>
+                <!-- Icon indicator -->
+                <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden shrink-0">
+                    <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
+                </div>
+            </div>
         </model-viewer>
     </div>
 
@@ -84,30 +105,7 @@
         </a>
     </div>
 
-    <!-- TAMAGOTCHI UI -->
-    <div x-show="arActive && expressionEnabled" style="display: none;" class="fixed inset-0 z-40 pointer-events-none">
-        <!-- Expression Bubble (Top Left, below Back button) -->
-        <div class="absolute top-20 left-6 flex items-start gap-3 max-w-[200px]">
-            <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
-            <div class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 relative mt-2">
-                <span x-text="expMessage"></span>
-                <div class="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white/90 border-l-[10px] border-l-transparent"></div>
-            </div>
-        </div>
-
-        <!-- Expression Bar (Right Side) -->
-        <div class="absolute top-1/2 right-6 transform -translate-y-1/2 flex flex-col items-center gap-2">
-            <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
-            <div class="w-4 h-48 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
-                <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
-                     :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
-            </div>
-            <!-- Icon indicator -->
-            <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden">
-                <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
-            </div>
-        </div>
-    </div>
+    <!-- Old UI container removed -->
 
     <div x-show="isFetching" style="display: none;" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-black/60 backdrop-blur-xl text-white px-6 py-4 rounded-2xl flex flex-col items-center gap-3 shadow-2xl border border-white/10">
         <svg class="animate-spin h-8 w-8 text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
