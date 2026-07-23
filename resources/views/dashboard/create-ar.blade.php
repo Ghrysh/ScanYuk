@@ -646,23 +646,52 @@
                             <span class="text-white font-bold text-xs md:text-sm">Ketuk untuk Memutar AR & Suara</span>
                         </div>
 
-                        <template x-if="previewData.type === '2d'"><img :src="previewData.src" class="max-w-full max-h-full object-contain"></template>
+                        <template x-if="previewData.type === '2d'">
+                            <div class="w-full h-full relative flex items-center justify-center bg-slate-900 overflow-hidden">
+                                <!-- Placeholder QR Code Simulator -->
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
+                                    <div class="w-[250px] h-[250px] border-4 border-dashed border-slate-500 rounded-xl flex flex-col items-center justify-center bg-slate-800/50">
+                                        <i class="bi bi-qr-code-scan text-slate-400 text-5xl"></i>
+                                        <p class="text-slate-400 text-[10px] mt-2 font-medium text-center">Batas QR Code<br>(Ukuran Asli)</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Container dengan ukuran persis scanner.blade.php (250x250) -->
+                                <div class="w-[250px] h-[250px] relative pointer-events-auto">
+                                    <img :src="previewData.src" 
+                                         class="w-full h-full object-contain filter drop-shadow(0 25px 25px rgba(0,0,0,0.8))"
+                                         :style="previewStyle">
+                                </div>
+                            </div>
+                        </template>
                         <template x-if="previewData.type === '3d'">
-                            <div class="w-full h-full relative"> 
+                            <div class="w-full h-full relative flex items-center justify-center bg-slate-900 overflow-hidden"> 
                                 <div x-show="isPreviewLoading" class="absolute inset-0 z-20 flex flex-col items-center justify-center bg-slate-900/80">
                                     <div class="w-10 h-10 md:w-12 md:h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mb-3"></div>
                                     <p class="text-white font-bold text-xs md:text-sm mb-2">Mensinkronisasi Media...</p>
                                     <div class="w-32 md:w-48 bg-slate-700 rounded-full h-1.5 md:h-2">
                                         <div class="bg-teal-500 h-1.5 md:h-2 rounded-full" :style="`width: ${previewProgress}%`"></div>
                                     </div>
-                                </div>   
-                                <!-- PERUBAHAN DI SINI: Menyisipkan transform scale, rotasi, & animasi ke tag model-viewer -->
-                                <model-viewer id="preview-model-viewer" 
-                                    :src="previewData.src" 
-                                    :scale="previewScale"
-                                    :orientation="previewRotation"
-                                    :style="previewStyle"
-                                    autoplay auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer>
+                                </div>
+                                
+                                <!-- Placeholder QR Code Simulator -->
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
+                                    <div class="w-[250px] h-[250px] border-4 border-dashed border-slate-500 rounded-xl flex flex-col items-center justify-center bg-slate-800/50">
+                                        <i class="bi bi-qr-code-scan text-slate-400 text-5xl"></i>
+                                        <p class="text-slate-400 text-[10px] mt-2 font-medium text-center">Batas QR Code<br>(Ukuran Asli)</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Container dengan ukuran persis scanner.blade.php (250x250) -->
+                                <div class="w-[250px] h-[250px] relative pointer-events-auto">
+                                    <model-viewer id="preview-model-viewer" 
+                                        :src="previewData.src" 
+                                        :scale="previewScale"
+                                        :orientation="previewRotation"
+                                        :style="previewStyle"
+                                        disable-zoom disable-pan
+                                        autoplay auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full bg-transparent"></model-viewer>
+                                </div>
                             </div>
                         </template>
 
