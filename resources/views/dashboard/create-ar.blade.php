@@ -1232,8 +1232,8 @@
                     if(rotRaw) {
                         try {
                             let r = JSON.parse(rotRaw);
-                            // model-viewer meminta format "pitch yaw roll" (X Y Z)
-                            this.previewRotation = `${r[0]}deg ${r[1]}deg ${r[2]}deg`;
+                            // model-viewer meminta format "pitch yaw roll" 
+                            this.previewRotation = `${r[2]}deg ${r[0]}deg ${r[1]}deg`;
                         } catch(e){}
                     }
                     
