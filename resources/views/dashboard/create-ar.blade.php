@@ -2232,11 +2232,7 @@
             document.getElementById('form-position').value = JSON.stringify(window.threeState.position);
             document.getElementById('form-rotation').value = JSON.stringify(window.threeState.rotation);
             
-            let finalScale = window.threeState.scale;
-            if (previewModel && previewModel.userData && previewModel.userData._baseScale) {
-                finalScale = window.threeState.scale * previewModel.userData._baseScale;
-            }
-            document.getElementById('form-scale').value = finalScale;
+            document.getElementById('form-scale').value = window.threeState.scale;
             
             window.dispatchEvent(new CustomEvent('transform-updated'));
 
