@@ -657,7 +657,12 @@
                                     </div>
                                 </div>   
                                 <!-- PERUBAHAN DI SINI: Menyisipkan transform scale, rotasi, & animasi ke tag model-viewer -->
-                                <model-viewer id="preview-model-viewer" :src="previewData.src" autoplay auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer>
+                                <model-viewer id="preview-model-viewer" 
+                                    :src="previewData.src" 
+                                    :scale="previewScale"
+                                    :orientation="previewRotation"
+                                    :style="previewStyle"
+                                    autoplay auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full"></model-viewer>
                             </div>
                         </template>
 
@@ -1227,9 +1232,17 @@
                     if(rotRaw) {
                         try {
                             let r = JSON.parse(rotRaw);
-                            // PERBAIKAN: model-viewer meminta format "roll pitch yaw" (Z X Y)
-                            // r[0] adalah X, r[1] adalah Y, r[2] adalah Z
-                            this.previewRotation = `${r[2]}deg ${r[0]}deg ${r[1]}deg`;
+                            // model-viewer meminta format "pitch yaw roll" (X Y Z)
+                            this.previewRotation = `${r[0]}deg ${r[1]}deg ${r[2]}deg`;
+                        } catch(e){}
+                    }
+                    
+                    const posRaw = document.getElementById('form-position')?.value;
+                    if(posRaw) {
+                        try {
+                            let p = JSON.parse(posRaw);
+                            // Sesuaikan posisi (menggunakan CSS margin karena model-viewer di scanner.blade.php juga menggunakan margin untuk translasi)
+                            this.previewStyle = `margin-left: ${p[0] * 50}px; margin-top: ${-p[1] * 50}px;`;
                         } catch(e){}
                     }
                     
