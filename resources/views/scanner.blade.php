@@ -35,7 +35,7 @@
     </style>
 </head>
 <body x-data="arTracker()" x-init="startCamera()">
-
+    <div style="position:fixed; z-index:9999; background:red; color:white; padding:10px; top:0; right:0;" x-text="'DEBUG EXP: ' + expressionEnabled + ' TYPE: ' + arData.type"></div>
     <video id="qr-video" playsinline webkit-playsinline muted autoplay></video>
     <canvas id="qr-canvas" style="display: none;"></canvas>
     
