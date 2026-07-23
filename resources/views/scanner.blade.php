@@ -56,9 +56,9 @@
              :style="`margin-left: ${arData.posX * 50}px; margin-top: ${-arData.posY * 50}px;`">
              
         <!-- Overlay untuk AR 3D -->
-        <template x-if="arData.type === '3d'">
-            <model-viewer 
-                id="main-ar-viewer"
+        <model-viewer 
+            x-show="arData.type === '3d'"
+            id="main-ar-viewer"
             @load="adjustHotspots($event.target)"
             :src="arData.src" 
             :scale="arData.scale"
@@ -103,8 +103,7 @@
                     </div>
                 </div>
             </div>
-            </model-viewer>
-        </template>
+        </model-viewer>
     </div>
 
     <div class="fixed top-6 left-6 z-40">
