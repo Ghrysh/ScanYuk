@@ -62,7 +62,7 @@
             id="main-ar-viewer"
             :src="arData.src" 
             :scale="arData.scale"
-            :orientation="`${arData.baseRotZ}deg ${arData.baseRotX}deg ${arData.baseRotY}deg`"
+            :orientation="`${arData.baseRotX}deg ${arData.baseRotY}deg ${arData.baseRotZ}deg`"
             :auto-rotate="arData.orbitActive"
             :animation-name="arData.animClip !== '*' ? arData.animClip : null"
             autoplay

@@ -2129,17 +2129,23 @@
                     }
                 });
 
+                previewModel.updateMatrixWorld(true);
                 const box = new THREE.Box3().setFromObject(previewModel);
                 const center = box.getCenter(new THREE.Vector3());
                 const maxDim = Math.max(box.getSize(new THREE.Vector3()).x, box.getSize(new THREE.Vector3()).y, box.getSize(new THREE.Vector3()).z) || 1;
                 const norm = 1.2 / maxDim;
                 
-                previewModel.scale.setScalar(norm);
+                const intrinsicScale = previewModel.scale.clone();
                 const bottomY = box.min.y * norm;
-                previewModel.position.set(-center.x * norm, -bottomY, -center.z * norm);
+                previewModel.userData = { _baseScale: norm, _bottomY: -bottomY, _intrinsicScale: intrinsicScale };
                 
-                // Simpan ukuran bawaan objek
-                previewModel.userData = { _baseScale: norm, _bottomY: -bottomY };
+                previewModel.scale.set(
+                    intrinsicScale.x * norm,
+                    intrinsicScale.y * norm,
+                    intrinsicScale.z * norm
+                );
+                
+                previewModel.position.set(-center.x * norm, -bottomY, -center.z * norm);
 
                 orbitState.active = false; 
                 orbitState.angle = 0;
@@ -2207,7 +2213,18 @@
             if (!previewModel) return;
             previewModel.position.set(window.threeState.position[0], window.threeState.position[1] + previewModel.userData._bottomY, window.threeState.position[2]);
             previewModel.rotation.set(THREE.MathUtils.degToRad(window.threeState.rotation[0]), THREE.MathUtils.degToRad(window.threeState.rotation[1]), THREE.MathUtils.degToRad(window.threeState.rotation[2]));
-            previewModel.scale.setScalar(window.threeState.scale * previewModel.userData._baseScale);
+            
+            const s = window.threeState.scale * previewModel.userData._baseScale;
+            if (previewModel.userData._intrinsicScale) {
+                previewModel.scale.set(
+                    previewModel.userData._intrinsicScale.x * s,
+                    previewModel.userData._intrinsicScale.y * s,
+                    previewModel.userData._intrinsicScale.z * s
+                );
+            } else {
+                previewModel.scale.setScalar(s);
+            }
+            
             if (!window.orbitState.active && pivotGroup) { pivotGroup.position.set(0, 0, 0); pivotGroup.rotation.set(0, 0, 0); }
         };
 
@@ -2219,6 +2236,10 @@
             document.getElementById('rot-x').value = THREE.MathUtils.radToDeg(previewModel.rotation.x).toFixed(1);
             document.getElementById('rot-y').value = THREE.MathUtils.radToDeg(previewModel.rotation.y).toFixed(1);
             document.getElementById('rot-z').value = THREE.MathUtils.radToDeg(previewModel.rotation.z).toFixed(1);
+            
+            let intrinsicX = previewModel.userData._intrinsicScale ? previewModel.userData._intrinsicScale.x : 1;
+            document.getElementById('scale-slider').value = (previewModel.scale.x / (intrinsicX * previewModel.userData._baseScale)).toFixed(2);
+            document.getElementById('scale-display').textContent = document.getElementById('scale-slider').value;
             window.applyTransformFromForm();
         }
 
