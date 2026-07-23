@@ -74,6 +74,7 @@
             :animation-name="arData.animClip !== '*' ? arData.animClip : null"
             autoplay
             :style="`margin-left: ${arData.posX * 50}px; margin-top: ${-arData.posY * 50}px;`"
+            camera-controls
             disable-zoom 
             disable-pan
             interaction-prompt="none"
@@ -743,11 +744,34 @@
                         const expEl = viewer.querySelector('[slot="hotspot-expression"]');
                         if(expEl) {
                             expEl.setAttribute('data-position', `${pExpX} ${pExpY} ${frontZ}`);
+                            
+                            // FORCE RE-REGISTRATION (Hack for model-viewer shadow DOM bugs)
+                            const parent = expEl.parentNode;
+                            const next = expEl.nextSibling;
+                            parent.removeChild(expEl);
+                            if(next) parent.insertBefore(expEl, next);
+                            else parent.appendChild(expEl);
+                            
+                            if (typeof viewer.updateHotspot === 'function') {
+                                viewer.updateHotspot({name: 'hotspot-expression', position: `${pExpX} ${pExpY} ${frontZ}`});
+                            }
+                            
                             document.getElementById('debug-hotspot').innerText = `POS: ${pExpX.toFixed(2)}, ${pExpY.toFixed(2)}, ${frontZ.toFixed(2)}`;
                         }
                         
                         const barEl = viewer.querySelector('[slot="hotspot-bar"]');
-                        if(barEl) barEl.setAttribute('data-position', `${pBarX} ${pBarY} ${frontZ}`);
+                        if(barEl) {
+                            barEl.setAttribute('data-position', `${pBarX} ${pBarY} ${frontZ}`);
+                            const parent = barEl.parentNode;
+                            const next = barEl.nextSibling;
+                            parent.removeChild(barEl);
+                            if(next) parent.insertBefore(barEl, next);
+                            else parent.appendChild(barEl);
+                            
+                            if (typeof viewer.updateHotspot === 'function') {
+                                viewer.updateHotspot({name: 'hotspot-bar', position: `${pBarX} ${pBarY} ${frontZ}`});
+                            }
+                        }
                         
                         // Perbarui QR Code hotspot jika ada
                         const qrEl = viewer.querySelector('[slot="hotspot-qrcode"]');
