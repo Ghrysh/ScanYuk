@@ -209,14 +209,15 @@ class ArProjectController extends Controller
 
         // Daftarkan ke tabel qr_codes agar tampil di list dashboard user utama
         \App\Models\QrCode::create([
-            'user_id'       => auth()->id(),
-            'uuid'          => $uuid,
-            'title'         => $request->title,
-            'ar_type'       => 'marker', // Bedakan tipe kontennya menjadi 'marker'
-            'ar_project_id' => $project->id,
-            'qr_image_path' => $qrImage,
-            'status'        => 'Aktif',
-            'scan_count'    => 0,
+            'user_id'           => auth()->id(),
+            'uuid'              => $uuid,
+            'title'             => $request->title,
+            'ar_type'           => 'marker', // Bedakan tipe kontennya menjadi 'marker'
+            'ar_project_id'     => $project->id,
+            'qr_image_path'     => $qrImage,
+            'status'            => 'Aktif',
+            'scan_count'        => 0,
+            'enable_expression' => $request->has('enable_expression'),
         ]);
 
         // Tambah limit counter user (Gunakan logic yang sama seperti QrCodeController)

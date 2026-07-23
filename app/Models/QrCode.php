@@ -21,6 +21,7 @@ class QrCode extends Model
         'qr_image_path',
         'status',
         'scan_count',
+        'enable_expression',
     ];
 
     public function arAsset()

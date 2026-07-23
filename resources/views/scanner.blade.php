@@ -396,8 +396,7 @@
                                 orbitActive: result.data.orbit_active == 1 || result.data.orbit_active == true,
                                 animClip: result.data.anim_clip || '*'
                             };
-                            
-                            this.expressionEnabled = result.data.enable_expression === true;
+                            this.expressionEnabled = result.data.enable_expression == 1 || result.data.enable_expression == true;
 
                             this.arCache[url] = { 
                                 narration: result.data.narration, 
