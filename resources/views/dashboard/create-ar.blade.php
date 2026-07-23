@@ -674,24 +674,12 @@
                                     </div>
                                 </div>
                                 
-                                <!-- Placeholder QR Code Simulator -->
-                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-30">
-                                    <div class="w-[250px] h-[250px] border-4 border-dashed border-slate-500 rounded-xl flex flex-col items-center justify-center bg-slate-800/50">
-                                        <i class="bi bi-qr-code-scan text-slate-400 text-5xl"></i>
-                                        <p class="text-slate-400 text-[10px] mt-2 font-medium text-center">Batas QR Code<br>(Ukuran Asli)</p>
-                                    </div>
-                                </div>
-                                
-                                <!-- Container dengan ukuran persis scanner.blade.php (250x250) -->
-                                <div class="w-[250px] h-[250px] relative pointer-events-auto">
-                                    <model-viewer id="preview-model-viewer" 
-                                        :src="previewData.src" 
-                                        :scale="previewScale"
-                                        :orientation="previewRotation"
-                                        :style="previewStyle"
-                                        disable-zoom disable-pan
-                                        autoplay auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full bg-transparent"></model-viewer>
-                                </div>
+                                <model-viewer id="preview-model-viewer" 
+                                    :src="previewData.src" 
+                                    :scale="previewScale"
+                                    :orientation="previewRotation"
+                                    :style="previewStyle"
+                                    autoplay auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full bg-transparent"></model-viewer>
                             </div>
                         </template>
 
@@ -2105,6 +2093,24 @@
             scene.add(new THREE.AmbientLight(0xffffff, 0.6));
             const dir = new THREE.DirectionalLight(0xffffff, 1.2); dir.position.set(5, 8, 5); scene.add(dir);
             scene.add(new THREE.GridHelper(6, 12, 0x334155, 0x1e293b));
+            
+            // Tambahkan Simulator QR Code 3D ke scene
+            const canvasQr = document.createElement('canvas');
+            canvasQr.width = 512; canvasQr.height = 512;
+            const ctx = canvasQr.getContext('2d');
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 512, 512);
+            ctx.lineWidth = 20; ctx.strokeStyle = '#000000'; ctx.strokeRect(20, 20, 472, 472);
+            ctx.fillRect(60, 60, 120, 120); ctx.fillRect(332, 60, 120, 120); ctx.fillRect(60, 332, 120, 120);
+            ctx.fillStyle = '#000000'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center';
+            ctx.fillText('UKURAN ASLI', 256, 236); ctx.fillText('QR CODE', 256, 286);
+            
+            const qrTexture = new THREE.CanvasTexture(canvasQr);
+            const qrGeo = new THREE.PlaneGeometry(1.2, 1.2); // 1.2 units == ukuran asli QR Code
+            const qrMat = new THREE.MeshBasicMaterial({ map: qrTexture, transparent: true, opacity: 0.8, depthWrite: false });
+            const qrPlane = new THREE.Mesh(qrGeo, qrMat);
+            qrPlane.rotation.x = -Math.PI / 2;
+            qrPlane.position.y = 0.005; // Sedikit di atas grid
+            scene.add(qrPlane);
 
             orbitControls = new OrbitControls(camera, renderer.domElement);
             orbitControls.enableDamping = true; orbitControls.target.set(0, 0.5, 0);
