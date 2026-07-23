@@ -276,23 +276,27 @@
                                 <div id="tamagotchi-editor-expression" class="absolute pointer-events-none" style="display: none; transform: translate(-50%, -50%);">
                                     <div class="flex items-start gap-3 w-48">
                                         <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce shrink-0" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
-                                        <div class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 relative mt-2">
-                                            <span x-text="expMessage"></span>
-                                            <div class="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white/90 border-l-[10px] border-l-transparent"></div>
-                                        </div>
                                     </div>
                                 </div>
                                 
                                 <div id="tamagotchi-editor-bar" class="absolute pointer-events-none" style="display: none; transform: translate(-50%, -50%);">
-                                    <div class="flex flex-col items-center gap-2">
-                                        <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
-                                        <div class="w-4 h-48 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
-                                            <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
-                                                 :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
+                                    <div class="flex items-start gap-3">
+                                        <div class="flex flex-col items-center gap-2">
+                                            <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
+                                            <div class="w-4 h-48 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
+                                                <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
+                                                     :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
+                                            </div>
+                                            <!-- Icon indicator -->
+                                            <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden shrink-0">
+                                                <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
+                                            </div>
                                         </div>
-                                        <!-- Icon indicator -->
-                                        <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden shrink-0">
-                                            <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
+                                        
+                                        <!-- Pesan Tamagotchi (Kanan atas dekat bar) -->
+                                        <div x-show="showExpMessage" x-transition.opacity.duration.300ms class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 relative mt-4 max-w-[150px]">
+                                            <span x-text="expMessage"></span>
+                                            <div class="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white/90 border-l-[10px] border-l-transparent"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -396,7 +400,7 @@
                             <span class="text-xs text-slate-500 mt-1">Model 3D akan memiliki perasaan dinamis berdasarkan waktu dan interaksi (Senang, Suntuk, Marah, dll)</span>
                         </div>
                         <div class="relative">
-                            <input type="checkbox" name="enable_expression" value="1" class="sr-only peer" x-model="expressionEnabled">
+                            <input type="checkbox" name="enable_expression" value="1" class="sr-only peer" x-model="expressionEnabled" x-init="$watch('expressionEnabled', value => { if(value) triggerMessage() })">
                             <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
                         </div>
                     </label>
@@ -708,21 +712,25 @@
                                     autoplay auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full bg-transparent">
                                     
                                     <!-- TAMAGOTCHI UI (Hotspots) for Modal Preview -->
-                                    <div x-show="expressionEnabled" slot="hotspot-expression" data-position="-0.7 0.7 0" class="flex items-start gap-3 w-48" style="pointer-events: none; transform: translate(-50%, -50%);">
+                                    <div x-show="expressionEnabled" slot="hotspot-expression" data-position="-0.4 0.7 0" class="flex items-start gap-3 w-48" style="pointer-events: none; transform: translate(-50%, -50%);">
                                         <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce shrink-0" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
-                                        <div class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 relative mt-2">
+                                    </div>
+                                    <div x-show="expressionEnabled" slot="hotspot-bar" data-position="0.7 0.7 0" class="flex items-start gap-3" style="pointer-events: none; transform: translate(-50%, -50%);">
+                                        <div class="flex flex-col items-center gap-2">
+                                            <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
+                                            <div class="w-4 h-48 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
+                                                <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
+                                                     :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
+                                            </div>
+                                            <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden shrink-0">
+                                                <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Pesan Tamagotchi (Kanan atas dekat bar) -->
+                                        <div x-show="showExpMessage" x-transition.opacity.duration.300ms class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 relative mt-4 max-w-[150px]">
                                             <span x-text="expMessage"></span>
                                             <div class="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white/90 border-l-[10px] border-l-transparent"></div>
-                                        </div>
-                                    </div>
-                                    <div x-show="expressionEnabled" slot="hotspot-bar" data-position="0.7 0 0" class="flex flex-col items-center gap-2" style="pointer-events: none; transform: translate(-50%, -50%);">
-                                        <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
-                                        <div class="w-4 h-48 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
-                                            <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
-                                                 :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
-                                        </div>
-                                        <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden shrink-0">
-                                            <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
                                         </div>
                                     </div>
                                 </model-viewer>
@@ -1256,7 +1264,17 @@
                 expressionEnabled: false,
                 expState: 'senang',
                 expMessage: 'Halo!',
+                showExpMessage: true,
+                msgTimeout: null,
                 expPoints: 100,
+                
+                triggerMessage() {
+                    this.showExpMessage = true;
+                    if (this.msgTimeout) clearTimeout(this.msgTimeout);
+                    this.msgTimeout = setTimeout(() => {
+                        this.showExpMessage = false;
+                    }, 3000);
+                },
                 
                 getExpColor() {
                     if (this.expPoints > 70) return '#10b981'; // Hijau
@@ -2173,7 +2191,7 @@
                 // Update QR Plane position dynamically based on scale
                 if (previewModel && qrPlane && previewModel.userData._baseZOffset !== undefined) {
                     const currentScale = window.threeState.scale;
-                    qrPlane.position.z = previewModel.userData._baseZOffset * currentScale;
+                    qrPlane.position.z = (previewModel.userData._baseZOffset * currentScale) + window.threeState.position[2];
                 }
                 
                 // Update Tamagotchi UI Positions
@@ -2189,8 +2207,8 @@
                     const w = renderer.domElement.clientWidth;
                     const h = renderer.domElement.clientHeight;
                     
-                    // Left hotspot (-0.7, 0.7, 0)
-                    const pExp = new THREE.Vector3(-0.7 * s, 0.7 * s, 0);
+                    // Expression Hotspot (geser ke kanan, sedikit lebih dekat)
+                    const pExp = new THREE.Vector3(-0.4 * s, 0.7 * s, 0);
                     pExp.applyMatrix4(activeModelGroup.matrixWorld);
                     pExp.project(camera);
                     if(elExp) {
@@ -2198,8 +2216,8 @@
                         elExp.style.top = (pExp.y * -0.5 + 0.5) * h + 'px';
                     }
                     
-                    // Right hotspot (0.7, 0, 0)
-                    const pBar = new THREE.Vector3(0.7 * s, 0, 0);
+                    // Bar Hotspot (geser ke atas)
+                    const pBar = new THREE.Vector3(0.7 * s, 0.7 * s, 0);
                     pBar.applyMatrix4(activeModelGroup.matrixWorld);
                     pBar.project(camera);
                     if(elBar) {
@@ -2315,7 +2333,7 @@
                 scene.add(qrPlane);
                 
                 // Simpan original baseScale untuk dikirim ke scanner
-                previewModel.userData = { _baseScale: norm };
+                previewModel.userData = { _baseScale: norm, _baseZOffset: -((size.z / 2) * norm) };
                 
                 // activeModelGroup adalah yang akan dimanipulasi oleh input form pengguna
                 activeModelGroup = new THREE.Group();
