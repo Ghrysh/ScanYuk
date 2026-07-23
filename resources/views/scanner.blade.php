@@ -76,27 +76,31 @@
             class="w-full h-full bg-transparent">
             
             <!-- TAMAGOTCHI UI (Hotspots) -->
-            <div slot="hotspot-expression" data-position="-0.4 0.7 0" class="flex items-start gap-3 w-48 transition-opacity duration-300" :style="`opacity: ${expressionEnabled ? 1 : 0}; visibility: ${expressionEnabled ? 'visible' : 'hidden'}; pointer-events: none; transform: translate(-50%, -50%);`">
-                <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce shrink-0" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
+            <div slot="hotspot-expression" data-position="-0.4 0.7 0" class="transition-opacity duration-300" :style="`opacity: ${expressionEnabled ? 1 : 0}; visibility: ${expressionEnabled ? 'visible' : 'hidden'}; pointer-events: none;`">
+                <div id="hotspot-exp-content" class="flex items-start gap-3 w-48" style="transform-origin: center; transform: translate(-50%, -50%);">
+                    <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce shrink-0" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
+                </div>
             </div>
 
-            <div slot="hotspot-bar" data-position="0.7 0.7 0" class="relative transition-opacity duration-300" :style="`opacity: ${expressionEnabled ? 1 : 0}; visibility: ${expressionEnabled ? 'visible' : 'hidden'}; pointer-events: none; transform: translate(-50%, -50%);`">
-                <div class="flex flex-col items-center gap-2">
-                    <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
-                    <div class="w-4 h-32 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
-                        <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
-                             :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
+            <div slot="hotspot-bar" data-position="0.7 0.7 0" class="transition-opacity duration-300" :style="`opacity: ${expressionEnabled ? 1 : 0}; visibility: ${expressionEnabled ? 'visible' : 'hidden'}; pointer-events: none;`">
+                <div id="hotspot-bar-content" class="relative" style="transform-origin: center; transform: translate(-50%, -50%);">
+                    <div class="flex flex-col items-center gap-2">
+                        <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
+                        <div class="w-4 h-32 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
+                            <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
+                                 :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
+                        </div>
+                        <!-- Icon indicator -->
+                        <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden shrink-0">
+                            <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
+                        </div>
                     </div>
-                    <!-- Icon indicator -->
-                    <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden shrink-0">
-                        <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
+                    
+                    <!-- Pesan Tamagotchi (Kanan atas dekat bar) -->
+                    <div x-show="showExpMessage" x-transition.opacity.duration.300ms class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 absolute top-6 left-2 z-10 max-w-[150px]">
+                        <span x-text="expMessage"></span>
+                        <div class="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white/90 border-l-[10px] border-l-transparent"></div>
                     </div>
-                </div>
-                
-                <!-- Pesan Tamagotchi (Kanan atas dekat bar) -->
-                <div x-show="showExpMessage" x-transition.opacity.duration.300ms class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 absolute top-6 left-2 z-10 max-w-[150px]">
-                    <span x-text="expMessage"></span>
-                    <div class="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white/90 border-l-[10px] border-l-transparent"></div>
                 </div>
             </div>
             </model-viewer>
@@ -335,6 +339,13 @@
                         }
 
                         this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
+
+                        // Counter-scale for tamagotchi hotspots so they don't shrink with the container
+                        const expContent = document.getElementById('hotspot-exp-content');
+                        const barContent = document.getElementById('hotspot-bar-content');
+                        const invScale = 1 / (this.curScale || 1);
+                        if (expContent) expContent.style.transform = `translate(-50%, -50%) scale(${invScale})`;
+                        if (barContent) barContent.style.transform = `translate(-50%, -50%) scale(${invScale})`;
 
                         // PERBAIKAN MATEMATIKA: 
                         // Rotasi Base dikunci di atribut 'orientation' pada HTML.
