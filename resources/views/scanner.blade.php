@@ -48,38 +48,6 @@
         <p class="text-slate-400 text-xs mt-1" x-text="loadingStatusText"></p>
     </div>
 
-    <!-- VISUAL LOGGER UNTUK DEBUG HP -->
-    <div id="visual-logger" style="position:fixed; bottom:10px; left:10px; right:10px; background:rgba(0,0,0,0.8); color:lime; font-size:10px; padding:10px; z-index:99999; max-height:200px; overflow-y:auto; pointer-events:none; word-wrap:break-word;">
-        --- SYSTEM LOGS ---<br>
-    </div>
-    <script>
-        (function(){
-            var logger = document.getElementById('visual-logger');
-            function logMsg(msg, isErr) {
-                var d = document.createElement('div');
-                d.style.color = isErr ? 'red' : 'lime';
-                d.innerText = msg;
-                logger.appendChild(d);
-                logger.scrollTop = logger.scrollHeight;
-            }
-            var oldLog = console.log;
-            console.log = function() {
-                var args = Array.from(arguments).map(String).join(' ');
-                logMsg('INFO: ' + args, false);
-                oldLog.apply(console, arguments);
-            };
-            var oldErr = console.error;
-            console.error = function() {
-                var args = Array.from(arguments).map(String).join(' ');
-                logMsg('ERR: ' + args, true);
-                oldErr.apply(console, arguments);
-            };
-            window.onerror = function(msg, url, line) {
-                logMsg('FATAL: ' + msg + ' (L:' + line + ')', true);
-            };
-        })();
-    </script>
-
     <!-- PERBAIKAN: Binding Posisi, Skala, Rotasi, & Animasi ke UI -->
     <div id="ar-overlay-container" class="transition-opacity duration-300" :class="arActive ? 'opacity-100' : 'opacity-0 pointer-events-none'">
         
@@ -108,36 +76,35 @@
                 loading="eager"
                 power-preference="high-performance"
                 class="w-full h-full bg-transparent">
-                
-                <!-- TAMAGOTCHI UI (Hotspots) -->
-                <div id="hs-exp-wrapper" slot="hotspot-expression" data-position="-0.4 0.7 0" style="pointer-events: none; opacity: 0; transition: opacity 0.3s;">
-                    <div id="hotspot-exp-content" class="flex items-start gap-3 w-48" style="transform-origin: center; transform: translate(-50%, -50%);">
-                        <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce shrink-0" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
-                    </div>
-                </div>
-
-                <div id="hs-bar-wrapper" slot="hotspot-bar" data-position="0.7 0.7 0" style="pointer-events: none; opacity: 0; transition: opacity 0.3s;">
-                    <div id="hotspot-bar-content" class="relative" style="transform-origin: center; transform: translate(-50%, -50%);">
-                        <div class="flex flex-col items-center gap-2">
-                            <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
-                            <div class="w-4 h-32 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
-                                <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
-                                     :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
-                            </div>
-                            <!-- Icon indicator -->
-                            <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden shrink-0">
-                                <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
-                            </div>
-                        </div>
-                        
-                        <!-- Pesan Tamagotchi (Kanan atas dekat bar) -->
-                        <div x-show="showExpMessage" x-transition.opacity.duration.300ms class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 absolute top-6 left-2 z-10 max-w-[150px]">
-                            <span x-text="expMessage"></span>
-                            <div class="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white/90 border-l-[10px] border-l-transparent"></div>
-                        </div>
-                    </div>
-                </div>
             </model-viewer>
+        </div>
+
+        <!-- TAMAGOTCHI UI — Positioned via CSS, OUTSIDE model-viewer -->
+        <div id="tamagotchi-layer" style="position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s;">
+            <!-- Ekspresi Wajah (kiri atas model) -->
+            <div id="tama-expression" style="position: absolute; top: -10px; left: -70px;">
+                <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
+            </div>
+
+            <!-- Bar + Pesan (kanan atas model) -->
+            <div id="tama-bar" style="position: absolute; top: -10px; right: -60px;">
+                <div class="flex flex-col items-center gap-2">
+                    <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
+                    <div class="w-4 h-32 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
+                        <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
+                             :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden shrink-0">
+                        <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
+                    </div>
+                </div>
+                
+                <!-- Pesan Tamagotchi -->
+                <div x-show="showExpMessage" x-transition.opacity.duration.300ms class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 absolute top-6 left-8 z-10 max-w-[150px]">
+                    <span x-text="expMessage"></span>
+                    <div class="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white/90 border-l-[10px] border-l-transparent"></div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -374,18 +341,11 @@
 
                         this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
 
-                        // Manual opacity to isolate from Alpine lifecycle
-                        const hsExpWrapper = document.getElementById('hs-exp-wrapper');
-                        const hsBarWrapper = document.getElementById('hs-bar-wrapper');
-                        if (hsExpWrapper) hsExpWrapper.style.opacity = this.expressionEnabled ? '1' : '0';
-                        if (hsBarWrapper) hsBarWrapper.style.opacity = this.expressionEnabled ? '1' : '0';
-
-                        // Counter-scale for tamagotchi hotspots so they don't shrink with the container
-                        const expContent = document.getElementById('hotspot-exp-content');
-                        const barContent = document.getElementById('hotspot-bar-content');
-                        const invScale = 1 / (this.curScale || 1);
-                        if (expContent) expContent.style.transform = `translate(-50%, -50%) scale(${invScale})`;
-                        if (barContent) barContent.style.transform = `translate(-50%, -50%) scale(${invScale})`;
+                        // Tamagotchi layer visibility — pure JS, no Alpine dependency
+                        const tamaLayer = document.getElementById('tamagotchi-layer');
+                        if (tamaLayer) {
+                            tamaLayer.style.opacity = this.expressionEnabled ? '1' : '0';
+                        }
 
                         // PERBAIKAN MATEMATIKA: 
                         // Rotasi Base dikunci di atribut 'orientation' pada HTML.
@@ -393,12 +353,6 @@
                         if (this.arData.type === '3d') {
                             const viewer = document.getElementById('main-ar-viewer');
                             if (viewer) {
-                                // Robust fallback for model-viewer shadow DOM bugs
-                                if (viewer.modelIsVisible && this._lastAdjustedSrc !== this.arData.src) {
-                                    this.adjustHotspots(viewer);
-                                    this._lastAdjustedSrc = this.arData.src;
-                                }
-
                                 // 90 adalah sudut lurus menghadap objek. 
                                 // Jika HP miring ke atas (pitch naik), kamera memutar ke bawah memandang ke atas.
                                 let orbitPitch = Math.round((90 - this.curPitch) * 10) / 10;
