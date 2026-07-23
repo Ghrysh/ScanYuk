@@ -709,6 +709,7 @@
                                     :scale="previewScale"
                                     :orientation="previewRotation"
                                     :style="previewStyle"
+                                    @load="adjustHotspots($event.target)"
                                     autoplay auto-rotate camera-controls shadow-intensity="1" exposure="1.2" class="w-full h-full bg-transparent">
                                     
                                     <!-- TAMAGOTCHI UI (Hotspots) for Modal Preview -->
@@ -1280,6 +1281,28 @@
                     if (this.expPoints > 70) return '#10b981'; // Hijau
                     if (this.expPoints > 30) return '#f59e0b'; // Kuning
                     return '#ef4444'; // Merah
+                },
+                
+                adjustHotspots(viewer) {
+                    if (!viewer) return;
+                    try {
+                        const center = viewer.getBoundingBoxCenter();
+                        const size = viewer.getDimensions();
+                        const maxDim = Math.max(size.x, size.y, size.z);
+                        const norm = 2.0 / maxDim;
+                        
+                        const pExpX = (-0.4 / norm) + center.x;
+                        const pExpY = (0.7 / norm) + center.y;
+                        
+                        const pBarX = (0.7 / norm) + center.x;
+                        const pBarY = (0.7 / norm) + center.y;
+                        
+                        const expEl = viewer.querySelector('[slot="hotspot-expression"]');
+                        if(expEl) expEl.setAttribute('data-position', `${pExpX} ${pExpY} ${center.z}`);
+                        
+                        const barEl = viewer.querySelector('[slot="hotspot-bar"]');
+                        if(barEl) barEl.setAttribute('data-position', `${pBarX} ${pBarY} ${center.z}`);
+                    } catch(e) { console.error('Error adjusting hotspots:', e); }
                 },
 
                 init() {

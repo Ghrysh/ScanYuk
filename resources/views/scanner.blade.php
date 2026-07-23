@@ -60,6 +60,7 @@
         <model-viewer 
             x-show="arData.type === '3d'" 
             id="main-ar-viewer"
+            @load="adjustHotspots($event.target)"
             :src="arData.src" 
             :scale="arData.scale"
             :orientation="`${arData.baseRotZ}deg ${arData.baseRotX}deg ${arData.baseRotY}deg`"
@@ -447,6 +448,7 @@
 
                                 const onLoad = () => {
                                     this.loadingProgress = 100;
+                                    this.adjustHotspots(viewer);
                                     cleanUp();
                                     resolve();
                                 };
@@ -695,6 +697,37 @@
                     if (this.expPoints >= 35) return '#facc15'; 
                     if (this.expPoints >= 10) return '#f87171'; 
                     return '#991b1b'; 
+                },
+                
+                adjustHotspots(viewer) {
+                    if (!viewer) return;
+                    try {
+                        const center = viewer.getBoundingBoxCenter();
+                        const size = viewer.getDimensions();
+                        const maxDim = Math.max(size.x, size.y, size.z);
+                        const norm = 2.0 / maxDim;
+                        
+                        const pExpX = (-0.4 / norm) + center.x;
+                        const pExpY = (0.7 / norm) + center.y;
+                        
+                        const pBarX = (0.7 / norm) + center.x;
+                        const pBarY = (0.7 / norm) + center.y;
+                        
+                        const expEl = viewer.querySelector('[slot="hotspot-expression"]');
+                        if(expEl) expEl.setAttribute('data-position', `${pExpX} ${pExpY} ${center.z}`);
+                        
+                        const barEl = viewer.querySelector('[slot="hotspot-bar"]');
+                        if(barEl) barEl.setAttribute('data-position', `${pBarX} ${pBarY} ${center.z}`);
+                        
+                        // Perbarui QR Code hotspot jika ada
+                        const qrEl = viewer.querySelector('[slot="hotspot-qrcode"]');
+                        if(qrEl) {
+                            const offsetZ = parseFloat('{{ $marker->base_z_offset ?? 0 }}');
+                            // Kalau model raw offsetZ tidak sesuai, kita bisa paskan z belakang model:
+                            const backZ = center.z - (size.z / 2);
+                            qrEl.setAttribute('data-position', `0 ${center.y} ${backZ}`);
+                        }
+                    } catch(e) { console.error('Error adjusting hotspots:', e); }
                 },
 
                 initExpression(uuid) {
