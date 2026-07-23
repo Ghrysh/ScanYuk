@@ -49,7 +49,14 @@
     </div>
 
     <!-- PERBAIKAN: Binding Posisi, Skala, Rotasi, & Animasi ke UI -->
-    <div id="ar-overlay-container">
+    <div x-show="arActive" id="ar-overlay-container" class="transition-opacity duration-300">
+        
+         <!-- DEBUG INFO -->
+         <div style="position:absolute; top:-50px; left:0; background:black; color:lime; font-size:12px; padding:5px; z-index:9999; width:300px;">
+            <div id="debug-hotspot">POS: WAIT...</div>
+            <div id="debug-transform">TRANS: WAIT...</div>
+         </div>
+
         <!-- Overlay untuk AR 2D -->
         <img x-show="arData.type === '2d'" id="main-ar-2d" :src="arData.src" 
              class="w-full h-full object-contain filter drop-shadow(0 25px 25px rgba(0,0,0,0.8))"
@@ -76,13 +83,13 @@
             class="w-full h-full bg-transparent">
             
             <!-- TAMAGOTCHI UI (Hotspots) -->
-            <div slot="hotspot-expression" data-position="-0.4 0.7 0" class="transition-opacity duration-300" :style="`opacity: ${expressionEnabled ? 1 : 0}; visibility: ${expressionEnabled ? 'visible' : 'hidden'}; pointer-events: none;`">
+            <div slot="hotspot-expression" data-position="-0.4 0.7 0" style="pointer-events: none;">
                 <div id="hotspot-exp-content" class="flex items-start gap-3 w-48" style="transform-origin: center; transform: translate(-50%, -50%);">
                     <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce shrink-0" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
                 </div>
             </div>
 
-            <div slot="hotspot-bar" data-position="0.7 0.7 0" class="transition-opacity duration-300" :style="`opacity: ${expressionEnabled ? 1 : 0}; visibility: ${expressionEnabled ? 'visible' : 'hidden'}; pointer-events: none;`">
+            <div slot="hotspot-bar" data-position="0.7 0.7 0" style="pointer-events: none;">
                 <div id="hotspot-bar-content" class="relative" style="transform-origin: center; transform: translate(-50%, -50%);">
                     <div class="flex flex-col items-center gap-2">
                         <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
@@ -354,9 +361,18 @@
                             if (viewer) {
                                 // 90 adalah sudut lurus menghadap objek. 
                                 // Jika HP miring ke atas (pitch naik), kamera memutar ke bawah memandang ke atas.
-                                let orbitPitch = 90 - this.curPitch;
-                                let orbitYaw = -this.curYaw; 
-                                viewer.setAttribute('camera-orbit', `${orbitYaw}deg ${orbitPitch}deg auto`);
+                                let orbitPitch = 90 + this.curPitch;
+                                // Batasi agar tidak flip over (0 = top, 180 = bottom)
+                                orbitPitch = Math.max(10, Math.min(170, orbitPitch));
+                                
+                                viewer.setAttribute('camera-orbit', `0deg ${orbitPitch}deg auto`);
+                                
+                                // Update debug info
+                                const expEl = viewer.querySelector('[slot="hotspot-expression"]');
+                                if (expEl) {
+                                    const debugEl = document.getElementById('debug-transform');
+                                    if (debugEl) debugEl.innerText = `TRANS: ${expEl.style.transform || 'NONE'}`;
+                                }
                             }
                         } else if (this.arData.type === '2d') {
                             const img2d = document.getElementById('main-ar-2d');
@@ -725,7 +741,10 @@
                         const frontZ = center.z + (size.z / 2) + 0.1;
 
                         const expEl = viewer.querySelector('[slot="hotspot-expression"]');
-                        if(expEl) expEl.setAttribute('data-position', `${pExpX} ${pExpY} ${frontZ}`);
+                        if(expEl) {
+                            expEl.setAttribute('data-position', `${pExpX} ${pExpY} ${frontZ}`);
+                            document.getElementById('debug-hotspot').innerText = `POS: ${pExpX.toFixed(2)}, ${pExpY.toFixed(2)}, ${frontZ.toFixed(2)}`;
+                        }
                         
                         const barEl = viewer.querySelector('[slot="hotspot-bar"]');
                         if(barEl) barEl.setAttribute('data-position', `${pBarX} ${pBarY} ${frontZ}`);
