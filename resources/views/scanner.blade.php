@@ -723,11 +723,13 @@
                         const pBarX = (0.7 / norm) + center.x;
                         const pBarY = (0.7 / norm) + center.y;
                         
+                        const frontZ = center.z + (size.z / 2) + 0.1;
+
                         const expEl = viewer.querySelector('[slot="hotspot-expression"]');
-                        if(expEl) expEl.setAttribute('data-position', `${pExpX} ${pExpY} ${center.z}`);
+                        if(expEl) expEl.setAttribute('data-position', `${pExpX} ${pExpY} ${frontZ}`);
                         
                         const barEl = viewer.querySelector('[slot="hotspot-bar"]');
-                        if(barEl) barEl.setAttribute('data-position', `${pBarX} ${pBarY} ${center.z}`);
+                        if(barEl) barEl.setAttribute('data-position', `${pBarX} ${pBarY} ${frontZ}`);
                         
                         // Perbarui QR Code hotspot jika ada
                         const qrEl = viewer.querySelector('[slot="hotspot-qrcode"]');
