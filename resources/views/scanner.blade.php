@@ -401,9 +401,13 @@
 
                                 // 90 adalah sudut lurus menghadap objek. 
                                 // Jika HP miring ke atas (pitch naik), kamera memutar ke bawah memandang ke atas.
-                                let orbitPitch = 90 - this.curPitch;
-                                let orbitYaw = -this.curYaw; 
-                                viewer.setAttribute('camera-orbit', `${orbitYaw}deg ${orbitPitch}deg auto`);
+                                let orbitPitch = Math.round((90 - this.curPitch) * 10) / 10;
+                                let orbitYaw = Math.round((-this.curYaw) * 10) / 10; 
+                                let newOrbit = `${orbitYaw}deg ${orbitPitch}deg auto`;
+                                
+                                if (viewer.getAttribute('camera-orbit') !== newOrbit) {
+                                    viewer.setAttribute('camera-orbit', newOrbit);
+                                }
                             }
                         } else if (this.arData.type === '2d') {
                             const img2d = document.getElementById('main-ar-2d');
@@ -779,9 +783,9 @@
                         if(expEl) {
                             expEl.setAttribute('data-position', `${pExpX} ${pExpY} ${frontZ}`);
                             
-                            // FORCE update API
+                            // FORCE update API (name must omit 'hotspot-' prefix)
                             if (typeof viewer.updateHotspot === 'function') {
-                                viewer.updateHotspot({name: 'hotspot-expression', position: `${pExpX} ${pExpY} ${frontZ}`});
+                                viewer.updateHotspot({name: 'expression', position: `${pExpX} ${pExpY} ${frontZ}`});
                             }
                             
                             console.log(`Exp pos: ${pExpX.toFixed(2)}, ${pExpY.toFixed(2)}, ${frontZ.toFixed(2)}`);
@@ -797,7 +801,7 @@
                             barEl.setAttribute('data-position', `${pBarX} ${pBarY} ${frontZ}`);
                             
                             if (typeof viewer.updateHotspot === 'function') {
-                                viewer.updateHotspot({name: 'hotspot-bar', position: `${pBarX} ${pBarY} ${frontZ}`});
+                                viewer.updateHotspot({name: 'bar', position: `${pBarX} ${pBarY} ${frontZ}`});
                             }
                         }
                         
