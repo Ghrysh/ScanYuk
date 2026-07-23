@@ -2143,7 +2143,24 @@
                 });
 
                 previewModel.updateMatrixWorld(true);
-                const box = new THREE.Box3().setFromObject(previewModel);
+                const box = new THREE.Box3();
+                previewModel.traverse((node) => {
+                    if (node.isMesh || node.isSkinnedMesh) {
+                        node.updateWorldMatrix(true, false);
+                        const geometry = node.geometry;
+                        if (geometry) {
+                            if (!geometry.boundingBox) geometry.computeBoundingBox();
+                            const meshBox = geometry.boundingBox.clone();
+                            meshBox.applyMatrix4(node.matrixWorld);
+                            box.union(meshBox);
+                        }
+                    }
+                });
+                
+                if (box.isEmpty()) {
+                    box.setFromObject(previewModel);
+                }
+                
                 const center = box.getCenter(new THREE.Vector3());
                 const size = box.getSize(new THREE.Vector3());
                 const maxDim = Math.max(size.x, size.y, size.z) || 1;
