@@ -1206,6 +1206,15 @@
                             link.download = `ar-journey-${this.tamaUsername}.png`;
                             link.href = URL.createObjectURL(blob);
                             link.click();
+                            
+                            // Arahkan ke platform setelah didownload
+                            setTimeout(() => {
+                                if (platform === 'whatsapp') {
+                                    window.open('https://wa.me/?text=' + encodeURIComponent(`🐾 Journey Tamagotchi AR ku!\nExplorer: @${this.tamaUsername}\n\n*Gambar telah didownload ke HP kamu, silakan lampirkan gambarnya di chat ini!* ✨`), '_blank');
+                                } else if (platform === 'instagram') {
+                                    alert('Gambar berhasil disimpan ke galeri! Silakan buka Instagram dan post ke Story kamu ya 📱✨');
+                                }
+                            }, 500);
                         });
                     } catch (err) {
                         this.isSharing = false;
@@ -1352,15 +1361,15 @@
             <!-- Podium -->
             <div style="position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); width: 280px; height: 50px; background: rgba(0,0,0,0.2); border-radius: 50%; filter: blur(5px); z-index: 1;"></div>
             
-            <!-- Character Image wrapper to ensure perfect centering -->
-            <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 5;">
+            <!-- Character Image wrapper to ensure perfect centering without modern CSS that html2canvas breaks on -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 5;">
                 <img id="share-model-img" src="" style="width: 100%; height: 100%; object-fit: contain; object-position: center; filter: drop-shadow(0 20px 25px rgba(0,0,0,0.3)); transform: scale(1.15);">
             </div>
             
             <!-- Floating Badge -->
-            <div style="position: absolute; top: 20px; right: 20px; background: #fbbf24; border: 4px solid #fff; border-radius: 50%; width: 90px; height: 90px; box-shadow: 0 10px 15px rgba(0,0,0,0.2); z-index: 10; transform: rotate(15deg); display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                <span style="font-size: 14px; font-weight: 800; color: #78350f; text-transform: uppercase; margin-bottom: -2px;">Scan</span>
-                <span id="share-scan-count" style="font-size: 38px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #d97706; line-height: 1;">0</span>
+            <div style="position: absolute; top: 20px; right: 20px; background: #fbbf24; border: 4px solid #fff; border-radius: 50%; width: 90px; height: 90px; box-shadow: 0 10px 15px rgba(0,0,0,0.2); z-index: 10; transform: rotate(15deg); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                <div style="font-size: 14px; font-weight: 800; color: #78350f; text-transform: uppercase; margin-top: 10px; line-height: 1.2;">Scan</div>
+                <div id="share-scan-count" style="font-size: 38px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #d97706; margin-top: -2px; line-height: 1;">0</div>
             </div>
         </div>
         
@@ -1371,8 +1380,8 @@
                     <p style="color: #64748b; margin: 0 0 4px 0; font-size: 14px; font-weight: 700; text-transform: uppercase;">Explorer</p>
                     <p style="color: #1e293b; margin: 0; font-size: 26px; font-weight: 900;" id="share-username">@Player</p>
                 </div>
-                <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 38px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); line-height: 1; padding-bottom: 2px;" id="share-mood-emoji">
-                    😊
+                <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 15px; text-align: center; font-size: 38px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));" id="share-mood-emoji">
+                    <div style="margin-top: 4px;">😊</div>
                 </div>
             </div>
             
