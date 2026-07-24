@@ -1177,11 +1177,10 @@
                         }
 
                         // Populate the share card
-                        // Menggunakan background-image agar html2canvas bisa memposisikan gambar dengan sempurna (cover/contain)
-                        document.getElementById('share-model-img').style.backgroundImage = `url(${modelDataUrl})`;
+                        document.getElementById('share-model-img').src = modelDataUrl;
                         document.getElementById('share-username').innerText = '@' + this.tamaUsername;
                         document.getElementById('share-scan-count').innerText = this.tamaTotalScans;
-                        document.getElementById('share-mood-emoji').innerHTML = '<div style="margin-top: 4px;">' + this.getMoodEmoji(this.expState) + '</div>';
+                        document.getElementById('share-mood-emoji').innerText = this.getMoodEmoji(this.expState);
                         document.getElementById('share-exp').innerText = Math.floor(this.expPoints);
                         
                         // Set experience bar width
@@ -1380,22 +1379,34 @@
         </div>
         
         <!-- Character Showcase -->
-        <div style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center; margin-top: -10px;">
+        <div style="flex: 1; position: relative; margin-top: -10px;">
             <!-- Glow effect behind character -->
             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 350px; height: 350px; background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; z-index: 1;"></div>
             
             <!-- Podium -->
             <div style="position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); width: 280px; height: 50px; background: rgba(0,0,0,0.2); border-radius: 50%; filter: blur(5px); z-index: 1;"></div>
             
-            <!-- Character Image wrapper to ensure perfect centering without modern CSS that html2canvas breaks on -->
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 5;">
-                <div id="share-model-img" style="width: 100%; height: 100%; background-position: center; background-size: contain; background-repeat: no-repeat; filter: drop-shadow(0 20px 25px rgba(0,0,0,0.3)); transform: scale(1.15);"></div>
+            <!-- Character Image wrapper using classic table for bulletproof html2canvas centering -->
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5;">
+                <table style="width: 100%; height: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="vertical-align: middle; text-align: center; padding: 0;">
+                            <img id="share-model-img" src="" style="max-width: 100%; max-height: 100%; filter: drop-shadow(0 20px 25px rgba(0,0,0,0.3)); transform: scale(1.15);">
+                        </td>
+                    </tr>
+                </table>
             </div>
             
-            <!-- Floating Badge -->
-            <div style="position: absolute; top: 20px; right: 20px; background: #fbbf24; border: 4px solid #fff; border-radius: 50%; width: 90px; height: 90px; box-shadow: 0 10px 15px rgba(0,0,0,0.2); z-index: 10; transform: rotate(15deg); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                <div style="font-size: 14px; font-weight: 800; color: #78350f; text-transform: uppercase; margin-top: 10px; line-height: 1.2;">Scan</div>
-                <div id="share-scan-count" style="font-size: 38px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #d97706; margin-top: -2px; line-height: 1;">0</div>
+            <!-- Floating Badge using classic table -->
+            <div style="position: absolute; top: 20px; right: 20px; background: #fbbf24; border: 4px solid #fff; border-radius: 50%; width: 90px; height: 90px; box-shadow: 0 10px 15px rgba(0,0,0,0.2); z-index: 10; transform: rotate(15deg);">
+                <table style="width: 100%; height: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="vertical-align: middle; text-align: center; padding: 0;">
+                            <div style="font-size: 14px; font-weight: 800; color: #78350f; text-transform: uppercase; line-height: 1; margin-bottom: 2px;">Scan</div>
+                            <div id="share-scan-count" style="font-size: 38px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #d97706; line-height: 1;">0</div>
+                        </td>
+                    </tr>
+                </table>
             </div>
         </div>
         
@@ -1406,8 +1417,14 @@
                     <p style="color: #64748b; margin: 0 0 4px 0; font-size: 14px; font-weight: 700; text-transform: uppercase;">Explorer</p>
                     <p style="color: #1e293b; margin: 0; font-size: 26px; font-weight: 900;" id="share-username">@Player</p>
                 </div>
-                <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 15px; text-align: center; font-size: 38px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));" id="share-mood-emoji">
-                    <div style="margin-top: 4px;">😊</div>
+                <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 15px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); overflow: hidden;">
+                    <table style="width: 100%; height: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="vertical-align: middle; text-align: center; padding: 0; font-size: 38px; line-height: 1;" id="share-mood-emoji">
+                                😊
+                            </td>
+                        </tr>
+                    </table>
                 </div>
             </div>
             
