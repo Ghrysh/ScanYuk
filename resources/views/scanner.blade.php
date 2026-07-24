@@ -152,6 +152,13 @@
         </div>
     </div>
 
+    <!-- Sharing Loading Overlay -->
+    <div x-show="isSharing" style="display: none;" class="fixed inset-0 z-[300] flex flex-col items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md">
+        <div class="w-16 h-16 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mb-4"></div>
+        <p class="text-white font-bold text-xl animate-pulse">Mempersiapkan Kartu...</p>
+        <p class="text-slate-400 text-sm mt-2 text-center max-w-xs">Tunggu sebentar, kami sedang mengambil gambar AR terbaikmu!</p>
+    </div>
+
     <!-- TAMAGOTCHI: Journey Modal -->
     <div x-show="showJourneyModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center">
         <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="showJourneyModal = false"></div>
@@ -309,6 +316,7 @@
                 tamaDisplayName: '',
                 tamaTotalScans: 0,
                 showJourneyModal: false,
+                isSharing: false,
                 messageInterval: null,
                 journeyEntries: [],
                 statusInput: '',
@@ -1133,6 +1141,7 @@
                 },
 
                 async shareJourney(platform) {
+                    this.isSharing = true;
                     const originalText = `🐾 Journey Tamagotchi AR ku!\nExplorer: @${this.tamaUsername}\nCoba scan QR Code nya!`;
                     
                     try {
@@ -1143,7 +1152,6 @@
                         }
                         
                         if (!modelDataUrl) {
-                            // Fallback dummy image if no AR model is active
                             modelDataUrl = '/ekspresi/senang.png';
                         }
 
@@ -1158,7 +1166,6 @@
                         const expBar = document.getElementById('share-exp-bar');
                         if (expBar) {
                             expBar.style.width = Math.min(100, Math.max(0, this.expPoints)) + '%';
-                            // Ubah warna bar sesuai exp
                             if (this.expPoints >= 75) {
                                 expBar.style.background = 'linear-gradient(90deg, #34d399, #10b981)';
                             } else if (this.expPoints >= 35) {
@@ -1179,6 +1186,8 @@
                         canvas.toBlob(async (blob) => {
                             const file = new File([blob], 'ar-journey.png', { type: 'image/png' });
                             
+                            this.isSharing = false; // Turn off loading before native OS popup
+
                             if (navigator.canShare && navigator.canShare({ files: [file] })) {
                                 try {
                                     await navigator.share({
@@ -1192,16 +1201,15 @@
                                 }
                             }
                             
-                            // Fallback: download the image
+                            // Fallback: download the image silently
                             const link = document.createElement('a');
                             link.download = `ar-journey-${this.tamaUsername}.png`;
                             link.href = URL.createObjectURL(blob);
                             link.click();
-                            alert('Gambar telah di-download! Kamu bisa share manual ke ' + platform + ' (misal ke IG Story/WA) ya 📱✨');
                         });
                     } catch (err) {
+                        this.isSharing = false;
                         console.error('Error generating share image', err);
-                        alert('Maaf, terjadi kesalahan saat membuat gambar share.');
                     }
                 },
 
@@ -1331,29 +1339,28 @@
     <!-- Hidden Share Card Template -->
     <div id="share-card-container" style="position: absolute; top: -9999px; left: -9999px; width: 480px; height: 853px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); border-radius: 30px; overflow: hidden; font-family: 'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; box-shadow: 0 0 0 10px rgba(255,255,255,0.3) inset;">
         
-        <!-- Decorative Header -->
+        <!-- Header -->
         <div style="padding: 40px 20px 0; text-align: center; z-index: 10;">
-            <div style="display: inline-block; background: #fff; padding: 10px 25px; border-radius: 50px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 15px;">
-                <h2 style="color: #8b5cf6; margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">🏆 AR Journey</h2>
-            </div>
-            <p style="color: #fff; margin: 0; font-size: 20px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">Pencapaian Baru Terbuka!</p>
+            <h2 style="color: white; margin: 0; font-size: 38px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 4px 6px rgba(0,0,0,0.2);">AR JOURNEY</h2>
         </div>
         
         <!-- Character Showcase -->
-        <div style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center; margin-top: -20px;">
+        <div style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center; margin-top: -10px;">
             <!-- Glow effect behind character -->
             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 350px; height: 350px; background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; z-index: 1;"></div>
             
             <!-- Podium -->
-            <div style="position: absolute; bottom: 15%; width: 280px; height: 50px; background: rgba(0,0,0,0.15); border-radius: 50%; filter: blur(5px); z-index: 1;"></div>
+            <div style="position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); width: 280px; height: 50px; background: rgba(0,0,0,0.2); border-radius: 50%; filter: blur(5px); z-index: 1;"></div>
             
-            <!-- Character Image -->
-            <img id="share-model-img" src="" style="width: 100%; height: 100%; object-fit: contain; object-position: center; z-index: 5; filter: drop-shadow(0 20px 25px rgba(0,0,0,0.3)); transform: scale(1.15);">
+            <!-- Character Image wrapper to ensure perfect centering -->
+            <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 5;">
+                <img id="share-model-img" src="" style="width: 100%; height: 100%; object-fit: contain; object-position: center; filter: drop-shadow(0 20px 25px rgba(0,0,0,0.3)); transform: scale(1.15);">
+            </div>
             
             <!-- Floating Badge -->
-            <div style="position: absolute; top: 20px; right: 20px; background: #fbbf24; border: 4px solid #fff; border-radius: 50%; width: 90px; height: 90px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 15px rgba(0,0,0,0.2); z-index: 10; transform: rotate(15deg);">
-                <span style="font-size: 14px; font-weight: 800; color: #78350f; text-transform: uppercase;">Scan</span>
-                <span id="share-scan-count" style="font-size: 36px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #d97706; line-height: 1;">0</span>
+            <div style="position: absolute; top: 20px; right: 20px; background: #fbbf24; border: 4px solid #fff; border-radius: 50%; width: 90px; height: 90px; box-shadow: 0 10px 15px rgba(0,0,0,0.2); z-index: 10; transform: rotate(15deg); display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                <span style="font-size: 14px; font-weight: 800; color: #78350f; text-transform: uppercase; margin-bottom: -2px;">Scan</span>
+                <span id="share-scan-count" style="font-size: 38px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #d97706; line-height: 1;">0</span>
             </div>
         </div>
         
@@ -1364,7 +1371,7 @@
                     <p style="color: #64748b; margin: 0 0 4px 0; font-size: 14px; font-weight: 700; text-transform: uppercase;">Explorer</p>
                     <p style="color: #1e293b; margin: 0; font-size: 26px; font-weight: 900;" id="share-username">@Player</p>
                 </div>
-                <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 32px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));" id="share-mood-emoji">
+                <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 38px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); line-height: 1; padding-bottom: 2px;" id="share-mood-emoji">
                     😊
                 </div>
             </div>
