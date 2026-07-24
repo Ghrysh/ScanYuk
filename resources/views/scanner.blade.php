@@ -83,12 +83,12 @@
         <!-- TAMAGOTCHI UI — Positioned via CSS, OUTSIDE model-viewer -->
         <div id="tamagotchi-layer" style="position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s;">
             <!-- Ekspresi Wajah (kiri atas model) -->
-            <div id="tama-expression" style="position: absolute; top: 5%; left: 5%;">
+            <div id="tama-expression" style="position: absolute; top: 5%; left: 5%; transform-origin: top left; will-change: transform;">
                 <img :src="'/ekspresi/' + expState + '.png'" class="w-14 h-14 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
             </div>
 
             <!-- Bar + Pesan (kanan atas model) -->
-            <div id="tama-bar" style="position: absolute; top: 5%; right: 5%;">
+            <div id="tama-bar" style="position: absolute; top: 5%; right: 5%; transform-origin: top right; will-change: transform;">
                 <div class="flex flex-col items-center gap-2">
                     <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
                     <div class="w-4 h-32 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
@@ -531,10 +531,20 @@
 
                         this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
 
-                        // Tamagotchi layer visibility — pure JS, no Alpine dependency
+                        // Tamagotchi layer visibility and anti-scaling — pure JS
                         const tamaLayer = document.getElementById('tamagotchi-layer');
                         if (tamaLayer) {
                             tamaLayer.style.opacity = this.expressionEnabled ? '1' : '0';
+                            
+                            // Anti-scale: Jaga agar ukuran UI tamagotchi (Bar, Emoji) selalu tetap di layar
+                            // walau wadah utamanya membesar/mengecil mengikuti jarak QR Code
+                            const tamaExpr = document.getElementById('tama-expression');
+                            const tamaBar = document.getElementById('tama-bar');
+                            if (tamaExpr && tamaBar) {
+                                let invScale = 1 / Math.max(0.01, this.curScale);
+                                tamaExpr.style.transform = `scale(${invScale})`;
+                                tamaBar.style.transform = `scale(${invScale})`;
+                            }
                         }
 
                         // PERBAIKAN MATEMATIKA: 
