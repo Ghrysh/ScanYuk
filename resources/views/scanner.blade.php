@@ -152,11 +152,32 @@
         </div>
     </div>
 
-    <!-- Sharing Loading Overlay -->
-    <div x-show="isSharing" style="display: none;" class="fixed inset-0 z-[300] flex flex-col items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md">
-        <div class="w-16 h-16 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mb-4"></div>
-        <p class="text-white font-bold text-xl animate-pulse">Mempersiapkan Kartu...</p>
-        <p class="text-slate-400 text-sm mt-2 text-center max-w-xs">Tunggu sebentar, kami sedang mengambil gambar AR terbaikmu!</p>
+    <!-- Sharing Overlay -->
+    <div x-show="shareState !== 'idle'" style="display: none;" class="fixed inset-0 z-[300] flex flex-col items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md">
+        
+        <template x-if="shareState === 'loading'">
+            <div class="flex flex-col items-center">
+                <div class="w-16 h-16 border-4 border-teal-500/30 border-t-teal-500 rounded-full animate-spin mb-4"></div>
+                <p class="text-white font-bold text-xl animate-pulse">Mempersiapkan Kartu...</p>
+                <p class="text-slate-400 text-sm mt-2 text-center max-w-xs">Tunggu sebentar, kami sedang mengambil gambar AR terbaikmu!</p>
+            </div>
+        </template>
+        
+        <template x-if="shareState === 'ready'">
+            <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mb-4 shadow-lg shadow-green-500/30">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <p class="text-white font-bold text-xl mb-2">Kartu Siap Dibagikan!</p>
+                <p class="text-slate-300 text-sm mb-6 max-w-xs">Klik tombol di bawah untuk langsung membuka <span class="font-bold text-white capitalize" x-text="sharePlatform"></span>.</p>
+                
+                <button @click="executeShare()" class="w-full max-w-xs py-3 rounded-xl bg-gradient-to-r from-teal-500 to-indigo-500 text-white font-bold shadow-lg shadow-teal-500/30 hover:opacity-90 transition mb-3 flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                    Buka Aplikasi
+                </button>
+                <button @click="shareState = 'idle'" class="text-slate-400 text-sm underline">Batal</button>
+            </div>
+        </template>
     </div>
 
     <!-- TAMAGOTCHI: Journey Modal -->
@@ -316,7 +337,9 @@
                 tamaDisplayName: '',
                 tamaTotalScans: 0,
                 showJourneyModal: false,
-                isSharing: false,
+                shareState: 'idle',
+                sharePlatform: '',
+                shareFile: null,
                 messageInterval: null,
                 journeyEntries: [],
                 statusInput: '',
@@ -1141,8 +1164,8 @@
                 },
 
                 async shareJourney(platform) {
-                    this.isSharing = true;
-                    const originalText = `🐾 Journey Tamagotchi AR ku!\nExplorer: @${this.tamaUsername}\nCoba scan QR Code nya!`;
+                    this.sharePlatform = platform;
+                    this.shareState = 'loading';
                     
                     try {
                         const viewer = document.querySelector('model-viewer');
@@ -1159,7 +1182,7 @@
                         document.getElementById('share-model-img').src = modelDataUrl;
                         document.getElementById('share-username').innerText = '@' + this.tamaUsername;
                         document.getElementById('share-scan-count').innerText = this.tamaTotalScans;
-                        document.getElementById('share-mood-emoji').innerText = this.getMoodEmoji(this.expState);
+                        document.getElementById('share-mood-emoji').innerHTML = '<div style="margin-top: 4px;">' + this.getMoodEmoji(this.expState) + '</div>';
                         document.getElementById('share-exp').innerText = Math.floor(this.expPoints);
                         
                         // Set experience bar width
@@ -1183,42 +1206,50 @@
                             scale: 2 // High res
                         });
                         
-                        canvas.toBlob(async (blob) => {
-                            const file = new File([blob], 'ar-journey.png', { type: 'image/png' });
+                        canvas.toBlob((blob) => {
+                            this.shareFile = new File([blob], 'ar-journey.png', { type: 'image/png' });
                             
-                            this.isSharing = false; // Turn off loading before native OS popup
-
-                            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                                try {
-                                    await navigator.share({
-                                        title: 'AR Journey',
-                                        text: originalText,
-                                        files: [file]
-                                    });
-                                    return;
-                                } catch (e) {
-                                    console.log('Share canceled or failed', e);
-                                }
+                            if (navigator.canShare && navigator.canShare({ files: [this.shareFile] })) {
+                                // Tunggu klik manual user agar tidak terkena User Gesture Expired blokir browser
+                                this.shareState = 'ready';
+                            } else {
+                                // Fallback (Browser lama / tidak support file share)
+                                this.shareState = 'idle';
+                                const link = document.createElement('a');
+                                link.download = `ar-journey-${this.tamaUsername}.png`;
+                                link.href = URL.createObjectURL(blob);
+                                link.click();
+                                
+                                setTimeout(() => {
+                                    if (platform === 'whatsapp') {
+                                        window.open('https://wa.me/?text=' + encodeURIComponent(`🐾 Journey Tamagotchi AR ku!\nExplorer: @${this.tamaUsername}\n\n*Perangkat Anda belum mendukung direct image share. Gambar telah didownload ke HP kamu, silakan lampirkan manual di chat ini!* ✨`), '_blank');
+                                    } else if (platform === 'instagram') {
+                                        alert('Perangkat Anda tidak mendukung direct image share. Gambar berhasil disimpan ke galeri! Silakan buka Instagram dan post ke Story secara manual 📱✨');
+                                    }
+                                }, 500);
                             }
-                            
-                            // Fallback: download the image silently
-                            const link = document.createElement('a');
-                            link.download = `ar-journey-${this.tamaUsername}.png`;
-                            link.href = URL.createObjectURL(blob);
-                            link.click();
-                            
-                            // Arahkan ke platform setelah didownload
-                            setTimeout(() => {
-                                if (platform === 'whatsapp') {
-                                    window.open('https://wa.me/?text=' + encodeURIComponent(`🐾 Journey Tamagotchi AR ku!\nExplorer: @${this.tamaUsername}\n\n*Gambar telah didownload ke HP kamu, silakan lampirkan gambarnya di chat ini!* ✨`), '_blank');
-                                } else if (platform === 'instagram') {
-                                    alert('Gambar berhasil disimpan ke galeri! Silakan buka Instagram dan post ke Story kamu ya 📱✨');
-                                }
-                            }, 500);
                         });
                     } catch (err) {
-                        this.isSharing = false;
+                        this.shareState = 'idle';
                         console.error('Error generating share image', err);
+                        alert('Terjadi kesalahan saat mempersiapkan kartu.');
+                    }
+                },
+
+                async executeShare() {
+                    if (!this.shareFile) return;
+                    const originalText = `🐾 Journey Tamagotchi AR ku!\nExplorer: @${this.tamaUsername}\nCoba scan QR Code nya di ScanYuk!`;
+                    
+                    try {
+                        await navigator.share({
+                            title: 'AR Journey',
+                            text: originalText,
+                            files: [this.shareFile]
+                        });
+                    } catch (e) {
+                        console.log('Share canceled or failed', e);
+                    } finally {
+                        this.shareState = 'idle';
                     }
                 },
 
