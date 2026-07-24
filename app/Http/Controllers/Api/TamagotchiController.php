@@ -47,17 +47,21 @@ class TamagotchiController extends Controller
                 ], 401);
             }
 
+            // Hitung depletion berdasarkan waktu terakhir aktif
+            $diffMs = 0;
+            if ($session->last_active_at) {
+                $diffMs = now()->diffInMilliseconds($session->last_active_at);
+            }
+
             // Sesi sudah ada — increment scan
             $session->update([
                 'total_scans' => $session->total_scans + 1,
                 'last_active_at' => now(),
             ]);
 
-            // Hitung depletion berdasarkan waktu terakhir aktif
-            if ($session->last_active_at) {
-                $diffMs = now()->diffInMilliseconds($session->last_active_at);
+            if ($diffMs > 0) {
                 $pointsToDeduct = $diffMs * 0.0000005787; // 48 jam = 100 poin
-                $session->exp_points = max(0, $session->exp_points - $pointsToDeduct);
+                $session->exp_points = min(100, max(0, $session->exp_points - $pointsToDeduct));
                 $session->save();
             }
         } else {
@@ -116,7 +120,7 @@ class TamagotchiController extends Controller
         }
 
         $session->update([
-            'exp_points' => $request->exp_points,
+            'exp_points' => min(100, max(0, $request->exp_points)),
             'last_lat' => $request->lat,
             'last_lon' => $request->lon,
             'last_active_at' => now(),
@@ -148,7 +152,7 @@ class TamagotchiController extends Controller
             'session_id' => $session->id,
             'status_text' => $request->status_text,
             'mood' => $request->mood ?? 'senang',
-            'exp_points' => $request->exp_points ?? $session->exp_points,
+            'exp_points' => min(100, max(0, $request->exp_points ?? $session->exp_points)),
             'lat' => $request->lat,
             'lon' => $request->lon,
         ]);
@@ -223,11 +227,14 @@ class TamagotchiController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Session not found.'], 404);
         }
 
-        // Hitung depletion
+        // Hitung depletion dan increment scan karena user me-load ulang halaman (dianggap scan baru)
         if ($session->last_active_at) {
             $diffMs = now()->diffInMilliseconds($session->last_active_at);
             $pointsToDeduct = $diffMs * 0.0000005787;
-            $session->exp_points = max(0, $session->exp_points - $pointsToDeduct);
+            $session->exp_points = min(100, max(0, $session->exp_points - $pointsToDeduct));
+            
+            $session->total_scans = $session->total_scans + 1;
+            
             $session->last_active_at = now();
             $session->save();
         }

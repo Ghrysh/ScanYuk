@@ -1009,7 +1009,7 @@
                         if (result.status === 'success') {
                             this.tamaSessionId = result.data.session_id;
                             this.tamaTotalScans = result.data.total_scans;
-                            this.expPoints = result.data.exp_points;
+                            this.expPoints = Math.min(100, result.data.exp_points);
                             
                             // Save to sessionStorage (marks this browser tab as active)
                             sessionStorage.setItem('tama_browser_' + uuid, JSON.stringify({
@@ -1038,7 +1038,7 @@
                         });
                         const result = await res.json();
                         if (result.status === 'success') {
-                            this.expPoints = result.data.exp_points;
+                            this.expPoints = Math.min(100, result.data.exp_points);
                             this.tamaTotalScans = result.data.total_scans;
                         }
                     } catch(e) {}
@@ -1073,7 +1073,7 @@
                         if (result.status === 'success') {
                             this.tamaSessionId = result.data.session_id;
                             this.tamaTotalScans = result.data.total_scans;
-                            this.expPoints = result.data.exp_points;
+                            this.expPoints = Math.min(100, result.data.exp_points);
                             this.showPhoneModal = false;
 
                             // Save to localStorage (persistent) and sessionStorage (browser session)
@@ -1384,9 +1384,15 @@
                     }
                     
                     if (!isTimeOverride) {
+                        // 1. Turun otomatis secara konstan (sekitar 0.0005787 poin per detik = 48 jam)
+                        this.expPoints = Math.max(0, this.expPoints - 0.0005787); 
+                        
+                        // 2. Naik otomatis secara halus JIKA sedang scan DAN poin masih di bawah 35 (Suntuk)
+                        // (+1 poin per detik)
                         if (this.arActive && this.expPoints < 35) {
-                            this.expPoints += 1; 
+                            this.expPoints = Math.min(35, this.expPoints + 1);
                         }
+                        
                         this.updateExpState();
                     }
                 },
