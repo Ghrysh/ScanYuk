@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <style>
         body { background-color: #000; margin: 0; overflow: hidden; touch-action: none; }
@@ -121,12 +122,9 @@
         <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md"></div>
         <div class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-white/10">
             <!-- Header -->
-            <div class="p-6 pb-2 text-center">
-                <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-gradient-to-br from-teal-400 to-indigo-500 flex items-center justify-center shadow-lg shadow-teal-500/30">
-                    <img src="/ekspresi/senang.png" class="w-14 h-14 object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.innerText='🐾'">
-                </div>
-                <h3 class="text-white font-bold text-xl">Hai! Siapa kamu? 👋</h3>
-                <p class="text-slate-400 text-sm mt-1">Daftar atau masuk untuk menyimpan perjalananmu</p>
+            <div class="p-6 pb-2 border-b border-white/10">
+                <h3 class="text-white font-bold text-xl text-center">Masuk / Daftar</h3>
+                <p class="text-slate-400 text-sm mt-2 text-center">Silakan masukkan detail akun Anda</p>
             </div>
             
             <!-- Form -->
@@ -311,6 +309,7 @@
                 tamaDisplayName: '',
                 tamaTotalScans: 0,
                 showJourneyModal: false,
+                messageInterval: null,
                 journeyEntries: [],
                 statusInput: '',
                 statusSubmitting: false,
@@ -1133,26 +1132,62 @@
                     return 'bg-red-900/30 text-red-500';
                 },
 
-                shareJourney(platform) {
-                    const url = window.location.origin + '/scan-ar?id=' + this.arUuid;
-                    const text = `🐾 Journey Tamagotchi AR ku!\n\n` +
-                        `Nama: ${this.tamaDisplayName}\n` +
-                        `Mood: ${this.expState} ${this.getMoodEmoji(this.expState)}\n` +
-                        `Exp: ${Math.floor(this.expPoints)}/100\n` +
-                        `Total Scan: ${this.tamaTotalScans}x\n\n` +
-                        `Coba juga scan QR Code nya! ✨\n${url}`;
+                async shareJourney(platform) {
+                    const originalText = `🐾 Journey Tamagotchi AR ku!\nExplorer: @${this.tamaUsername}\nCoba scan QR Code nya!`;
+                    
+                    try {
+                        const viewer = document.querySelector('model-viewer');
+                        let modelDataUrl = '';
+                        if (viewer && viewer.toDataURL) {
+                            modelDataUrl = viewer.toDataURL('image/png', 0.9);
+                        }
+                        
+                        if (!modelDataUrl) {
+                            // Fallback dummy image if no AR model is active
+                            modelDataUrl = '/ekspresi/senang.png';
+                        }
 
-                    if (platform === 'whatsapp') {
-                        window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
-                    } else if (platform === 'instagram') {
-                        // Instagram doesn't have a direct share API for stories from web
-                        // Copy text to clipboard and show instruction
-                        navigator.clipboard.writeText(text).then(() => {
-                            alert('Teks sudah dicopy! Buka Instagram dan paste di Story kamu 📱');
-                        }).catch(() => {
-                            // Fallback
-                            prompt('Copy teks ini untuk di-share:', text);
+                        // Populate the share card
+                        document.getElementById('share-model-img').src = modelDataUrl;
+                        document.getElementById('share-username').innerText = '@' + this.tamaUsername;
+                        document.getElementById('share-scan-count').innerText = this.tamaTotalScans;
+                        document.getElementById('share-mood-emoji').innerText = this.getMoodEmoji(this.expState);
+                        document.getElementById('share-exp').innerText = Math.floor(this.expPoints);
+
+                        const shareCard = document.getElementById('share-card-container');
+                        
+                        // Capture
+                        const canvas = await html2canvas(shareCard, {
+                            backgroundColor: '#0f172a',
+                            scale: 2 // High res
                         });
+                        
+                        canvas.toBlob(async (blob) => {
+                            const file = new File([blob], 'ar-journey.png', { type: 'image/png' });
+                            
+                            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                                try {
+                                    await navigator.share({
+                                        title: 'AR Journey',
+                                        text: originalText,
+                                        files: [file]
+                                    });
+                                    return;
+                                } catch (e) {
+                                    console.log('Share canceled or failed', e);
+                                }
+                            }
+                            
+                            // Fallback: download the image
+                            const link = document.createElement('a');
+                            link.download = `ar-journey-${this.tamaUsername}.png`;
+                            link.href = URL.createObjectURL(blob);
+                            link.click();
+                            alert('Gambar telah di-download! Kamu bisa share manual ke ' + platform + ' (misal ke IG Story/WA) ya 📱✨');
+                        });
+                    } catch (err) {
+                        console.error('Error generating share image', err);
+                        alert('Maaf, terjadi kesalahan saat membuat gambar share.');
                     }
                 },
 
@@ -1161,6 +1196,14 @@
                     // exp_points already loaded from server via session
                     this.updateExpState();
                     
+                    // Periodically show message every 10 seconds
+                    if (this.messageInterval) clearInterval(this.messageInterval);
+                    this.messageInterval = setInterval(() => {
+                        if (this.arActive && !this.showExpMessage) {
+                            this.setRandomMessage(this.expState);
+                        }
+                    }, 10000);
+
                     if (this.expInterval) clearInterval(this.expInterval);
                     this.expInterval = setInterval(() => {
                         this.expLoop();
@@ -1270,5 +1313,39 @@
             }
         }
     </script>
+    
+    <!-- Hidden Share Card Template -->
+    <div id="share-card-container" style="position: absolute; top: -9999px; left: -9999px; width: 400px; height: 711px; background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 20px; overflow: hidden; font-family: sans-serif; display: flex; flex-direction: column;">
+        <div style="padding: 30px; text-align: center; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <h2 style="color: white; margin: 0; font-size: 28px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">AR Journey</h2>
+            <p style="color: #4ade80; margin: 5px 0 0 0; font-size: 16px;">Achievement Unlocked!</p>
+        </div>
+        
+        <div style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(circle at center, #334155 0%, #0f172a 70%);">
+            <!-- We will inject the model-viewer image here -->
+            <img id="share-model-img" src="" style="max-width: 80%; max-height: 80%; object-fit: contain; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));">
+            
+            <div style="position: absolute; bottom: 20px; right: 20px; background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                <p style="color: white; margin: 0; font-size: 14px;">Total Scan</p>
+                <p style="color: #38bdf8; margin: 0; font-size: 24px; font-weight: bold; text-align: center;" id="share-scan-count">0</p>
+            </div>
+        </div>
+        
+        <div style="padding: 30px; background: rgba(255,255,255,0.05); border-top: 1px solid rgba(255,255,255,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                <div>
+                    <p style="color: #94a3b8; margin: 0 0 5px 0; font-size: 14px;">Explorer</p>
+                    <p style="color: white; margin: 0; font-size: 24px; font-weight: bold;" id="share-username">Player</p>
+                </div>
+                <div style="text-align: right;">
+                    <p style="color: #94a3b8; margin: 0 0 5px 0; font-size: 14px;">Mood & Exp</p>
+                    <p style="color: white; margin: 0; font-size: 20px; font-weight: bold;"><span id="share-mood-emoji">😊</span> <span id="share-exp">100</span>/100</p>
+                </div>
+            </div>
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed rgba(255,255,255,0.2); text-align: center;">
+                <p style="color: #cbd5e1; margin: 0; font-size: 14px;">Dimainkan di <strong>ScanYuk WebAR</strong></p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
