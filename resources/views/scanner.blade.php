@@ -1153,6 +1153,20 @@
                         document.getElementById('share-scan-count').innerText = this.tamaTotalScans;
                         document.getElementById('share-mood-emoji').innerText = this.getMoodEmoji(this.expState);
                         document.getElementById('share-exp').innerText = Math.floor(this.expPoints);
+                        
+                        // Set experience bar width
+                        const expBar = document.getElementById('share-exp-bar');
+                        if (expBar) {
+                            expBar.style.width = Math.min(100, Math.max(0, this.expPoints)) + '%';
+                            // Ubah warna bar sesuai exp
+                            if (this.expPoints >= 75) {
+                                expBar.style.background = 'linear-gradient(90deg, #34d399, #10b981)';
+                            } else if (this.expPoints >= 35) {
+                                expBar.style.background = 'linear-gradient(90deg, #fcd34d, #f59e0b)';
+                            } else {
+                                expBar.style.background = 'linear-gradient(90deg, #f87171, #ef4444)';
+                            }
+                        }
 
                         const shareCard = document.getElementById('share-card-container');
                         
@@ -1315,35 +1329,58 @@
     </script>
     
     <!-- Hidden Share Card Template -->
-    <div id="share-card-container" style="position: absolute; top: -9999px; left: -9999px; width: 400px; height: 711px; background: linear-gradient(135deg, #1e293b, #0f172a); border-radius: 20px; overflow: hidden; font-family: sans-serif; display: flex; flex-direction: column;">
-        <div style="padding: 30px; text-align: center; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1);">
-            <h2 style="color: white; margin: 0; font-size: 28px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">AR Journey</h2>
-            <p style="color: #4ade80; margin: 5px 0 0 0; font-size: 16px;">Achievement Unlocked!</p>
+    <div id="share-card-container" style="position: absolute; top: -9999px; left: -9999px; width: 480px; height: 853px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); border-radius: 30px; overflow: hidden; font-family: 'Nunito', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; box-shadow: 0 0 0 10px rgba(255,255,255,0.3) inset;">
+        
+        <!-- Decorative Header -->
+        <div style="padding: 40px 20px 0; text-align: center; z-index: 10;">
+            <div style="display: inline-block; background: #fff; padding: 10px 25px; border-radius: 50px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-bottom: 15px;">
+                <h2 style="color: #8b5cf6; margin: 0; font-size: 24px; font-weight: 900; text-transform: uppercase; letter-spacing: 2px;">🏆 AR Journey</h2>
+            </div>
+            <p style="color: #fff; margin: 0; font-size: 20px; font-weight: 800; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">Pencapaian Baru Terbuka!</p>
         </div>
         
-        <div style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center; background-image: radial-gradient(circle at center, #334155 0%, #0f172a 70%);">
-            <!-- We will inject the model-viewer image here -->
-            <img id="share-model-img" src="" style="max-width: 80%; max-height: 80%; object-fit: contain; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.5));">
+        <!-- Character Showcase -->
+        <div style="flex: 1; position: relative; display: flex; align-items: center; justify-content: center; margin-top: -20px;">
+            <!-- Glow effect behind character -->
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 350px; height: 350px; background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; z-index: 1;"></div>
             
-            <div style="position: absolute; bottom: 20px; right: 20px; background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
-                <p style="color: white; margin: 0; font-size: 14px;">Total Scan</p>
-                <p style="color: #38bdf8; margin: 0; font-size: 24px; font-weight: bold; text-align: center;" id="share-scan-count">0</p>
+            <!-- Podium -->
+            <div style="position: absolute; bottom: 15%; width: 280px; height: 50px; background: rgba(0,0,0,0.15); border-radius: 50%; filter: blur(5px); z-index: 1;"></div>
+            
+            <!-- Character Image -->
+            <img id="share-model-img" src="" style="width: 100%; height: 100%; object-fit: contain; object-position: center; z-index: 5; filter: drop-shadow(0 20px 25px rgba(0,0,0,0.3)); transform: scale(1.15);">
+            
+            <!-- Floating Badge -->
+            <div style="position: absolute; top: 20px; right: 20px; background: #fbbf24; border: 4px solid #fff; border-radius: 50%; width: 90px; height: 90px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 15px rgba(0,0,0,0.2); z-index: 10; transform: rotate(15deg);">
+                <span style="font-size: 14px; font-weight: 800; color: #78350f; text-transform: uppercase;">Scan</span>
+                <span id="share-scan-count" style="font-size: 36px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #d97706; line-height: 1;">0</span>
             </div>
         </div>
         
-        <div style="padding: 30px; background: rgba(255,255,255,0.05); border-top: 1px solid rgba(255,255,255,0.1);">
-            <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-                <div>
-                    <p style="color: #94a3b8; margin: 0 0 5px 0; font-size: 14px;">Explorer</p>
-                    <p style="color: white; margin: 0; font-size: 24px; font-weight: bold;" id="share-username">Player</p>
+        <!-- Stats Card -->
+        <div style="background: rgba(255, 255, 255, 0.95); margin: 0 20px 20px; padding: 25px; border-radius: 25px; box-shadow: 0 15px 30px rgba(0,0,0,0.15); z-index: 10; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="flex: 1;">
+                    <p style="color: #64748b; margin: 0 0 4px 0; font-size: 14px; font-weight: 700; text-transform: uppercase;">Explorer</p>
+                    <p style="color: #1e293b; margin: 0; font-size: 26px; font-weight: 900;" id="share-username">@Player</p>
                 </div>
-                <div style="text-align: right;">
-                    <p style="color: #94a3b8; margin: 0 0 5px 0; font-size: 14px;">Mood & Exp</p>
-                    <p style="color: white; margin: 0; font-size: 20px; font-weight: bold;"><span id="share-mood-emoji">😊</span> <span id="share-exp">100</span>/100</p>
+                <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 15px; display: flex; align-items: center; justify-content: center; font-size: 32px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));" id="share-mood-emoji">
+                    😊
                 </div>
             </div>
-            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px dashed rgba(255,255,255,0.2); text-align: center;">
-                <p style="color: #cbd5e1; margin: 0; font-size: 14px;">Dimainkan di <strong>ScanYuk WebAR</strong></p>
+            
+            <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: #64748b; font-size: 14px; font-weight: 700;">Experience</span>
+                    <span style="color: #8b5cf6; font-size: 16px; font-weight: 900;"><span id="share-exp">100</span> / 100</span>
+                </div>
+                <div style="width: 100%; background: #e2e8f0; border-radius: 10px; height: 14px; overflow: hidden; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);">
+                    <div id="share-exp-bar" style="width: 100%; height: 100%; background: linear-gradient(90deg, #34d399, #10b981); border-radius: 10px; transition: width 0.3s ease;"></div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 25px; padding-top: 15px; border-top: 2px dashed #e2e8f0; text-align: center;">
+                <p style="color: #94a3b8; margin: 0; font-size: 14px; font-weight: 700;">Dimainkan di <span style="color: #3b82f6;">ScanYuk WebAR</span></p>
             </div>
         </div>
     </div>
