@@ -1448,8 +1448,8 @@
             
             <!-- Floating Badge using explicit absolute positioning to avoid html2canvas text bugs -->
             <div style="position: absolute; top: 20px; right: 20px; background: #fbbf24; border: 4px solid #fff; border-radius: 50%; width: 90px; height: 90px; box-shadow: 0 10px 15px rgba(0,0,0,0.2); z-index: 10; transform: rotate(15deg);">
-                <div style="position: absolute; top: 18px; left: 0; width: 100%; text-align: center; font-size: 14px; font-weight: 900; color: #78350f; text-transform: uppercase;">Scan</div>
-                <div id="share-scan-count" style="position: absolute; top: 35px; left: 0; width: 100%; text-align: center; font-size: 40px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #d97706;">0</div>
+                <div style="position: absolute; top: 12px; left: 0; width: 100%; text-align: center; font-size: 14px; font-weight: 900; color: #78350f; text-transform: uppercase; line-height: 1; margin: 0; padding: 0;">Scan</div>
+                <div id="share-scan-count" style="position: absolute; top: 28px; left: 0; width: 100%; text-align: center; font-size: 40px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #d97706; line-height: 1; margin: 0; padding: 0;">0</div>
             </div>
         </div>
         
@@ -1461,7 +1461,7 @@
                     <p style="color: #1e293b; margin: 0; font-size: 26px; font-weight: 900;" id="share-username">@Player</p>
                 </div>
                 <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 15px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); position: relative;">
-                    <div id="share-mood-emoji" style="position: absolute; top: 10px; left: 0; width: 100%; text-align: center; font-size: 38px;">😊</div>
+                    <div id="share-mood-emoji" style="position: absolute; top: 2px; left: 0; width: 100%; text-align: center; font-size: 38px; line-height: 1; margin: 0; padding: 0;">😊</div>
                 </div>
             </div>
             
