@@ -80,32 +80,31 @@
             </model-viewer>
         </div>
 
-    </div>
-
-    <!-- TAMAGOTCHI UI — Positioned via Screen Coordinates -->
-    <div id="tamagotchi-layer" style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; opacity: 0; transition: opacity 0.3s; z-index: 40; overflow: hidden;">
-        <!-- Ekspresi Wajah -->
-        <div id="tama-expression" style="position: absolute; transform: translate(-50%, -50%); will-change: left, top;">
-            <img :src="'/ekspresi/' + expState + '.png'" class="w-14 h-14 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
-        </div>
-
-        <!-- Bar + Pesan -->
-        <div id="tama-bar" style="position: absolute; transform: translate(-50%, -50%); will-change: left, top;">
-            <div class="flex flex-col items-center gap-2">
-                <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
-                <div class="w-4 h-32 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
-                    <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
-                         :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
-                </div>
-                <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden shrink-0">
-                    <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
-                </div>
+        <!-- TAMAGOTCHI UI — Positioned via CSS, OUTSIDE model-viewer -->
+        <div id="tamagotchi-layer" style="position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.3s;">
+            <!-- Ekspresi Wajah (kiri atas model) -->
+            <div id="tama-expression" style="position: absolute; top: 5%; left: 5%;">
+                <img :src="'/ekspresi/' + expState + '.png'" class="w-14 h-14 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
             </div>
-            
-            <!-- Pesan Tamagotchi -->
-            <div x-show="showExpMessage" x-transition.opacity.duration.300ms class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tr-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 absolute top-6 right-10 z-10 max-w-[150px]">
-                <span x-text="expMessage"></span>
-                <div class="absolute top-0 -right-2 w-0 h-0 border-t-[10px] border-t-white/90 border-r-[10px] border-r-transparent"></div>
+
+            <!-- Bar + Pesan (kanan atas model) -->
+            <div id="tama-bar" style="position: absolute; top: 5%; right: 5%;">
+                <div class="flex flex-col items-center gap-2">
+                    <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
+                    <div class="w-4 h-32 bg-slate-800/80 rounded-full border-2 border-white/20 shadow-xl overflow-hidden relative flex flex-col-reverse">
+                        <div class="w-full transition-all duration-1000 ease-linear rounded-full" 
+                             :style="`height: ${expPoints}%; background-color: ${getExpColor()}`"></div>
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center border border-white/20 mt-1 shadow-lg overflow-hidden shrink-0">
+                        <div class="w-full h-full" :style="`background-color: ${getExpColor()}; opacity: 0.8`"></div>
+                    </div>
+                </div>
+                
+                <!-- Pesan Tamagotchi -->
+                <div x-show="showExpMessage" x-transition.opacity.duration.300ms class="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-2xl rounded-tl-none shadow-xl border border-white/50 text-sm font-bold text-slate-800 absolute top-6 left-8 z-10 max-w-[150px]">
+                    <span x-text="expMessage"></span>
+                    <div class="absolute top-0 -left-2 w-0 h-0 border-t-[10px] border-t-white/90 border-l-[10px] border-l-transparent"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -532,21 +531,10 @@
 
                         this.arOverlayContainer.style.transform = `translate3d(${this.curX}px, ${this.curY}px, 0) rotate(${this.curAngle}deg) scale(${this.curScale})`;
 
-                        // Tamagotchi layer visibility and fixed positioning — pure JS
+                        // Tamagotchi layer visibility — pure JS, no Alpine dependency
                         const tamaLayer = document.getElementById('tamagotchi-layer');
                         if (tamaLayer) {
                             tamaLayer.style.opacity = this.expressionEnabled ? '1' : '0';
-                            
-                            // Posisi UI dikunci pada jarak piksel tetap dari pusat layar/objek
-                            const tamaExpr = document.getElementById('tama-expression');
-                            const tamaBar = document.getElementById('tama-bar');
-                            if (tamaExpr && tamaBar) {
-                                tamaExpr.style.left = (this.curX - 110) + 'px';
-                                tamaExpr.style.top = (this.curY - 120) + 'px';
-                                
-                                tamaBar.style.left = (this.curX + 110) + 'px';
-                                tamaBar.style.top = (this.curY - 120) + 'px';
-                            }
                         }
 
                         // PERBAIKAN MATEMATIKA: 
