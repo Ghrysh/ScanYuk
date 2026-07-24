@@ -115,16 +115,189 @@
         </a>
     </div>
 
-    <!-- Old UI container removed -->
+    <!-- TAMAGOTCHI: Phone Registration Modal -->
+    <div x-show="showPhoneModal" style="display: none;" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md"></div>
+        <div class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-white/10">
+            <!-- Header -->
+            <div class="p-6 pb-2 text-center">
+                <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-gradient-to-br from-teal-400 to-indigo-500 flex items-center justify-center shadow-lg shadow-teal-500/30">
+                    <img src="/ekspresi/senang.png" class="w-14 h-14 object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.innerText='🐾'">
+                </div>
+                <h3 class="text-white font-bold text-xl">Hai! Siapa kamu? 👋</h3>
+                <p class="text-slate-400 text-sm mt-1">Kenalan dulu yuk biar aku ingat kamu</p>
+            </div>
+            
+            <!-- Form -->
+            <div class="p-6 pt-3 space-y-3">
+                <!-- Step 1: Phone + Name -->
+                <template x-if="phoneStep === 1">
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-slate-400 text-xs font-medium mb-1 block">Nama Kamu</label>
+                            <input x-model="tamaName" type="text" placeholder="Mis. Andi" 
+                                class="w-full bg-slate-700/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
+                        </div>
+                        <div>
+                            <label class="text-slate-400 text-xs font-medium mb-1 block">Nomor WhatsApp</label>
+                            <input x-model="tamaPhone" type="tel" placeholder="08xxxxxxxxxx" 
+                                class="w-full bg-slate-700/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
+                        </div>
+                        <button @click="sendTamaOtp()" :disabled="tamaLoading" 
+                            class="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-indigo-500 text-white font-bold shadow-lg shadow-teal-500/30 hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2">
+                            <svg x-show="tamaLoading" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span x-text="tamaLoading ? 'Mengirim...' : 'Kirim Kode OTP'"></span>
+                        </button>
+                    </div>
+                </template>
+
+                <!-- Step 2: OTP -->
+                <template x-if="phoneStep === 2">
+                    <div class="space-y-3">
+                        <p class="text-slate-300 text-sm text-center">Masukkan kode 6 digit yang dikirim ke<br><span class="text-teal-400 font-bold" x-text="tamaPhone"></span></p>
+                        <div class="flex justify-center gap-2">
+                            <template x-for="(digit, index) in 6" :key="index">
+                                <input type="text" maxlength="1" inputmode="numeric" 
+                                    :id="'otp-' + index"
+                                    @input="handleOtpInput($event, index)"
+                                    @keydown.backspace="handleOtpBackspace($event, index)"
+                                    class="w-11 h-12 text-center text-xl font-bold text-white bg-slate-700/60 border border-white/10 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
+                            </template>
+                        </div>
+                        <button @click="verifyTamaOtp()" :disabled="tamaLoading || tamaOtpCode.length < 6" 
+                            class="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-indigo-500 text-white font-bold shadow-lg shadow-teal-500/30 hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2">
+                            <svg x-show="tamaLoading" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span x-text="tamaLoading ? 'Memverifikasi...' : '🚀 Mulai Petualangan!'"></span>
+                        </button>
+                        <button @click="phoneStep = 1" class="w-full text-slate-400 text-sm hover:text-white transition">← Ganti Nomor</button>
+                    </div>
+                </template>
+
+                <!-- Dev OTP Display -->
+                <div x-show="devOtp" class="bg-amber-500/20 border border-amber-500/30 rounded-xl p-3 text-center">
+                    <p class="text-amber-400 text-xs">🔧 Dev Mode — Kode OTP:</p>
+                    <p class="text-amber-300 font-bold text-2xl tracking-widest" x-text="devOtp"></p>
+                </div>
+
+                <p x-show="tamaError" class="text-red-400 text-sm text-center" x-text="tamaError"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAMAGOTCHI: Journey Modal -->
+    <div x-show="showJourneyModal" style="display: none;" class="fixed inset-0 z-[200] flex items-end justify-center">
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="showJourneyModal = false"></div>
+        <div class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-t-3xl shadow-2xl w-full max-w-lg border-t border-white/10 max-h-[85vh] flex flex-col" 
+             x-transition:enter="transition ease-out duration-300" x-transition:enter-start="translate-y-full" x-transition:enter-end="translate-y-0">
+            <!-- Handle -->
+            <div class="flex justify-center pt-3 pb-1"><div class="w-10 h-1 bg-white/20 rounded-full"></div></div>
+            
+            <!-- Header -->
+            <div class="p-4 pb-2 flex items-center justify-between">
+                <div>
+                    <h3 class="text-white font-bold text-lg">📖 Journey Kamu</h3>
+                    <p class="text-slate-400 text-xs" x-text="tamaDisplayName"></p>
+                </div>
+                <div class="flex gap-2">
+                    <button @click="shareJourney('whatsapp')" class="bg-green-500/20 text-green-400 p-2 rounded-xl hover:bg-green-500/30 transition" title="Share ke WhatsApp">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    </button>
+                    <button @click="shareJourney('instagram')" class="bg-pink-500/20 text-pink-400 p-2 rounded-xl hover:bg-pink-500/30 transition" title="Share ke Instagram">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="mx-4 p-3 bg-slate-700/40 rounded-xl flex items-center gap-3">
+                <img :src="'/ekspresi/' + expState + '.png'" class="w-10 h-10 object-contain" onerror="this.src='/ekspresi/senang.png'">
+                <div class="flex-1">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-300" x-text="expState"></span>
+                        <span class="text-teal-400 font-bold" x-text="Math.floor(expPoints) + '/100'"></span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-600 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all duration-500" :style="`width: ${expPoints}%; background-color: ${getExpColor()}`"></div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <p class="text-white text-sm font-bold" x-text="tamaTotalScans + 'x'"></p>
+                    <p class="text-slate-400 text-[10px]">scans</p>
+                </div>
+            </div>
+
+            <!-- Journey List -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                <template x-if="journeyEntries.length === 0">
+                    <div class="text-center py-8">
+                        <p class="text-slate-500 text-4xl mb-2">📝</p>
+                        <p class="text-slate-400 text-sm">Belum ada journey. Tulis ceritamu!</p>
+                    </div>
+                </template>
+                <template x-for="(entry, i) in journeyEntries" :key="entry.id">
+                    <div class="flex gap-3">
+                        <!-- Timeline dot -->
+                        <div class="flex flex-col items-center">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-lg shrink-0" 
+                                :class="i === 0 ? 'bg-teal-500/20 ring-2 ring-teal-400' : 'bg-slate-700'">
+                                <span x-text="getMoodEmoji(entry.mood)"></span>
+                            </div>
+                            <div x-show="i < journeyEntries.length - 1" class="w-0.5 flex-1 bg-slate-700 mt-1"></div>
+                        </div>
+                        <!-- Content -->
+                        <div class="flex-1 pb-4">
+                            <p class="text-white text-sm font-medium" x-text="entry.status_text"></p>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-slate-500 text-[11px]" x-text="entry.date + ' • ' + entry.time"></span>
+                                <span class="text-[10px] px-1.5 py-0.5 rounded-full" 
+                                    :class="getExpBadgeClass(entry.exp_points)" 
+                                    x-text="Math.floor(entry.exp_points) + ' pts'"></span>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAMAGOTCHI: Status Input (bottom bar) -->
+    <div x-show="expressionEnabled && tamaSessionId && arActive" style="display: none;" 
+         class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-xs">
+        <div class="bg-black/50 backdrop-blur-xl rounded-2xl border border-white/10 p-2 flex gap-2 items-center">
+            <input x-model="statusInput" type="text" placeholder="Lagi apa? Ceritain..." maxlength="255"
+                @keydown.enter="submitStatus()"
+                class="flex-1 bg-transparent text-white text-sm px-3 py-2 outline-none placeholder-slate-500">
+            <button @click="submitStatus()" :disabled="!statusInput.trim() || statusSubmitting" 
+                class="bg-gradient-to-r from-teal-500 to-indigo-500 text-white p-2 rounded-xl hover:opacity-90 transition disabled:opacity-30 shrink-0">
+                <svg x-show="!statusSubmitting" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"/></svg>
+                <svg x-show="statusSubmitting" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+            </button>
+        </div>
+        <p x-show="statusSaved" x-transition.opacity class="text-teal-400 text-xs text-center mt-1 font-medium">✓ Tersimpan di journey!</p>
+    </div>
+
+    <!-- TAMAGOTCHI: Journey Button (floating) -->
+    <button x-show="expressionEnabled && tamaSessionId && arActive" style="display: none;" 
+        @click="openJourney()" 
+        class="fixed top-6 right-6 z-40 bg-gradient-to-br from-amber-400 to-orange-500 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg shadow-orange-500/40 hover:scale-110 transition-transform border-2 border-white/20">
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+    </button>
 
     <div x-show="isFetching" style="display: none;" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-black/60 backdrop-blur-xl text-white px-6 py-4 rounded-2xl flex flex-col items-center gap-3 shadow-2xl border border-white/10">
         <svg class="animate-spin h-8 w-8 text-teal-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
         <span class="font-medium text-sm tracking-wide">Membuka Portal AR...</span>
     </div>
 
-    <div x-show="arActive" style="display: none;" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-xs">
+    <div x-show="arActive && !expressionEnabled" style="display: none;" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-xs">
         <button @click="replayVoice()" class="w-full bg-gradient-to-r from-teal-500 to-indigo-500 hover:opacity-90 backdrop-blur-md text-white py-4 px-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition shadow-[0_10px_25px_rgba(20,184,166,0.4)]">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 001.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06zM18.584 5.106a.75.75 0 011.06 0c3.808 3.807 3.808 9.98 0 13.788a.75.75 0 11-1.06-1.06 8.25 8.25 0 000-11.668.75.75 0 010-1.06z" /><path d="M15.932 7.757a.75.75 0 011.061 0 4.5 4.5 0 010 6.364.75.75 0 01-1.06-1.06 3 3 0 000-4.243.75.75 0 010-1.061z" /></svg>
+            Putar Ulang Narasi
+        </button>
+    </div>
+
+    <div x-show="arActive && expressionEnabled && tamaSessionId" style="display: none;" class="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-30 w-full max-w-xs">
+        <button @click="replayVoice()" class="w-full bg-black/40 backdrop-blur-md text-white py-3 px-4 rounded-2xl font-medium flex items-center justify-center gap-2 transition border border-white/10 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 001.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06z" /></svg>
             Putar Ulang Narasi
         </button>
     </div>
@@ -143,7 +316,6 @@
                 video: null, canvasElement: null, canvas: null, arOverlayContainer: null,
                 isFetching: false, arActive: false, errorMessage: '', arCache: {}, currentQrUrl: null, lastFoundTime: 0, audioBlocked: false,
                 
-                // PERBAIKAN: Tambahan state untuk menyimpan nilai transform dari Database
                 arData: { 
                     type: '2d', src: '',
                     scale: '1 1 1', scaleRaw: 1,
@@ -159,7 +331,26 @@
                 targetX: 0, targetY: 0, targetScale: 0, targetAngle: 0, targetYaw: 0, targetPitch: 0,
                 hasSnaped: false,
 
-                // TAMAGOTCHI STATE
+                // TAMAGOTCHI SESSION & JOURNEY
+                showPhoneModal: false,
+                phoneStep: 1,
+                tamaPhone: '',
+                tamaName: '',
+                tamaOtpCode: '',
+                devOtp: null,
+                tamaLoading: false,
+                tamaError: '',
+                tamaSessionId: null,
+                tamaDisplayName: '',
+                tamaTotalScans: 0,
+                showJourneyModal: false,
+                journeyEntries: [],
+                statusInput: '',
+                statusSubmitting: false,
+                statusSaved: false,
+                _syncInterval: null,
+                _sessionBrowserKey: null,
+                
                 expressionEnabled: false,
                 expPoints: 100,
                 expState: 'senang',
@@ -235,7 +426,7 @@
                             
                             if (this.arUuid !== uuid) {
                                 this.arUuid = uuid;
-                                // Reset tamagotchi cache trigger for new UUID
+                                this._sessionBrowserKey = 'tama_browser_' + uuid;
                             }
 
                             if (!this.arCache[this.currentQrUrl] && !this.isFetching) {
@@ -246,21 +437,25 @@
                                     this.arActive = true;
                                     this.restartAudioFromPause(this.currentQrUrl);
                                     
-                                    // Start Tamagotchi loop when AR becomes active
-                                    if (this.expressionEnabled) {
+                                    // Start Tamagotchi: check if phone registration is needed
+                                    if (this.expressionEnabled && !this.tamaSessionId) {
+                                        this.checkOrShowPhoneModal(uuid);
+                                    } else if (this.expressionEnabled && this.tamaSessionId) {
                                         this.initExpression(uuid);
                                     }
                                 }
                                 this.calculateTarget(code.location);
                             }
                         } else {
+                            // QR lost — hide AR visually but DON'T destroy session
                             if (Date.now() - this.lastFoundTime > 500) { 
                                 this.arOverlayContainer.style.opacity = '0';
                                 this.arOverlayContainer.style.pointerEvents = 'none';
                                 this.arOverlayContainer.style.transform = 'translate3d(-9999px, -9999px, 0)';
                                 this.arActive = false;
                                 this.hasSnaped = false;
-                                this.stopAllAudio();
+                                // DON'T stop audio or destroy session — user just moved camera
+                                // Session persists via sessionStorage
                             }
                         }
                     }
@@ -770,40 +965,284 @@
                     } catch(e) { console.error('Error adjusting hotspots:', e); }
                 },
 
-                initExpression(uuid) {
-                    this.$nextTick(() => {
-                        const viewer = document.querySelector('#main-ar-viewer');
-                        if (viewer) this.adjustHotspots(viewer);
-                    });
+                // === TAMAGOTCHI SESSION MANAGEMENT ===
+                checkOrShowPhoneModal(uuid) {
+                    // Check sessionStorage first (browser session = not closed/lockscreen)
+                    const browserKey = 'tama_browser_' + uuid;
+                    const browserSession = sessionStorage.getItem(browserKey);
                     
-                    const storageKey = 'ar_exp_' + uuid;
-                    let savedData = localStorage.getItem(storageKey);
-                    let now = Date.now();
-                    
-                    if (savedData) {
+                    if (browserSession) {
+                        // Browser session exists — NOT a new scan, resume silently
                         try {
-                            let parsed = JSON.parse(savedData);
-                            this.expPoints = parsed.points;
-                            this.lastLat = parsed.lat || null;
-                            this.lastLon = parsed.lon || null;
+                            let data = JSON.parse(browserSession);
+                            this.tamaSessionId = data.session_id;
+                            this.tamaDisplayName = data.display_name;
+                            this.tamaPhone = data.phone;
+                            this.tamaTotalScans = data.total_scans;
                             
-                            // Depletion (48 hours = 100 points -> 2.0833 points/hr -> 0.0000005787 points/ms)
-                            let timeDiffMs = now - parsed.lastTime;
-                            let pointsToDeduct = timeDiffMs * 0.0000005787;
-                            this.expPoints -= pointsToDeduct;
-                            if (this.expPoints < 0) this.expPoints = 0;
-                        } catch(e) {
-                            this.expPoints = 100;
-                        }
-                    } else {
-                        this.expPoints = 100;
+                            // Restore exp from server
+                            this.restoreSessionFromServer(data.session_id, data.phone);
+                            return;
+                        } catch(e) {}
                     }
+
+                    // Check localStorage (persistent across browser closes)
+                    const localKey = 'tama_local_' + uuid;
+                    const localData = localStorage.getItem(localKey);
                     
+                    if (localData) {
+                        try {
+                            let data = JSON.parse(localData);
+                            // Has previous session — verify with server and count as new scan
+                            this.tamaPhone = data.phone;
+                            this.tamaName = data.display_name;
+                            this.autoLoginSession(uuid, data);
+                            return;
+                        } catch(e) {}
+                    }
+
+                    // No session at all — show phone registration modal
+                    this.showPhoneModal = true;
+                },
+
+                async autoLoginSession(uuid, data) {
+                    try {
+                        const res = await fetch('/api/tamagotchi/check-session', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+                            body: JSON.stringify({ session_id: data.session_id, phone: data.phone })
+                        });
+                        const result = await res.json();
+                        if (result.status === 'success') {
+                            this.tamaSessionId = result.data.session_id;
+                            this.tamaDisplayName = result.data.display_name;
+                            this.tamaTotalScans = result.data.total_scans;
+                            this.expPoints = result.data.exp_points;
+                            
+                            // Save to sessionStorage (marks this browser tab as active)
+                            sessionStorage.setItem('tama_browser_' + uuid, JSON.stringify({
+                                session_id: this.tamaSessionId,
+                                display_name: this.tamaDisplayName,
+                                phone: this.tamaPhone,
+                                total_scans: this.tamaTotalScans
+                            }));
+                            
+                            this.initExpression(uuid);
+                            this.startSyncInterval();
+                        } else {
+                            // Session invalid — show phone modal
+                            this.showPhoneModal = true;
+                        }
+                    } catch(e) {
+                        this.showPhoneModal = true;
+                    }
+                },
+
+                async restoreSessionFromServer(sessionId, phone) {
+                    try {
+                        const res = await fetch('/api/tamagotchi/check-session', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+                            body: JSON.stringify({ session_id: sessionId, phone: phone })
+                        });
+                        const result = await res.json();
+                        if (result.status === 'success') {
+                            this.expPoints = result.data.exp_points;
+                            this.tamaTotalScans = result.data.total_scans;
+                        }
+                    } catch(e) {}
+                    this.initExpression(this.arUuid);
+                    this.startSyncInterval();
+                },
+
+                async sendTamaOtp() {
+                    if (!this.tamaPhone.trim() || !this.tamaName.trim()) {
+                        this.tamaError = 'Nama dan nomor telepon wajib diisi.';
+                        return;
+                    }
+                    this.tamaLoading = true;
+                    this.tamaError = '';
+                    try {
+                        const res = await fetch('/api/tamagotchi/send-otp', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+                            body: JSON.stringify({ phone: this.tamaPhone })
+                        });
+                        const result = await res.json();
+                        if (result.status === 'success') {
+                            this.phoneStep = 2;
+                            this.devOtp = result._otp || null;
+                        } else {
+                            this.tamaError = result.message || 'Gagal mengirim OTP.';
+                        }
+                    } catch(e) {
+                        this.tamaError = 'Kesalahan jaringan.';
+                    }
+                    this.tamaLoading = false;
+                },
+
+                handleOtpInput(event, index) {
+                    const val = event.target.value;
+                    if (val && index < 5) {
+                        document.getElementById('otp-' + (index + 1))?.focus();
+                    }
+                    // Collect all OTP digits
+                    let code = '';
+                    for (let i = 0; i < 6; i++) {
+                        code += document.getElementById('otp-' + i)?.value || '';
+                    }
+                    this.tamaOtpCode = code;
+                },
+
+                handleOtpBackspace(event, index) {
+                    if (!event.target.value && index > 0) {
+                        document.getElementById('otp-' + (index - 1))?.focus();
+                    }
+                },
+
+                async verifyTamaOtp() {
+                    if (this.tamaOtpCode.length < 6) return;
+                    this.tamaLoading = true;
+                    this.tamaError = '';
+                    try {
+                        const res = await fetch('/api/tamagotchi/register', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+                            body: JSON.stringify({
+                                phone: this.tamaPhone,
+                                otp: this.tamaOtpCode,
+                                display_name: this.tamaName,
+                                qr_uuid: this.arUuid,
+                                lat: this.lastLat,
+                                lon: this.lastLon,
+                            })
+                        });
+                        const result = await res.json();
+                        if (result.status === 'success') {
+                            this.tamaSessionId = result.data.session_id;
+                            this.tamaDisplayName = result.data.display_name;
+                            this.tamaTotalScans = result.data.total_scans;
+                            this.expPoints = result.data.exp_points;
+                            this.showPhoneModal = false;
+                            this.devOtp = null;
+
+                            // Save to localStorage (persistent) and sessionStorage (browser session)
+                            const saveData = {
+                                session_id: this.tamaSessionId,
+                                display_name: this.tamaDisplayName,
+                                phone: this.tamaPhone,
+                                total_scans: this.tamaTotalScans
+                            };
+                            localStorage.setItem('tama_local_' + this.arUuid, JSON.stringify(saveData));
+                            sessionStorage.setItem('tama_browser_' + this.arUuid, JSON.stringify(saveData));
+
+                            this.initExpression(this.arUuid);
+                            this.startSyncInterval();
+                        } else {
+                            this.tamaError = result.message || 'Verifikasi gagal.';
+                        }
+                    } catch(e) {
+                        this.tamaError = 'Kesalahan jaringan.';
+                    }
+                    this.tamaLoading = false;
+                },
+
+                startSyncInterval() {
+                    if (this._syncInterval) clearInterval(this._syncInterval);
+                    this._syncInterval = setInterval(() => {
+                        if (this.tamaSessionId) {
+                            fetch('/api/tamagotchi/sync', {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+                                body: JSON.stringify({
+                                    session_id: this.tamaSessionId,
+                                    exp_points: this.expPoints,
+                                    mood: this.expState,
+                                    lat: this.lastLat,
+                                    lon: this.lastLon,
+                                })
+                            }).catch(() => {});
+                        }
+                    }, 30000); // Sync every 30 seconds
+                },
+
+                async submitStatus() {
+                    if (!this.statusInput.trim() || this.statusSubmitting) return;
+                    this.statusSubmitting = true;
+                    try {
+                        await fetch('/api/tamagotchi/journal', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
+                            body: JSON.stringify({
+                                session_id: this.tamaSessionId,
+                                status_text: this.statusInput.trim(),
+                                mood: this.expState,
+                                exp_points: this.expPoints,
+                                lat: this.lastLat,
+                                lon: this.lastLon,
+                            })
+                        });
+                        this.statusInput = '';
+                        this.statusSaved = true;
+                        setTimeout(() => { this.statusSaved = false; }, 2000);
+                    } catch(e) {}
+                    this.statusSubmitting = false;
+                },
+
+                async openJourney() {
+                    this.showJourneyModal = true;
+                    try {
+                        const res = await fetch('/api/tamagotchi/journey/' + this.tamaSessionId);
+                        const result = await res.json();
+                        if (result.status === 'success') {
+                            this.journeyEntries = result.data.journeys;
+                        }
+                    } catch(e) {}
+                },
+
+                getMoodEmoji(mood) {
+                    const map = { senang: '😊', suntuk: '😐', marah: '😠', menangis: '😢', cape: '😴', tidur: '💤' };
+                    return map[mood] || '😊';
+                },
+
+                getExpBadgeClass(pts) {
+                    if (pts >= 75) return 'bg-green-500/20 text-green-400';
+                    if (pts >= 35) return 'bg-yellow-500/20 text-yellow-400';
+                    if (pts >= 10) return 'bg-red-500/20 text-red-400';
+                    return 'bg-red-900/30 text-red-500';
+                },
+
+                shareJourney(platform) {
+                    const url = window.location.origin + '/scan-ar?id=' + this.arUuid;
+                    const text = `🐾 Journey Tamagotchi AR ku!\n\n` +
+                        `Nama: ${this.tamaDisplayName}\n` +
+                        `Mood: ${this.expState} ${this.getMoodEmoji(this.expState)}\n` +
+                        `Exp: ${Math.floor(this.expPoints)}/100\n` +
+                        `Total Scan: ${this.tamaTotalScans}x\n\n` +
+                        `Coba juga scan QR Code nya! ✨\n${url}`;
+
+                    if (platform === 'whatsapp') {
+                        window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
+                    } else if (platform === 'instagram') {
+                        // Instagram doesn't have a direct share API for stories from web
+                        // Copy text to clipboard and show instruction
+                        navigator.clipboard.writeText(text).then(() => {
+                            alert('Teks sudah dicopy! Buka Instagram dan paste di Story kamu 📱');
+                        }).catch(() => {
+                            // Fallback
+                            prompt('Copy teks ini untuk di-share:', text);
+                        });
+                    }
+                },
+
+                // === TAMAGOTCHI CORE LOGIC ===
+                initExpression(uuid) {
+                    // exp_points already loaded from server via session
                     this.updateExpState();
                     
                     if (this.expInterval) clearInterval(this.expInterval);
                     this.expInterval = setInterval(() => {
-                        this.expLoop(storageKey);
+                        this.expLoop();
                     }, 1000);
 
                     // Setup GPS 
@@ -813,8 +1252,7 @@
                             let lon = pos.coords.longitude;
                             
                             if (this.lastLat !== null && this.lastLon !== null) {
-                                let dist = this.getDistanceFromLatLonInKm(this.lastLat, this.lastLon, lat, lon) * 1000; // meters
-                                // Boost to 100 if distance > 100m and not already senang
+                                let dist = this.getDistanceFromLatLonInKm(this.lastLat, this.lastLon, lat, lon) * 1000;
                                 if (dist > 100 && this.expPoints < 75) {
                                     this.expPoints = 100;
                                     this.updateExpState();
@@ -823,17 +1261,24 @@
                             
                             this.lastLat = lat;
                             this.lastLon = lon;
-                            // Save immediately after location update
-                            localStorage.setItem(storageKey, JSON.stringify({
-                                points: this.expPoints,
-                                lastTime: Date.now(),
-                                lat: this.lastLat,
-                                lon: this.lastLon
-                            }));
-                        }, (err) => {
-                            console.log("GPS denied or error", err);
-                        }, { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 });
+                        }, (err) => {}, { enableHighAccuracy: false, maximumAge: 60000, timeout: 10000 });
                     }
+
+                    // Listen for visibility change (lockscreen detection)
+                    document.addEventListener('visibilitychange', () => {
+                        if (document.hidden) {
+                            this._hiddenAt = Date.now();
+                        } else {
+                            // Page became visible again
+                            if (this._hiddenAt && (Date.now() - this._hiddenAt > 60000)) {
+                                // Hidden for > 60 seconds = likely lockscreen
+                                // Clear browser session so next QR scan = new scan
+                                if (this.arUuid) {
+                                    sessionStorage.removeItem('tama_browser_' + this.arUuid);
+                                }
+                            }
+                        }
+                    });
                 },
                 
                 getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
@@ -847,12 +1292,12 @@
                     return R * c; 
                 },
 
-                expLoop(storageKey) {
+                expLoop() {
                     let hour = new Date().getHours();
                     let isTimeOverride = false;
                     
                     if (hour === 6 && this.expPoints < 100) {
-                        this.expPoints = 100; // wake up happy
+                        this.expPoints = 100;
                     }
                     
                     if (hour >= 21 || hour < 6) {
@@ -864,20 +1309,10 @@
                     }
                     
                     if (!isTimeOverride) {
-                        // Increment if AR is actively being viewed and points are below Suntuk threshold
                         if (this.arActive && this.expPoints < 35) {
                             this.expPoints += 1; 
                         }
                         this.updateExpState();
-                    }
-                    
-                    if (this.arActive) {
-                        localStorage.setItem(storageKey, JSON.stringify({
-                            points: this.expPoints,
-                            lastTime: Date.now(),
-                            lat: this.lastLat,
-                            lon: this.lastLon
-                        }));
                     }
                 },
                 

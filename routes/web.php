@@ -255,3 +255,11 @@ Route::post('/api/chatbot/live/send', [\App\Http\Controllers\ChatbotController::
 Route::get('/api/chatbot/live/poll/{leadId}', [\App\Http\Controllers\ChatbotController::class, 'pollLiveChat']);
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+// Tamagotchi Public API (no auth required — for scanner visitors)
+Route::post('/api/tamagotchi/send-otp', [\App\Http\Controllers\Api\TamagotchiController::class, 'sendOtp']);
+Route::post('/api/tamagotchi/register', [\App\Http\Controllers\Api\TamagotchiController::class, 'register']);
+Route::post('/api/tamagotchi/check-session', [\App\Http\Controllers\Api\TamagotchiController::class, 'checkSession']);
+Route::post('/api/tamagotchi/sync', [\App\Http\Controllers\Api\TamagotchiController::class, 'sync']);
+Route::post('/api/tamagotchi/journal', [\App\Http\Controllers\Api\TamagotchiController::class, 'journal']);
+Route::get('/api/tamagotchi/journey/{sessionId}', [\App\Http\Controllers\Api\TamagotchiController::class, 'getJourney']);
