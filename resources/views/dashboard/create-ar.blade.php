@@ -273,13 +273,13 @@
                                 </div>
                                 
                                 {{-- TAMAGOTCHI UI OVERLAY FOR 3D CANVAS --}}
-                                <div id="tamagotchi-editor-expression" class="absolute pointer-events-none" style="display: none; transform: translate(-50%, -50%);">
+                                <div id="tamagotchi-editor-expression" class="absolute pointer-events-none" style="display: none; top: 15px; left: 15px;">
                                     <div class="flex items-start gap-3 w-48">
                                         <img :src="'/ekspresi/' + expState + '.png'" class="w-16 h-16 drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)] object-contain animate-bounce shrink-0" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
                                     </div>
                                 </div>
                                 
-                                <div id="tamagotchi-editor-bar" class="absolute pointer-events-none" style="display: none; transform: translate(-50%, -50%);">
+                                <div id="tamagotchi-editor-bar" class="absolute pointer-events-none" style="display: none; top: 15px; right: 15px;">
                                     <div class="relative">
                                         <div class="flex flex-col items-center gap-2">
                                             <span class="text-white text-[10px] font-bold drop-shadow-md bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm" x-text="Math.floor(expPoints) + '/100'"></span>
@@ -2232,28 +2232,6 @@
                 if (activeModelGroup && alpineData) {
                     if(elExp) elExp.style.display = 'block';
                     if(elBar) elBar.style.display = 'block';
-                    
-                    const s = window.threeState.scale;
-                    const w = renderer.domElement.clientWidth;
-                    const h = renderer.domElement.clientHeight;
-                    
-                    // Expression Hotspot (geser ke kanan, sedikit lebih dekat)
-                    const pExp = new THREE.Vector3(-0.4 * s, 0.7 * s, 0);
-                    pExp.applyMatrix4(activeModelGroup.matrixWorld);
-                    pExp.project(camera);
-                    if(elExp) {
-                        elExp.style.left = (pExp.x * 0.5 + 0.5) * w + 'px';
-                        elExp.style.top = (pExp.y * -0.5 + 0.5) * h + 'px';
-                    }
-                    
-                    // Bar Hotspot (geser ke atas)
-                    const pBar = new THREE.Vector3(0.7 * s, 0.7 * s, 0);
-                    pBar.applyMatrix4(activeModelGroup.matrixWorld);
-                    pBar.project(camera);
-                    if(elBar) {
-                        elBar.style.left = (pBar.x * 0.5 + 0.5) * w + 'px';
-                        elBar.style.top = (pBar.y * -0.5 + 0.5) * h + 'px';
-                    }
                 } else {
                     if(elExp) elExp.style.display = 'none';
                     if(elBar) elBar.style.display = 'none';
