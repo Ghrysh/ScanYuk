@@ -116,6 +116,7 @@
     </div>
 
     <!-- TAMAGOTCHI: Phone Registration Modal -->
+    <!-- TAMAGOTCHI: Registration Modal -->
     <div x-show="showPhoneModal" style="display: none;" class="fixed inset-0 z-[200] flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-slate-900/90 backdrop-blur-md"></div>
         <div class="relative bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden border border-white/10">
@@ -125,58 +126,27 @@
                     <img src="/ekspresi/senang.png" class="w-14 h-14 object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.innerText='🐾'">
                 </div>
                 <h3 class="text-white font-bold text-xl">Hai! Siapa kamu? 👋</h3>
-                <p class="text-slate-400 text-sm mt-1">Kenalan dulu yuk biar aku ingat kamu</p>
+                <p class="text-slate-400 text-sm mt-1">Daftar atau masuk untuk menyimpan perjalananmu</p>
             </div>
             
             <!-- Form -->
             <div class="p-6 pt-3 space-y-3">
-                <!-- Step 1: Phone + Name -->
-                <template x-if="phoneStep === 1">
-                    <div class="space-y-3">
-                        <div>
-                            <label class="text-slate-400 text-xs font-medium mb-1 block">Nama Kamu</label>
-                            <input x-model="tamaName" type="text" placeholder="Mis. Andi" 
-                                class="w-full bg-slate-700/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
-                        </div>
-                        <div>
-                            <label class="text-slate-400 text-xs font-medium mb-1 block">Nomor WhatsApp</label>
-                            <input x-model="tamaPhone" type="tel" placeholder="08xxxxxxxxxx" 
-                                class="w-full bg-slate-700/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
-                        </div>
-                        <button @click="sendTamaOtp()" :disabled="tamaLoading" 
-                            class="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-indigo-500 text-white font-bold shadow-lg shadow-teal-500/30 hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2">
-                            <svg x-show="tamaLoading" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            <span x-text="tamaLoading ? 'Mengirim...' : 'Kirim Kode OTP'"></span>
-                        </button>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-slate-400 text-xs font-medium mb-1 block">Username (Tanpa spasi)</label>
+                        <input x-model="tamaUsername" type="text" placeholder="Mis. andi123" 
+                            class="w-full bg-slate-700/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
                     </div>
-                </template>
-
-                <!-- Step 2: OTP -->
-                <template x-if="phoneStep === 2">
-                    <div class="space-y-3">
-                        <p class="text-slate-300 text-sm text-center">Masukkan kode 6 digit yang dikirim ke<br><span class="text-teal-400 font-bold" x-text="tamaPhone"></span></p>
-                        <div class="flex justify-center gap-2">
-                            <template x-for="(digit, index) in 6" :key="index">
-                                <input type="text" maxlength="1" inputmode="numeric" 
-                                    :id="'otp-' + index"
-                                    @input="handleOtpInput($event, index)"
-                                    @keydown.backspace="handleOtpBackspace($event, index)"
-                                    class="w-11 h-12 text-center text-xl font-bold text-white bg-slate-700/60 border border-white/10 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
-                            </template>
-                        </div>
-                        <button @click="verifyTamaOtp()" :disabled="tamaLoading || tamaOtpCode.length < 6" 
-                            class="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-indigo-500 text-white font-bold shadow-lg shadow-teal-500/30 hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2">
-                            <svg x-show="tamaLoading" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                            <span x-text="tamaLoading ? 'Memverifikasi...' : '🚀 Mulai Petualangan!'"></span>
-                        </button>
-                        <button @click="phoneStep = 1" class="w-full text-slate-400 text-sm hover:text-white transition">← Ganti Nomor</button>
+                    <div>
+                        <label class="text-slate-400 text-xs font-medium mb-1 block">Password</label>
+                        <input x-model="tamaPassword" type="password" placeholder="Minimal 4 karakter" 
+                            class="w-full bg-slate-700/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
                     </div>
-                </template>
-
-                <!-- Dev OTP Display -->
-                <div x-show="devOtp" class="bg-amber-500/20 border border-amber-500/30 rounded-xl p-3 text-center">
-                    <p class="text-amber-400 text-xs">🔧 Dev Mode — Kode OTP:</p>
-                    <p class="text-amber-300 font-bold text-2xl tracking-widest" x-text="devOtp"></p>
+                    <button @click="registerTamaUser()" :disabled="tamaLoading" 
+                        class="w-full py-3 rounded-xl bg-gradient-to-r from-teal-500 to-indigo-500 text-white font-bold shadow-lg shadow-teal-500/30 hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2">
+                        <svg x-show="tamaLoading" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span x-text="tamaLoading ? 'Memproses...' : '🚀 Mulai Petualangan!'"></span>
+                    </button>
                 </div>
 
                 <p x-show="tamaError" class="text-red-400 text-sm text-center" x-text="tamaError"></p>
@@ -333,11 +303,8 @@
 
                 // TAMAGOTCHI SESSION & JOURNEY
                 showPhoneModal: false,
-                phoneStep: 1,
-                tamaPhone: '',
-                tamaName: '',
-                tamaOtpCode: '',
-                devOtp: null,
+                tamaUsername: '',
+                tamaPassword: '',
                 tamaLoading: false,
                 tamaError: '',
                 tamaSessionId: null,
@@ -976,12 +943,11 @@
                         try {
                             let data = JSON.parse(browserSession);
                             this.tamaSessionId = data.session_id;
-                            this.tamaDisplayName = data.display_name;
-                            this.tamaPhone = data.phone;
+                            this.tamaUsername = data.username;
                             this.tamaTotalScans = data.total_scans;
                             
                             // Restore exp from server
-                            this.restoreSessionFromServer(data.session_id, data.phone);
+                            this.restoreSessionFromServer(data.session_id, data.username);
                             return;
                         } catch(e) {}
                     }
@@ -994,8 +960,7 @@
                         try {
                             let data = JSON.parse(localData);
                             // Has previous session — verify with server and count as new scan
-                            this.tamaPhone = data.phone;
-                            this.tamaName = data.display_name;
+                            this.tamaUsername = data.username;
                             this.autoLoginSession(uuid, data);
                             return;
                         } catch(e) {}
@@ -1010,20 +975,18 @@
                         const res = await fetch('/api/tamagotchi/check-session', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-                            body: JSON.stringify({ session_id: data.session_id, phone: data.phone })
+                            body: JSON.stringify({ session_id: data.session_id, username: data.username })
                         });
                         const result = await res.json();
                         if (result.status === 'success') {
                             this.tamaSessionId = result.data.session_id;
-                            this.tamaDisplayName = result.data.display_name;
                             this.tamaTotalScans = result.data.total_scans;
                             this.expPoints = result.data.exp_points;
                             
                             // Save to sessionStorage (marks this browser tab as active)
                             sessionStorage.setItem('tama_browser_' + uuid, JSON.stringify({
                                 session_id: this.tamaSessionId,
-                                display_name: this.tamaDisplayName,
-                                phone: this.tamaPhone,
+                                username: this.tamaUsername,
                                 total_scans: this.tamaTotalScans
                             }));
                             
@@ -1038,12 +1001,12 @@
                     }
                 },
 
-                async restoreSessionFromServer(sessionId, phone) {
+                async restoreSessionFromServer(sessionId, username) {
                     try {
                         const res = await fetch('/api/tamagotchi/check-session', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-                            body: JSON.stringify({ session_id: sessionId, phone: phone })
+                            body: JSON.stringify({ session_id: sessionId, username: username })
                         });
                         const result = await res.json();
                         if (result.status === 'success') {
@@ -1055,53 +1018,15 @@
                     this.startSyncInterval();
                 },
 
-                async sendTamaOtp() {
-                    if (!this.tamaPhone.trim() || !this.tamaName.trim()) {
-                        this.tamaError = 'Nama dan nomor telepon wajib diisi.';
+                async registerTamaUser() {
+                    if (!this.tamaUsername.trim() || !this.tamaPassword.trim()) {
+                        this.tamaError = 'Username dan Password wajib diisi.';
                         return;
                     }
-                    this.tamaLoading = true;
-                    this.tamaError = '';
-                    try {
-                        const res = await fetch('/api/tamagotchi/send-otp', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
-                            body: JSON.stringify({ phone: this.tamaPhone })
-                        });
-                        const result = await res.json();
-                        if (result.status === 'success') {
-                            this.phoneStep = 2;
-                            this.devOtp = result._otp || null;
-                        } else {
-                            this.tamaError = result.message || 'Gagal mengirim OTP.';
-                        }
-                    } catch(e) {
-                        this.tamaError = 'Kesalahan jaringan.';
+                    if (this.tamaPassword.length < 4) {
+                        this.tamaError = 'Password minimal 4 karakter.';
+                        return;
                     }
-                    this.tamaLoading = false;
-                },
-
-                handleOtpInput(event, index) {
-                    const val = event.target.value;
-                    if (val && index < 5) {
-                        document.getElementById('otp-' + (index + 1))?.focus();
-                    }
-                    // Collect all OTP digits
-                    let code = '';
-                    for (let i = 0; i < 6; i++) {
-                        code += document.getElementById('otp-' + i)?.value || '';
-                    }
-                    this.tamaOtpCode = code;
-                },
-
-                handleOtpBackspace(event, index) {
-                    if (!event.target.value && index > 0) {
-                        document.getElementById('otp-' + (index - 1))?.focus();
-                    }
-                },
-
-                async verifyTamaOtp() {
-                    if (this.tamaOtpCode.length < 6) return;
                     this.tamaLoading = true;
                     this.tamaError = '';
                     try {
@@ -1109,9 +1034,8 @@
                             method: 'POST',
                             headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}'},
                             body: JSON.stringify({
-                                phone: this.tamaPhone,
-                                otp: this.tamaOtpCode,
-                                display_name: this.tamaName,
+                                username: this.tamaUsername,
+                                password: this.tamaPassword,
                                 qr_uuid: this.arUuid,
                                 lat: this.lastLat,
                                 lon: this.lastLon,
@@ -1120,17 +1044,14 @@
                         const result = await res.json();
                         if (result.status === 'success') {
                             this.tamaSessionId = result.data.session_id;
-                            this.tamaDisplayName = result.data.display_name;
                             this.tamaTotalScans = result.data.total_scans;
                             this.expPoints = result.data.exp_points;
                             this.showPhoneModal = false;
-                            this.devOtp = null;
 
                             // Save to localStorage (persistent) and sessionStorage (browser session)
                             const saveData = {
                                 session_id: this.tamaSessionId,
-                                display_name: this.tamaDisplayName,
-                                phone: this.tamaPhone,
+                                username: this.tamaUsername,
                                 total_scans: this.tamaTotalScans
                             };
                             localStorage.setItem('tama_local_' + this.arUuid, JSON.stringify(saveData));

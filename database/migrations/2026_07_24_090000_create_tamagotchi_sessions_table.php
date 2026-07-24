@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('tamagotchi_sessions', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('qr_code_id');
-            $table->string('phone', 20);
-            $table->string('display_name', 100)->nullable();
+            $table->string('username', 50);
+            $table->string('password');
             $table->float('exp_points')->default(100);
             $table->decimal('last_lat', 10, 7)->nullable();
             $table->decimal('last_lon', 10, 7)->nullable();
@@ -20,7 +20,7 @@ return new class extends Migration
             $table->timestamp('last_active_at')->nullable();
             $table->timestamps();
 
-            $table->unique(['qr_code_id', 'phone']);
+            $table->unique(['qr_code_id', 'username']);
             $table->foreign('qr_code_id')->references('id')->on('qr_codes')->onDelete('cascade');
         });
     }

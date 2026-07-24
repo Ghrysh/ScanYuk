@@ -8,8 +8,8 @@ class TamagotchiSession extends Model
 {
     protected $fillable = [
         'qr_code_id',
-        'phone',
-        'display_name',
+        'username',
+        'password',
         'exp_points',
         'last_lat',
         'last_lon',
