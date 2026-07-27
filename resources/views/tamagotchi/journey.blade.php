@@ -8,6 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
@@ -30,9 +31,9 @@
                 <h1 class="font-bold text-lg text-white">Detail Journey</h1>
             </div>
             <!-- Bagikan Tombol Native Web Share API -->
-            <button onclick="shareJourney()" class="text-teal-400 bg-teal-500/10 hover:bg-teal-500/20 px-4 py-2 rounded-full text-sm font-semibold border border-teal-500/30 transition-colors flex items-center gap-2">
+            <button id="share-btn" onclick="shareJourney()" class="text-teal-400 bg-teal-500/10 hover:bg-teal-500/20 px-4 py-2 rounded-full text-sm font-semibold border border-teal-500/30 transition-colors flex items-center justify-center gap-2 min-w-[110px]">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
-                Bagikan
+                <span>Bagikan</span>
             </button>
         </div>
     </header>
@@ -103,18 +104,79 @@
     </main>
 
     <script>
-        function shareJourney() {
-            if (navigator.share) {
-                navigator.share({
-                    title: 'Journey {{ $username }} di ScanYuk AR',
-                    text: 'Lihat apa yang {{ $username }} temukan: "{{ $journey->status_text }}"',
-                    url: window.location.href,
-                }).catch(console.error);
-            } else {
-                // Fallback copy to clipboard
-                navigator.clipboard.writeText(window.location.href).then(() => {
-                    alert('Link disalin ke clipboard! Bagikan ke temanmu.');
+        async function shareJourney() {
+            const btn = document.getElementById('share-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<span class="animate-pulse">Memproses...</span>';
+            btn.disabled = true;
+
+            try {
+                // Trik menangkap model-viewer (WebGL canvas biasanya kosong jika tidak ditangani)
+                const viewer = document.querySelector('model-viewer');
+                let tempImg = null;
+                if (viewer) {
+                    const dataUrl = viewer.toDataURL('image/png');
+                    tempImg = document.createElement('img');
+                    tempImg.src = dataUrl;
+                    tempImg.className = viewer.className;
+                    viewer.style.display = 'none';
+                    viewer.parentNode.insertBefore(tempImg, viewer);
+                }
+
+                // Ambil screenshot dari journey-card
+                const card = document.getElementById('journey-card');
+                const canvas = await html2canvas(card, {
+                    backgroundColor: '#0f172a',
+                    scale: 2 // Resolusi tinggi
                 });
+
+                // Kembalikan model-viewer
+                if (viewer && tempImg) {
+                    viewer.style.display = '';
+                    tempImg.remove();
+                }
+
+                canvas.toBlob(async (blob) => {
+                    const file = new File([blob], `journey-{{ $username }}.png`, { type: 'image/png' });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        // Minta pengguna klik lagi untuk share (mencegah error user gesture expired)
+                        btn.innerHTML = 'Kirim 🚀';
+                        btn.disabled = false;
+                        btn.onclick = async () => {
+                            try {
+                                await navigator.share({
+                                    title: 'Journey {{ $username }} di ScanYuk AR',
+                                    text: 'Lihat apa yang {{ $username }} temukan: "{{ $journey->status_text }}"',
+                                    files: [file]
+                                });
+                            } catch (e) {
+                                console.log('Share dibatalkan atau error:', e);
+                            }
+                            // Kembalikan tombol ke semula
+                            btn.innerHTML = originalHTML;
+                            btn.onclick = shareJourney;
+                        };
+                    } else {
+                        // Fallback browser jadul / desktop: Download gambar
+                        const link = document.createElement('a');
+                        link.download = `journey-{{ $username }}.png`;
+                        link.href = URL.createObjectURL(blob);
+                        link.click();
+                        
+                        setTimeout(() => {
+                            alert('Gambar berhasil disimpan ke perangkat Anda! Silakan upload secara manual.');
+                        }, 500);
+                        
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    }
+                });
+            } catch (err) {
+                console.error(err);
+                alert('Gagal membuat gambar.');
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
             }
         }
     </script>
