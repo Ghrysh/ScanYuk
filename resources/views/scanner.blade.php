@@ -1383,18 +1383,18 @@
                     if (hour >= 21 || hour < 6) {
                         this.setExpState('tidur');
                         isTimeOverride = true;
-                        // Saat tidur, energi pulih secara alami (1 poin per jam = 1/3600 per detik)
+                        // Saat tidur, energi pulih +1 poin per jam (1/3600 per detik)
                         this.expPoints = Math.min(100, this.expPoints + 0.0002777);
                     } else if (hour === 20) {
                         this.setExpState('cape');
                         isTimeOverride = true;
-                        // Saat cape (jam 20), energi tetap turun perlahan
-                        this.expPoints = Math.max(0, this.expPoints - 0.0005787);
+                        // Saat cape (jam 20), energi tetap turun perlahan (-6.66 per jam = -0.00185 per detik)
+                        this.expPoints = Math.max(0, this.expPoints - 0.0018518);
                     }
                     
                     if (!isTimeOverride) {
-                        // 1. Turun otomatis secara konstan (sekitar 0.0005787 poin per detik = 48 jam)
-                        this.expPoints = Math.max(0, this.expPoints - 0.0005787); 
+                        // 1. Turun otomatis secara konstan (6.66 poin per jam = habis dlm 15 jam)
+                        this.expPoints = Math.max(0, this.expPoints - 0.0018518); 
                         
                         // 2. Naik otomatis secara halus JIKA sedang scan DAN poin masih di bawah 35 (Suntuk)
                         // (+1 poin per detik)
