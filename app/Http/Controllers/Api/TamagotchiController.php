@@ -56,13 +56,11 @@ class TamagotchiController extends Controller
             }
 
             // Hitung depletion berdasarkan waktu tidur/bangun
-            $session->exp_points = $this->calculateNewExp($session->exp_points, $session->last_active_at);
+            $session->syncDecay();
 
             // Sesi sudah ada — increment scan
             $session->update([
                 'total_scans' => $session->total_scans + 1,
-                'exp_points' => $session->exp_points,
-                'last_active_at' => now(),
             ]);
         } else {
             // Register - Sesi baru
@@ -249,10 +247,9 @@ class TamagotchiController extends Controller
 
         // Hitung depletion dan increment scan karena user me-load ulang halaman (dianggap scan baru)
         if ($session->last_active_at) {
-            $session->exp_points = $this->calculateNewExp($session->exp_points, $session->last_active_at);
-            $session->total_scans = $session->total_scans + 1;
+            $session->syncDecay();
             
-            $session->last_active_at = now();
+            $session->total_scans = $session->total_scans + 1;
             $session->save();
         }
 
@@ -266,44 +263,5 @@ class TamagotchiController extends Controller
                 'journey_count' => $session->journeys()->count(),
             ]
         ]);
-    }
-
-    /**
-     * Kalkulasi EXP baru berdasarkan waktu berlalu.
-     * Bangun (06:00 - 21:00): EXP berkurang agar habis dalam 15 jam (~6.66/jam)
-     * Tidur (21:00 - 06:00): EXP bertambah 1 poin per jam
-     */
-    private function calculateNewExp($currentExp, $lastActiveAt)
-    {
-        if (!$lastActiveAt) return $currentExp;
-
-        $now = now();
-        if ($lastActiveAt->greaterThanOrEqualTo($now)) return $currentExp;
-
-        $exp = $currentExp;
-        $time = clone $lastActiveAt;
-
-        // Simulasi per jam (atau fraksi) untuk akurasi perbedaan siang/malam
-        while ($time->lessThan($now)) {
-            $nextHour = (clone $time)->addHour()->startOfHour();
-            if ($nextHour->greaterThan($now)) {
-                $nextHour = clone $now;
-            }
-
-            $hoursDiff = $time->diffInSeconds($nextHour) / 3600;
-            $hourOfDay = $time->hour;
-
-            if ($hourOfDay >= 21 || $hourOfDay < 6) {
-                // Tidur: +1 per jam
-                $exp += (1.0 * $hoursDiff);
-            } else {
-                // Bangun: -6.66 per jam
-                $exp -= (6.666 * $hoursDiff);
-            }
-
-            $time = clone $nextHour;
-        }
-
-        return min(100, max(0, $exp));
     }
 }

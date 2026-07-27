@@ -57,6 +57,9 @@ class TamagotchiWebController extends Controller
             return view('tamagotchi.login', compact('session', 'username'));
         }
 
+        // Sinkronisasi EXP point terbaru sesuai waktu saat ini
+        $session->syncDecay();
+
         $journeys = $session->journeys()->latest()->get();
         
         $qr = $session->qrCode;
@@ -94,6 +97,9 @@ class TamagotchiWebController extends Controller
         if (!$isLoggedIn) {
             return redirect()->route('tamagotchi.index', $username);
         }
+
+        // Sinkronisasi EXP point terbaru sesuai waktu saat ini
+        $session->syncDecay();
 
         $journey = TamagotchiJourney::where('session_id', $session->id)->where('id', $journey_id)->firstOrFail();
 
