@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
@@ -60,7 +61,13 @@
                     $latestJourney = $journeys->first();
                     $mood = $latestJourney ? $latestJourney->mood : 'senang';
                 @endphp
-                <img src="/ekspresi/{{ $mood }}.png" class="w-14 h-14 object-contain animate-bounce" style="animation-duration: 3s;" onerror="this.src='/ekspresi/senang.png'">
+                @if($arType === '3d' && $file3dUrl)
+                    <model-viewer src="{{ $file3dUrl }}" auto-rotate camera-controls disable-zoom disable-pan interaction-prompt="none" shadow-intensity="1" class="w-full h-full object-contain"></model-viewer>
+                @elseif($arType === '2d' && $imageUrl)
+                    <img src="{{ $imageUrl }}" class="w-14 h-14 object-contain animate-bounce" style="animation-duration: 3s;">
+                @else
+                    <img src="/ekspresi/{{ $mood }}.png" class="w-14 h-14 object-contain animate-bounce" style="animation-duration: 3s;" onerror="this.src='/ekspresi/senang.png'">
+                @endif
                 <div class="absolute bottom-0 right-0 w-6 h-6 bg-teal-500 rounded-full border-2 border-slate-800 flex items-center justify-center">
                     <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                 </div>

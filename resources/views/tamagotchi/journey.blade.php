@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
@@ -43,10 +44,16 @@
             <div class="absolute -right-16 -top-16 w-48 h-48 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
             
             <div class="flex flex-col items-center text-center">
-                <div class="w-28 h-28 bg-gradient-to-br from-slate-700 to-slate-800 rounded-full flex items-center justify-center shadow-xl border border-slate-600 relative mb-6">
-                    <img src="/ekspresi/{{ $journey->mood }}.png" class="w-16 h-16 object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
+                <div class="w-28 h-28 bg-gradient-to-br from-slate-700 to-slate-800 rounded-full flex items-center justify-center shadow-xl border border-slate-600 relative mb-6 overflow-hidden">
+                    @if($arType === '3d' && $file3dUrl)
+                        <model-viewer src="{{ $file3dUrl }}" auto-rotate camera-controls disable-zoom disable-pan interaction-prompt="none" shadow-intensity="1" class="w-full h-full object-contain"></model-viewer>
+                    @elseif($arType === '2d' && $imageUrl)
+                        <img src="{{ $imageUrl }}" class="w-16 h-16 object-contain animate-bounce" style="animation-duration: 2s;">
+                    @else
+                        <img src="/ekspresi/{{ $journey->mood }}.png" class="w-16 h-16 object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
+                    @endif
                     
-                    <div class="absolute -bottom-2 right-0 bg-teal-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg border-2 border-slate-800">
+                    <div class="absolute bottom-0 right-0 bg-teal-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg border-2 border-slate-800 z-10">
                         {{ strtoupper($journey->mood) }}
                     </div>
                 </div>

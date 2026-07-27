@@ -48,7 +48,7 @@ class TamagotchiWebController extends Controller
      */
     public function index($username)
     {
-        $session = TamagotchiSession::where('username', strtolower($username))->firstOrFail();
+        $session = TamagotchiSession::with('qrCode.arAsset')->where('username', strtolower($username))->firstOrFail();
         
         // Cek apakah sudah login
         $isLoggedIn = session()->has('tamagotchi_logged_in_' . $session->id);
@@ -58,7 +58,13 @@ class TamagotchiWebController extends Controller
         }
 
         $journeys = $session->journeys()->latest()->get();
-        return view('tamagotchi.index', compact('session', 'journeys', 'username'));
+        
+        $qr = $session->qrCode;
+        $arType = $qr->ar_type ?? '3d';
+        $file3dUrl = ($arType === '3d' && $qr && $qr->arAsset) ? $qr->arAsset->file_path : null;
+        $imageUrl = ($arType === '2d' && $qr) ? asset('storage/' . $qr->image_path) : null;
+
+        return view('tamagotchi.index', compact('session', 'journeys', 'username', 'arType', 'file3dUrl', 'imageUrl'));
     }
 
     /**
@@ -82,7 +88,7 @@ class TamagotchiWebController extends Controller
      */
     public function show($username, $journey_id)
     {
-        $session = TamagotchiSession::where('username', strtolower($username))->firstOrFail();
+        $session = TamagotchiSession::with('qrCode.arAsset')->where('username', strtolower($username))->firstOrFail();
         
         $isLoggedIn = session()->has('tamagotchi_logged_in_' . $session->id);
         if (!$isLoggedIn) {
@@ -91,7 +97,12 @@ class TamagotchiWebController extends Controller
 
         $journey = TamagotchiJourney::where('session_id', $session->id)->where('id', $journey_id)->firstOrFail();
 
-        return view('tamagotchi.journey', compact('session', 'journey', 'username'));
+        $qr = $session->qrCode;
+        $arType = $qr->ar_type ?? '3d';
+        $file3dUrl = ($arType === '3d' && $qr && $qr->arAsset) ? $qr->arAsset->file_path : null;
+        $imageUrl = ($arType === '2d' && $qr) ? asset('storage/' . $qr->image_path) : null;
+
+        return view('tamagotchi.journey', compact('session', 'journey', 'username', 'arType', 'file3dUrl', 'imageUrl'));
     }
 
     /**
