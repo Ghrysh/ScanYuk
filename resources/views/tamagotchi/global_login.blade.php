@@ -41,7 +41,7 @@
                     <label class="block text-slate-300 text-sm font-semibold mb-2">Username</label>
                     <input type="text" name="username" required autocomplete="off"
                         class="w-full bg-slate-900/50 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
-                        placeholder="Mis. ghrysh">
+                        placeholder="Masukkan username Anda">
                 </div>
                 <div class="mb-6">
                     <label class="block text-slate-300 text-sm font-semibold mb-2">Password</label>

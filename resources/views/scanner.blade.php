@@ -132,7 +132,7 @@
                 <div class="space-y-3">
                     <div>
                         <label class="text-slate-400 text-xs font-medium mb-1 block">Username (Tanpa spasi)</label>
-                        <input x-model="tamaUsername" type="text" placeholder="Mis. andi123" 
+                        <input x-model="tamaUsername" type="text" placeholder="Masukkan username Anda" 
                             class="w-full bg-slate-700/60 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-teal-500 focus:border-transparent outline-none transition">
                     </div>
                     <div>
@@ -262,7 +262,7 @@
     <div x-show="expressionEnabled && tamaSessionId && arActive" style="display: none;" 
          class="fixed bottom-24 left-1/2 transform -translate-x-1/2 z-40 w-full max-w-xs">
         <div class="bg-black/50 backdrop-blur-xl rounded-2xl border border-white/10 p-2 flex gap-2 items-center">
-            <input x-model="statusInput" type="text" placeholder="Lagi apa? Ceritain..." maxlength="255"
+            <input x-model="statusInput" type="text" placeholder="Tuliskan aktivitas atau status..." maxlength="255"
                 @keydown.enter="submitStatus()"
                 class="flex-1 bg-transparent text-white text-sm px-3 py-2 outline-none placeholder-slate-500">
             <button @click="submitStatus()" :disabled="!statusInput.trim() || statusSubmitting" 
