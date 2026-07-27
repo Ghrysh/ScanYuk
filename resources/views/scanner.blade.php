@@ -1375,16 +1375,16 @@
                     let hour = new Date().getHours();
                     let isTimeOverride = false;
                     
-                    if (hour === 6 && this.expPoints < 100) {
-                        this.expPoints = 100;
-                    }
-                    
                     if (hour >= 21 || hour < 6) {
                         this.setExpState('tidur');
                         isTimeOverride = true;
+                        // Saat tidur, energi pulih secara alami (1 poin per jam = 1/3600 per detik)
+                        this.expPoints = Math.min(100, this.expPoints + 0.0002777);
                     } else if (hour === 20) {
                         this.setExpState('cape');
                         isTimeOverride = true;
+                        // Saat cape (jam 20), energi tetap turun perlahan
+                        this.expPoints = Math.max(0, this.expPoints - 0.0005787);
                     }
                     
                     if (!isTimeOverride) {
