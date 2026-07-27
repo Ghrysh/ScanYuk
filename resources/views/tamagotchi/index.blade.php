@@ -22,7 +22,7 @@
 <body class="bg-grid-pattern text-slate-900 min-h-screen pb-12 relative" x-data="{ showSettings: false, tab: 'username' }">
     <!-- Header -->
     <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
-        <div class="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <a href="{{ url('/') }}" class="text-slate-500 hover:text-slate-700 transition bg-slate-100 hover:bg-slate-200 p-2 rounded-full">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" /></svg>
@@ -35,7 +35,7 @@
         </div>
     </header>
 
-    <main class="max-w-5xl mx-auto px-4 mt-6">
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
         @if(session('success'))
             <div class="bg-teal-500/10 border border-teal-500/50 text-teal-400 text-sm rounded-xl p-3 mb-6 flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>

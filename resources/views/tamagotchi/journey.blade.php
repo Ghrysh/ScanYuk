@@ -28,7 +28,7 @@
 
     <!-- Header -->
     <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
-        <div class="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <a href="{{ route('tamagotchi.index', $username) }}" class="text-slate-500 hover:text-slate-700 transition bg-slate-100 p-2 rounded-full border border-slate-200">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" /></svg>
@@ -43,7 +43,7 @@
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-4xl mx-auto px-4 mt-8 z-10 flex flex-col justify-center">
+    <main class="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 z-10 flex flex-col justify-center">
         <!-- The Journey Card to screenshot or show -->
         <div id="journey-card" class="bg-white rounded-[2rem] border border-slate-200 p-6 md:p-10 shadow-sm relative overflow-hidden">
             <!-- decorative circles inside card -->
