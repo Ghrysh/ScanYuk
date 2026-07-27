@@ -8,13 +8,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .bg-grid-pattern {
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-color: #fafafa;
+        }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen pb-12 relative flex flex-col">
+<body class="bg-grid-pattern text-slate-900 min-h-screen pb-12 relative flex flex-col">
     <!-- Animated background -->
     <div class="absolute inset-0 z-0 opacity-20 pointer-events-none">
         <div class="absolute top-1/4 left-1/4 w-64 h-64 bg-teal-500 rounded-full mix-blend-screen filter blur-3xl animate-pulse"></div>
@@ -22,13 +27,13 @@
     </div>
 
     <!-- Header -->
-    <header class="sticky top-0 z-30 glass-card border-b border-slate-700/50 shadow-lg">
+    <header class="sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-slate-200 shadow-sm">
         <div class="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <a href="{{ route('tamagotchi.index', $username) }}" class="text-slate-400 hover:text-white transition bg-slate-800 p-2 rounded-full border border-slate-700">
+                <a href="{{ route('tamagotchi.index', $username) }}" class="text-slate-500 hover:text-slate-700 transition bg-slate-100 p-2 rounded-full border border-slate-200">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" /></svg>
                 </a>
-                <h1 class="font-bold text-lg text-white">Detail Journey</h1>
+                <h1 class="font-bold text-lg text-slate-800">Detail Journey</h1>
             </div>
             <!-- Bagikan Tombol Native Web Share API -->
             <button id="share-btn" onclick="shareJourney()" class="text-teal-400 bg-teal-500/10 hover:bg-teal-500/20 px-4 py-2 rounded-full text-sm font-semibold border border-teal-500/30 transition-colors flex items-center justify-center gap-2 min-w-[110px]">
@@ -40,13 +45,13 @@
 
     <main class="flex-1 w-full max-w-2xl mx-auto px-4 mt-8 z-10 flex flex-col justify-center">
         <!-- The Journey Card to screenshot or show -->
-        <div id="journey-card" class="bg-gradient-to-br from-slate-800 to-slate-900 rounded-[2rem] border border-slate-700 p-8 shadow-2xl relative overflow-hidden">
+        <div id="journey-card" class="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm relative overflow-hidden">
             <!-- decorative circles inside card -->
             <div class="absolute -right-16 -top-16 w-48 h-48 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
             
             <div class="flex flex-col items-center text-center">
                 <div class="relative mb-6">
-                    <div class="w-28 h-28 bg-gradient-to-br from-slate-700 to-slate-800 rounded-full flex items-center justify-center shadow-xl border border-slate-600 overflow-hidden relative">
+                    <div class="w-28 h-28 bg-slate-50 rounded-full flex items-center justify-center shadow-md border border-slate-200 overflow-hidden relative">
                         @if($arType === '3d' && $file3dUrl)
                             <model-viewer src="{{ $file3dUrl }}" auto-rotate camera-controls disable-zoom disable-pan interaction-prompt="none" shadow-intensity="1" class="w-full h-full object-contain"></model-viewer>
                         @elseif($arType === '2d' && $imageUrl)
@@ -56,38 +61,38 @@
                         @endif
                     </div>
                     
-                    <div class="absolute -bottom-2 -right-2 bg-teal-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg border-2 border-slate-800 z-10">
+                    <div class="absolute -bottom-2 -right-2 bg-teal-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm border-2 border-white z-10">
                         {{ strtoupper($journey->mood) }}
                     </div>
                 </div>
 
-                <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-800 rounded-full border border-slate-700 mb-4">
-                    <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
-                    <span class="text-xs font-semibold text-slate-300">Update Status</span>
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-full border border-slate-200 mb-4">
+                    <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+                    <span class="text-xs font-semibold text-slate-500">Update Status</span>
                 </div>
 
-                <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2 leading-tight">
+                <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-2 leading-tight">
                     "{{ $journey->status_text }}"
                 </h2>
-                <p class="text-slate-400 font-medium {{ $journey->location_name ? 'mb-2' : 'mb-8' }}">Jejak perjalanan <span class="text-teal-400">{{ $username }}</span></p>
+                <p class="text-slate-500 font-medium {{ $journey->location_name ? 'mb-2' : 'mb-8' }}">Jejak perjalanan <span class="text-teal-600">{{ $username }}</span></p>
 
                 @if($journey->location_name)
-                <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-800/50 rounded-full border border-slate-700/50 mb-8">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-full border border-slate-200 mb-8">
                     <svg class="w-3 h-3 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
-                    <span class="text-xs text-slate-300">{{ $journey->location_name }}</span>
+                    <span class="text-xs text-slate-600">{{ $journey->location_name }}</span>
                 </div>
                 @endif
 
-                <div class="w-full bg-slate-800/80 rounded-2xl p-4 flex justify-between items-center border border-slate-700/50">
+                <div class="w-full bg-slate-50 rounded-2xl p-4 flex justify-between items-center border border-slate-200">
                     <div class="text-left">
                         <p class="text-xs text-slate-500 mb-1">Waktu</p>
-                        <p class="text-sm font-bold text-slate-200">{{ $journey->created_at->format('d M Y') }}</p>
-                        <p class="text-xs font-semibold text-teal-400">{{ $journey->created_at->format('H:i') }} WIB</p>
+                        <p class="text-sm font-bold text-slate-800">{{ $journey->created_at->format('d M Y') }}</p>
+                        <p class="text-xs font-semibold text-teal-600">{{ $journey->created_at->format('H:i') }} WIB</p>
                     </div>
-                    <div class="w-px h-10 bg-slate-700"></div>
+                    <div class="w-px h-10 bg-slate-200"></div>
                     <div class="text-right">
                         <p class="text-xs text-slate-500 mb-1">Health & Exp</p>
-                        <p class="text-sm font-bold text-slate-200 flex items-center justify-end gap-1">
+                        <p class="text-sm font-bold text-slate-800 flex items-center justify-end gap-1">
                             {{ round($journey->exp_points) }} 
                             <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                         </p>
@@ -95,7 +100,7 @@
                 </div>
             </div>
             
-            <div class="mt-6 pt-6 border-t border-slate-700/50 flex items-center justify-between">
+            <div class="mt-6 pt-6 border-t border-slate-200 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <div class="w-8 h-8 rounded bg-teal-500 p-1">
                         <!-- Pseudo QR / Logo Icon -->
@@ -191,7 +196,7 @@
                     const file = new File([blob], `journey-{{ $username }}.png`, { type: 'image/png' });
                     
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        btn.innerHTML = 'Kirim 🚀';
+                        btn.innerHTML = 'Kirim';
                         btn.disabled = false;
                         btn.onclick = async () => {
                             try {

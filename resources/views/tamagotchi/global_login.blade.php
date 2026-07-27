@@ -8,10 +8,18 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <style>
+    <style>
         body { font-family: 'Inter', sans-serif; }
+        .bg-grid-pattern {
+            background-size: 50px 50px;
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.03) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.03) 1px, transparent 1px);
+            background-color: #fafafa;
+        }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+<body class="bg-grid-pattern text-slate-900 min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
     <!-- Animated background -->
     <div class="absolute inset-0 z-0 opacity-30">
         <div class="absolute top-0 left-1/4 w-96 h-96 bg-teal-500 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-pulse"></div>
@@ -19,13 +27,13 @@
     </div>
 
     <div class="relative z-10 w-full max-w-md">
-        <div class="bg-slate-800/60 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-slate-700/50">
+        <div class="bg-white/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-slate-200">
             <div class="text-center mb-8">
                 <div class="w-20 h-20 bg-gradient-to-br from-teal-400 to-blue-500 rounded-full mx-auto flex items-center justify-center mb-4 shadow-lg shadow-teal-500/30">
                     <img src="/ekspresi/senang.png" class="w-12 h-12 object-contain" alt="Tamagotchi">
                 </div>
-                <h1 class="text-2xl font-bold text-white mb-2">Login <span class="text-teal-400">Tamagotchi</span></h1>
-                <p class="text-slate-400 text-sm">Masukkan username dan password Tamagotchi Anda untuk melihat perjalanan.</p>
+                <h1 class="text-2xl font-bold text-slate-900 mb-2">Login <span class="text-teal-600">Tamagotchi</span></h1>
+                <p class="text-slate-500 text-sm">Masukkan username dan password Tamagotchi Anda untuk melihat perjalanan.</p>
             </div>
 
             @if(session('error'))
@@ -38,15 +46,15 @@
             <form action="{{ route('tamagotchi.global-login-post') }}" method="POST">
                 @csrf
                 <div class="mb-4">
-                    <label class="block text-slate-300 text-sm font-semibold mb-2">Username</label>
+                    <label class="block text-slate-700 text-sm font-semibold mb-2">Username</label>
                     <input type="text" name="username" required autocomplete="off"
-                        class="w-full bg-slate-900/50 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
+                        class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
                         placeholder="Masukkan username Anda">
                 </div>
                 <div class="mb-6">
-                    <label class="block text-slate-300 text-sm font-semibold mb-2">Password</label>
+                    <label class="block text-slate-700 text-sm font-semibold mb-2">Password</label>
                     <input type="password" name="password" required
-                        class="w-full bg-slate-900/50 border border-slate-700 text-white rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
+                        class="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl px-4 py-3 focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-colors"
                         placeholder="••••••••">
                 </div>
                 <button type="submit" class="w-full bg-gradient-to-r from-teal-500 to-blue-600 hover:from-teal-400 hover:to-blue-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg transition-transform transform hover:-translate-y-0.5">
@@ -55,7 +63,7 @@
             </form>
             
             <div class="mt-6 text-center">
-                <a href="{{ url('/') }}" class="text-slate-500 hover:text-slate-300 text-sm transition-colors">Kembali ke Beranda</a>
+                <a href="{{ url('/') }}" class="text-slate-500 hover:text-slate-700 text-sm transition-colors">Kembali ke Beranda</a>
             </div>
         </div>
     </div>
