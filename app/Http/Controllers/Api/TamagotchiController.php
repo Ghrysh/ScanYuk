@@ -33,12 +33,18 @@ class TamagotchiController extends Controller
             ], 404);
         }
 
-        // Cek apakah sesi sudah ada untuk username + qr_code_id
-        $session = TamagotchiSession::where('qr_code_id', $qr->id)
-            ->where('username', $username)
-            ->first();
+        // Cek apakah username sudah ada secara global
+        $session = TamagotchiSession::where('username', $username)->first();
 
         if ($session) {
+            // Jika username ada tapi milik QR Code lain, tolak! (1 Akun = 1 QR Code)
+            if ($session->qr_code_id != $qr->id) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Username ini sudah digunakan. Silakan pilih nama lain.'
+                ], 403);
+            }
+
             // Login - cek password
             if (!Hash::check($request->password, $session->password)) {
                 return response()->json([

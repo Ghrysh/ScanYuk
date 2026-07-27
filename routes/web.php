@@ -262,3 +262,10 @@ Route::post('/api/tamagotchi/check-session', [\App\Http\Controllers\Api\Tamagotc
 Route::post('/api/tamagotchi/sync', [\App\Http\Controllers\Api\TamagotchiController::class, 'sync']);
 Route::post('/api/tamagotchi/journal', [\App\Http\Controllers\Api\TamagotchiController::class, 'journal']);
 Route::get('/api/tamagotchi/journey/{sessionId}', [\App\Http\Controllers\Api\TamagotchiController::class, 'getJourney']);
+
+// Tamagotchi Web Journey
+Route::get('/tamagotchi/{username}', [\App\Http\Controllers\TamagotchiWebController::class, 'index'])->name('tamagotchi.index');
+Route::post('/tamagotchi/{username}/login', [\App\Http\Controllers\TamagotchiWebController::class, 'login'])->name('tamagotchi.login');
+Route::get('/tamagotchi/{username}/journey/{id}', [\App\Http\Controllers\TamagotchiWebController::class, 'show'])->name('tamagotchi.journey');
+Route::post('/tamagotchi/{username}/change-username', [\App\Http\Controllers\TamagotchiWebController::class, 'changeUsername'])->name('tamagotchi.change-username');
+Route::post('/tamagotchi/{username}/reset-password', [\App\Http\Controllers\TamagotchiWebController::class, 'resetPassword'])->name('tamagotchi.reset-password');
