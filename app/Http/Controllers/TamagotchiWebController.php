@@ -28,8 +28,8 @@ class TamagotchiWebController extends Controller
             'password' => 'required|string'
         ]);
 
-        $username = strtolower(trim($request->username));
-        $session = TamagotchiSession::where('username', $username)->first();
+        $usernameLower = strtolower(trim($request->username));
+        $session = TamagotchiSession::whereRaw('LOWER(username) = ?', [$usernameLower])->first();
 
         if (!$session) {
             return back()->with('error', 'Username Tamagotchi tidak ditemukan.');
@@ -48,7 +48,7 @@ class TamagotchiWebController extends Controller
      */
     public function index($username)
     {
-        $session = TamagotchiSession::with('qrCode.arAsset')->where('username', strtolower($username))->firstOrFail();
+        $session = TamagotchiSession::with('qrCode.arAsset')->whereRaw('LOWER(username) = ?', [strtolower($username)])->firstOrFail();
         
         // Cek apakah sudah login
         $isLoggedIn = session()->has('tamagotchi_logged_in_' . $session->id);
@@ -73,7 +73,7 @@ class TamagotchiWebController extends Controller
     public function login(Request $request, $username)
     {
         $request->validate(['password' => 'required|string']);
-        $session = TamagotchiSession::where('username', strtolower($username))->firstOrFail();
+        $session = TamagotchiSession::whereRaw('LOWER(username) = ?', [strtolower($username)])->firstOrFail();
 
         if (Hash::check($request->password, $session->password)) {
             session()->put('tamagotchi_logged_in_' . $session->id, true);
@@ -88,7 +88,7 @@ class TamagotchiWebController extends Controller
      */
     public function show($username, $journey_id)
     {
-        $session = TamagotchiSession::with('qrCode.arAsset')->where('username', strtolower($username))->firstOrFail();
+        $session = TamagotchiSession::with('qrCode.arAsset')->whereRaw('LOWER(username) = ?', [strtolower($username)])->firstOrFail();
         
         $isLoggedIn = session()->has('tamagotchi_logged_in_' . $session->id);
         if (!$isLoggedIn) {
@@ -110,18 +110,25 @@ class TamagotchiWebController extends Controller
      */
     public function changeUsername(Request $request, $username)
     {
-        $session = TamagotchiSession::where('username', strtolower($username))->firstOrFail();
+        $session = TamagotchiSession::whereRaw('LOWER(username) = ?', [strtolower($username)])->firstOrFail();
         if (!session()->has('tamagotchi_logged_in_' . $session->id)) {
             return redirect()->route('tamagotchi.index', $username);
         }
 
         $request->validate([
-            'new_username' => 'required|string|alpha_dash|max:50|unique:tamagotchi_sessions,username'
-        ], [
-            'new_username.unique' => 'Username sudah digunakan oleh akun lain.'
+            'new_username' => 'required|string|alpha_dash|max:50'
         ]);
 
-        $newUsername = strtolower($request->new_username);
+        $newUsername = trim($request->new_username);
+        
+        // Cek unik manual secara case-insensitive
+        $exists = TamagotchiSession::whereRaw('LOWER(username) = ?', [strtolower($newUsername)])
+            ->where('id', '!=', $session->id)
+            ->exists();
+            
+        if ($exists) {
+            return back()->withErrors(['new_username' => 'Username sudah digunakan oleh akun lain.']);
+        }
         $session->username = $newUsername;
         $session->save();
 
@@ -133,7 +140,7 @@ class TamagotchiWebController extends Controller
      */
     public function resetPassword(Request $request, $username)
     {
-        $session = TamagotchiSession::where('username', strtolower($username))->firstOrFail();
+        $session = TamagotchiSession::whereRaw('LOWER(username) = ?', [strtolower($username)])->firstOrFail();
         if (!session()->has('tamagotchi_logged_in_' . $session->id)) {
             return redirect()->route('tamagotchi.index', $username);
         }

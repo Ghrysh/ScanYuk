@@ -23,7 +23,8 @@ class TamagotchiController extends Controller
             'qr_uuid' => 'required|string',
         ]);
 
-        $username = strtolower(trim($request->username));
+        $originalUsername = trim($request->username);
+        $usernameLower = strtolower($originalUsername);
         
         // Cari QR Code berdasarkan UUID
         $qr = DB::table('qr_codes')->where('uuid', $request->qr_uuid)->first();
@@ -35,7 +36,7 @@ class TamagotchiController extends Controller
         }
 
         // Cek apakah username sudah ada secara global
-        $session = TamagotchiSession::where('username', $username)->first();
+        $session = TamagotchiSession::whereRaw('LOWER(username) = ?', [$usernameLower])->first();
 
         if ($session) {
             // Jika username ada tapi milik QR Code lain, tolak! (1 Akun = 1 QR Code)
@@ -67,7 +68,7 @@ class TamagotchiController extends Controller
             // Register - Sesi baru
             $session = TamagotchiSession::create([
                 'qr_code_id' => $qr->id,
-                'username' => $username,
+                'username' => $originalUsername,
                 'password' => Hash::make($request->password),
                 'exp_points' => 100,
                 'total_scans' => 1,
@@ -236,10 +237,10 @@ class TamagotchiController extends Controller
             'username' => 'required|string',
         ]);
 
-        $username = strtolower(trim($request->username));
+        $usernameLower = strtolower(trim($request->username));
 
         $session = TamagotchiSession::where('id', $request->session_id)
-            ->where('username', $username)
+            ->whereRaw('LOWER(username) = ?', [$usernameLower])
             ->first();
 
         if (!$session) {
