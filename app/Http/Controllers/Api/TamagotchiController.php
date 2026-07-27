@@ -223,6 +223,7 @@ class TamagotchiController extends Controller
                         'status_text' => $j->status_text,
                         'mood' => $j->mood,
                         'exp_points' => round($j->exp_points, 2),
+                        'location_name' => $j->location_name,
                         'date' => $j->created_at->format('d M Y'),
                         'time' => $j->created_at->format('H:i'),
                         'relative' => $j->created_at->diffForHumans(),
