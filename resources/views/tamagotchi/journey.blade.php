@@ -104,6 +104,58 @@
     </main>
 
     <script>
+        function cropAndCenter(dataUrl) {
+            return new Promise((resolve) => {
+                if (!dataUrl) return resolve('');
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+
+                    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const l = pixels.data.length;
+                    let bound = { top: null, left: null, right: null, bottom: null };
+
+                    for (let i = 0; i < l; i += 4) {
+                        if (pixels.data[i + 3] > 0) { 
+                            const x = (i / 4) % canvas.width;
+                            const y = Math.floor((i / 4) / canvas.width);
+                            if (bound.top === null) bound.top = y;
+                            if (bound.left === null || x < bound.left) bound.left = x;
+                            if (bound.right === null || x > bound.right) bound.right = x;
+                            if (bound.bottom === null || y > bound.bottom) bound.bottom = y;
+                        }
+                    }
+
+                    if (bound.top === null) return resolve(dataUrl);
+
+                    const cropWidth = bound.right - bound.left;
+                    const cropHeight = bound.bottom - bound.top;
+                    const size = Math.max(cropWidth, cropHeight);
+                    
+                    const finalCvs = document.createElement('canvas');
+                    finalCvs.width = size;
+                    finalCvs.height = size;
+                    const finalCtx = finalCvs.getContext('2d');
+                    
+                    const dx = (size - cropWidth) / 2;
+                    const dy = (size - cropHeight) / 2;
+                    
+                    finalCtx.drawImage(
+                        canvas,
+                        bound.left, bound.top, cropWidth, cropHeight,
+                        dx, dy, cropWidth, cropHeight
+                    );
+                    
+                    resolve(finalCvs.toDataURL('image/png'));
+                };
+                img.src = dataUrl;
+            });
+        }
+
         async function shareJourney() {
             const btn = document.getElementById('share-btn');
             const originalHTML = btn.innerHTML;
@@ -111,36 +163,28 @@
             btn.disabled = true;
 
             try {
-                // Trik menangkap model-viewer (WebGL canvas biasanya kosong jika tidak ditangani)
                 const viewer = document.querySelector('model-viewer');
-                let tempImg = null;
+                let modelDataUrl = '';
                 if (viewer) {
-                    const dataUrl = viewer.toDataURL('image/png');
-                    tempImg = document.createElement('img');
-                    tempImg.src = dataUrl;
-                    tempImg.className = viewer.className;
-                    viewer.style.display = 'none';
-                    viewer.parentNode.insertBefore(tempImg, viewer);
+                    modelDataUrl = viewer.toDataURL('image/png');
+                } else {
+                    const fallbackImg = document.querySelector('#journey-card img');
+                    if (fallbackImg) modelDataUrl = fallbackImg.src;
                 }
 
-                // Ambil screenshot dari journey-card
-                const card = document.getElementById('journey-card');
+                const finalImageUrl = await cropAndCenter(modelDataUrl);
+                document.getElementById('share-model-img').src = finalImageUrl;
+
+                const card = document.getElementById('share-card-container');
                 const canvas = await html2canvas(card, {
                     backgroundColor: '#0f172a',
-                    scale: 2 // Resolusi tinggi
+                    scale: 2
                 });
-
-                // Kembalikan model-viewer
-                if (viewer && tempImg) {
-                    viewer.style.display = '';
-                    tempImg.remove();
-                }
 
                 canvas.toBlob(async (blob) => {
                     const file = new File([blob], `journey-{{ $username }}.png`, { type: 'image/png' });
                     
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        // Minta pengguna klik lagi untuk share (mencegah error user gesture expired)
                         btn.innerHTML = 'Kirim 🚀';
                         btn.disabled = false;
                         btn.onclick = async () => {
@@ -153,12 +197,10 @@
                             } catch (e) {
                                 console.log('Share dibatalkan atau error:', e);
                             }
-                            // Kembalikan tombol ke semula
                             btn.innerHTML = originalHTML;
                             btn.onclick = shareJourney;
                         };
                     } else {
-                        // Fallback browser jadul / desktop: Download gambar
                         const link = document.createElement('a');
                         link.download = `journey-{{ $username }}.png`;
                         link.href = URL.createObjectURL(blob);
@@ -180,5 +222,49 @@
             }
         }
     </script>
+
+    <!-- Hidden Share Card Template -->
+    <div id="share-card-container" style="position: absolute; top: -9999px; left: -9999px; width: 480px; height: 853px; background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); border-radius: 30px; overflow: hidden; font-family: 'Inter', sans-serif; display: flex; flex-direction: column; box-shadow: 0 0 0 10px rgba(255,255,255,0.3) inset;">
+        
+        <div style="padding: 40px 20px 0; text-align: center; z-index: 10;">
+            <h2 style="color: white; margin: 0; font-size: 38px; font-weight: 900; text-transform: uppercase; letter-spacing: 3px; text-shadow: 0 4px 6px rgba(0,0,0,0.2);">AR JOURNEY</h2>
+        </div>
+        
+        <div style="flex: 1; position: relative; margin-top: -10px;">
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 350px; height: 350px; background: radial-gradient(circle, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 70%); border-radius: 50%; z-index: 1;"></div>
+            
+            <div style="position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); width: 280px; height: 50px; background: rgba(0,0,0,0.2); border-radius: 50%; filter: blur(5px); z-index: 1;"></div>
+            
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 5;">
+                <img id="share-model-img" src="" style="position: absolute; top: 50%; left: 50%; width: 350px; height: 350px; margin-left: -175px; margin-top: -175px; filter: drop-shadow(0 20px 25px rgba(0,0,0,0.3)); transform: scale(1.15); object-fit: contain;">
+            </div>
+            
+            <div style="position: absolute; top: 20px; right: 20px; background: #3b82f6; border: 4px solid #fff; border-radius: 50%; width: 90px; height: 90px; box-shadow: 0 10px 15px rgba(0,0,0,0.2); z-index: 10; transform: rotate(15deg);">
+                <div style="position: absolute; top: 18px; left: 0; width: 100%; text-align: center; font-size: 14px; font-weight: 900; color: #fff; text-transform: uppercase; line-height: 1; margin: 0; padding: 0;">Exp</div>
+                <div style="position: absolute; top: 35px; left: 0; width: 100%; text-align: center; font-size: 34px; font-weight: 900; color: #fff; text-shadow: 0 2px 0 #1d4ed8; line-height: 1; margin: 0; padding: 0; transform: translateY(-12px);">{{ round($journey->exp_points) }}</div>
+            </div>
+        </div>
+        
+        <div style="background: rgba(255, 255, 255, 0.95); margin: 0 20px 20px; padding: 25px; border-radius: 25px; box-shadow: 0 15px 30px rgba(0,0,0,0.15); z-index: 10; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div style="flex: 1; padding-right: 15px;">
+                    <p style="color: #64748b; margin: 0 0 4px 0; font-size: 14px; font-weight: 700; text-transform: uppercase;">@ {{ $username }}</p>
+                    <p style="color: #1e293b; margin: 0; font-size: 20px; font-weight: 900; line-height: 1.2;">"{{ $journey->status_text }}"</p>
+                </div>
+                <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 15px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05)); position: relative; flex-shrink: 0;">
+                    @php
+                        $emojiMap = ['senang' => '😊', 'suntuk' => '😐', 'marah' => '😠', 'menangis' => '😢', 'cape' => '😴', 'tidur' => '💤'];
+                        $moodEmoji = $emojiMap[strtolower($journey->mood)] ?? '😊';
+                    @endphp
+                    <div style="position: absolute; top: 10px; left: 0; width: 100%; text-align: center; font-size: 38px; line-height: 1; margin: 0; padding: 0; transform: translateY(-16px);">{{ $moodEmoji }}</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <p style="color: #64748b; margin: 0; font-size: 14px; font-weight: 700;">{{ $journey->created_at->format('d M Y - H:i') }}</p>
+                <p style="color: #94a3b8; margin: 0; font-size: 14px; font-weight: 700;">ScanYuk WebAR</p>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
