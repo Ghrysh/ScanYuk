@@ -35,7 +35,7 @@
         </div>
     </header>
 
-    <main class="max-w-2xl mx-auto px-4 mt-6">
+    <main class="max-w-5xl mx-auto px-4 mt-6">
         @if(session('success'))
             <div class="bg-teal-500/10 border border-teal-500/50 text-teal-400 text-sm rounded-xl p-3 mb-6 flex items-center gap-2">
                 <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
@@ -58,7 +58,11 @@
             </div>
         @endif
 
-        <!-- Profile Card -->
+        <div class="md:grid md:grid-cols-12 md:gap-8 items-start">
+            
+            <!-- Sidebar / Profile -->
+            <div class="md:col-span-5 lg:col-span-4 md:sticky md:top-24 mb-8 md:mb-0">
+                <!-- Profile Card -->
         <div class="bg-white rounded-3xl p-6 mb-8 flex items-center gap-5 relative overflow-hidden shadow-sm border border-slate-200">
             <div class="absolute -right-10 -top-10 w-32 h-32 bg-teal-500/10 rounded-full blur-2xl"></div>
             
@@ -89,14 +93,17 @@
                 </div>
                 
                 <!-- Mini Exp Bar -->
-                <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden shadow-inner">
-                    <div class="h-full rounded-full transition-all duration-1000 ease-out" 
-                         style="width: {{ $session->exp_points }}%; background: linear-gradient(90deg, #14b8a6, #3b82f6);"></div>
+                    <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden shadow-inner">
+                        <div class="h-full rounded-full transition-all duration-1000 ease-out" 
+                             style="width: {{ $session->exp_points }}%; background: linear-gradient(90deg, #14b8a6, #3b82f6);"></div>
+                    </div>
                 </div>
             </div>
-        </div>
+            </div>
 
-        <h3 class="text-lg font-bold text-slate-800 mb-4 px-2">Jejak Perjalanan</h3>
+            <!-- Main Content / Journey List -->
+            <div class="md:col-span-7 lg:col-span-8">
+                <h3 class="text-lg font-bold text-slate-800 mb-4 px-2">Jejak Perjalanan</h3>
 
         <div class="space-y-4">
             @forelse($journeys as $j)
@@ -126,11 +133,12 @@
                     </div>
                 </a>
             @empty
-                <div class="text-center py-12 bg-white rounded-3xl border border-slate-200 shadow-sm">
-                    <img src="/ekspresi/suntuk.png" class="w-16 h-16 mx-auto mb-4 opacity-50 grayscale" alt="Empty">
-                    <p class="text-slate-500 font-medium">Belum ada perjalanan terekam.</p>
-                </div>
-            @endforelse
+                    <div class="text-center py-12 bg-white rounded-3xl border border-slate-200 shadow-sm">
+                        <img src="/ekspresi/suntuk.png" class="w-16 h-16 mx-auto mb-4 opacity-50 grayscale" alt="Empty">
+                        <p class="text-slate-500 font-medium">Belum ada perjalanan terekam.</p>
+                    </div>
+                @endforelse
+            </div>
         </div>
     </main>
 

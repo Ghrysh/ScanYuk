@@ -43,59 +43,61 @@
         </div>
     </header>
 
-    <main class="flex-1 w-full max-w-2xl mx-auto px-4 mt-8 z-10 flex flex-col justify-center">
+    <main class="flex-1 w-full max-w-4xl mx-auto px-4 mt-8 z-10 flex flex-col justify-center">
         <!-- The Journey Card to screenshot or show -->
-        <div id="journey-card" class="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm relative overflow-hidden">
+        <div id="journey-card" class="bg-white rounded-[2rem] border border-slate-200 p-6 md:p-10 shadow-sm relative overflow-hidden">
             <!-- decorative circles inside card -->
             <div class="absolute -right-16 -top-16 w-48 h-48 bg-teal-500/10 rounded-full blur-2xl pointer-events-none"></div>
             
-            <div class="flex flex-col items-center text-center">
-                <div class="relative mb-6">
-                    <div class="w-28 h-28 bg-slate-50 rounded-full flex items-center justify-center shadow-md border border-slate-200 overflow-hidden relative">
+            <div class="flex flex-col md:flex-row items-center md:items-start gap-8">
+                <div class="relative shrink-0">
+                    <div class="w-32 h-32 md:w-48 md:h-48 bg-slate-50 rounded-full flex items-center justify-center shadow-md border border-slate-200 overflow-hidden relative">
                         @if($arType === '3d' && $file3dUrl)
                             <model-viewer src="{{ $file3dUrl }}" auto-rotate camera-controls disable-zoom disable-pan interaction-prompt="none" shadow-intensity="1" class="w-full h-full object-contain"></model-viewer>
                         @elseif($arType === '2d' && $imageUrl)
-                            <img src="{{ $imageUrl }}" class="w-16 h-16 object-contain animate-bounce" style="animation-duration: 2s;">
+                            <img src="{{ $imageUrl }}" class="w-20 h-20 md:w-28 md:h-28 object-contain animate-bounce" style="animation-duration: 2s;">
                         @else
-                            <img src="/ekspresi/{{ $journey->mood }}.png" class="w-16 h-16 object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
+                            <img src="/ekspresi/{{ $journey->mood }}.png" class="w-20 h-20 md:w-28 md:h-28 object-contain animate-bounce" style="animation-duration: 2s;" onerror="this.src='/ekspresi/senang.png'">
                         @endif
                     </div>
                     
-                    <div class="absolute -bottom-2 -right-2 bg-teal-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-sm border-2 border-white z-10">
+                    <div class="absolute -bottom-2 -right-2 bg-teal-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm border-2 border-white z-10">
                         {{ strtoupper($journey->mood) }}
                     </div>
                 </div>
 
-                <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-full border border-slate-200 mb-4">
-                    <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
-                    <span class="text-xs font-semibold text-slate-500">Update Status</span>
-                </div>
-
-                <h2 class="text-2xl sm:text-3xl font-bold text-slate-800 mb-2 leading-tight">
-                    "{{ $journey->status_text }}"
-                </h2>
-                <p class="text-slate-500 font-medium {{ $journey->location_name ? 'mb-2' : 'mb-8' }}">Jejak perjalanan <span class="text-teal-600">{{ $username }}</span></p>
-
-                @if($journey->location_name)
-                <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-full border border-slate-200 mb-8">
-                    <svg class="w-3 h-3 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
-                    <span class="text-xs text-slate-600">{{ $journey->location_name }}</span>
-                </div>
-                @endif
-
-                <div class="w-full bg-slate-50 rounded-2xl p-4 flex justify-between items-center border border-slate-200">
-                    <div class="text-left">
-                        <p class="text-xs text-slate-500 mb-1">Waktu</p>
-                        <p class="text-sm font-bold text-slate-800">{{ $journey->created_at->format('d M Y') }}</p>
-                        <p class="text-xs font-semibold text-teal-600">{{ $journey->created_at->format('H:i') }} WIB</p>
+                <div class="flex-1 flex flex-col items-center md:items-start text-center md:text-left w-full">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-full border border-slate-200 mb-4">
+                        <span class="w-2 h-2 rounded-full bg-teal-500 animate-pulse"></span>
+                        <span class="text-xs font-semibold text-slate-500">Update Status</span>
                     </div>
-                    <div class="w-px h-10 bg-slate-200"></div>
-                    <div class="text-right">
-                        <p class="text-xs text-slate-500 mb-1">Health & Exp</p>
-                        <p class="text-sm font-bold text-slate-800 flex items-center justify-end gap-1">
-                            {{ round($journey->exp_points) }} 
-                            <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                        </p>
+
+                    <h2 class="text-2xl md:text-4xl font-bold text-slate-800 mb-3 leading-tight">
+                        "{{ $journey->status_text }}"
+                    </h2>
+                    <p class="text-slate-500 font-medium text-sm md:text-base {{ $journey->location_name ? 'mb-3' : 'mb-8' }}">Jejak perjalanan <span class="text-teal-600">{{ $username }}</span></p>
+
+                    @if($journey->location_name)
+                    <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-50 rounded-full border border-slate-200 mb-8">
+                        <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
+                        <span class="text-sm text-slate-600">{{ $journey->location_name }}</span>
+                    </div>
+                    @endif
+
+                    <div class="w-full bg-slate-50 rounded-2xl p-4 md:p-6 flex justify-between items-center border border-slate-200">
+                        <div class="text-left">
+                            <p class="text-xs text-slate-500 mb-1">Waktu</p>
+                            <p class="text-sm md:text-base font-bold text-slate-800">{{ $journey->created_at->format('d M Y') }}</p>
+                            <p class="text-sm font-semibold text-teal-600">{{ $journey->created_at->format('H:i') }} WIB</p>
+                        </div>
+                        <div class="w-px h-12 bg-slate-200"></div>
+                        <div class="text-right">
+                            <p class="text-xs text-slate-500 mb-1">Health & Exp</p>
+                            <p class="text-sm md:text-base font-bold text-slate-800 flex items-center justify-end gap-1">
+                                {{ round($journey->exp_points) }} 
+                                <svg class="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
