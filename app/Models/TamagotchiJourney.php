@@ -13,6 +13,7 @@ class TamagotchiJourney extends Model
         'exp_points',
         'lat',
         'lon',
+        'location_name',
     ];
 
     protected $casts = [

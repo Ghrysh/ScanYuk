@@ -101,10 +101,17 @@
                         </div>
                         <div class="flex-1 min-w-0">
                             <p class="text-white font-semibold text-sm truncate mb-1">{{ $j->status_text }}</p>
-                            <div class="flex items-center gap-3 text-xs text-slate-400">
+                            <div class="flex items-center gap-3 text-xs text-slate-400 mt-1">
                                 <span>{{ $j->created_at->format('d M Y') }}</span>
                                 <span class="w-1 h-1 rounded-full bg-slate-600"></span>
                                 <span>{{ $j->created_at->format('H:i') }}</span>
+                                @if($j->location_name)
+                                <span class="w-1 h-1 rounded-full bg-slate-600"></span>
+                                <span class="flex items-center gap-1 truncate max-w-[100px] sm:max-w-[150px]">
+                                    <svg class="w-3 h-3 text-red-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
+                                    <span class="truncate">{{ $j->location_name }}</span>
+                                </span>
+                                @endif
                             </div>
                         </div>
                         <div class="text-teal-400">

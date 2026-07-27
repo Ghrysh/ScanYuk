@@ -69,8 +69,14 @@
                 <h2 class="text-2xl sm:text-3xl font-bold text-white mb-2 leading-tight">
                     "{{ $journey->status_text }}"
                 </h2>
-                
-                <p class="text-slate-400 mb-8 font-medium">Jejak perjalanan <span class="text-teal-400">{{ $username }}</span></p>
+                <p class="text-slate-400 font-medium {{ $journey->location_name ? 'mb-2' : 'mb-8' }}">Jejak perjalanan <span class="text-teal-400">{{ $username }}</span></p>
+
+                @if($journey->location_name)
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-800/50 rounded-full border border-slate-700/50 mb-8">
+                    <svg class="w-3 h-3 text-red-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" /></svg>
+                    <span class="text-xs text-slate-300">{{ $journey->location_name }}</span>
+                </div>
+                @endif
 
                 <div class="w-full bg-slate-800/80 rounded-2xl p-4 flex justify-between items-center border border-slate-700/50">
                     <div class="text-left">
@@ -261,7 +267,12 @@
             </div>
             
             <div style="margin-top: 15px; padding-top: 15px; border-top: 2px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-                <p style="color: #64748b; margin: 0; font-size: 14px; font-weight: 700;">{{ $journey->created_at->format('d M Y - H:i') }}</p>
+                <div>
+                    <p style="color: #64748b; margin: 0; font-size: 14px; font-weight: 700;">{{ $journey->created_at->format('d M Y - H:i') }}</p>
+                    @if($journey->location_name)
+                    <p style="color: #ef4444; margin: 4px 0 0; font-size: 12px; font-weight: 700;">📍 {{ $journey->location_name }}</p>
+                    @endif
+                </div>
                 <p style="color: #94a3b8; margin: 0; font-size: 14px; font-weight: 700;">ScanYuk WebAR</p>
             </div>
         </div>

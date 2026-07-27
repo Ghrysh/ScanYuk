@@ -8,6 +8,7 @@ use App\Models\TamagotchiJourney;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 
 class TamagotchiController extends Controller
 {
@@ -154,6 +155,24 @@ class TamagotchiController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Session not found.'], 404);
         }
 
+        $locationName = null;
+        if ($request->lat && $request->lon) {
+            try {
+                $response = Http::withHeaders(['User-Agent' => 'ScanYuk/1.0'])->timeout(3)->get('https://nominatim.openstreetmap.org/reverse', [
+                    'lat' => $request->lat,
+                    'lon' => $request->lon,
+                    'format' => 'jsonv2'
+                ]);
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $address = $data['address'] ?? [];
+                    $city = $address['city'] ?? $address['town'] ?? $address['village'] ?? $address['county'] ?? '';
+                    $state = $address['state'] ?? '';
+                    $locationName = trim($city . ($city && $state ? ', ' : '') . $state, ', ');
+                }
+            } catch (\Exception $e) {}
+        }
+
         $journey = TamagotchiJourney::create([
             'session_id' => $session->id,
             'status_text' => $request->status_text,
@@ -161,6 +180,7 @@ class TamagotchiController extends Controller
             'exp_points' => min(100, max(0, $request->exp_points ?? $session->exp_points)),
             'lat' => $request->lat,
             'lon' => $request->lon,
+            'location_name' => $locationName,
         ]);
 
         return response()->json([
