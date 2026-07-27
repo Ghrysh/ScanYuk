@@ -56,20 +56,22 @@
         <div class="glass-card rounded-3xl p-6 mb-8 flex items-center gap-5 relative overflow-hidden">
             <div class="absolute -right-10 -top-10 w-32 h-32 bg-teal-500/20 rounded-full blur-2xl"></div>
             
-            <div class="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center border-4 border-slate-700 shadow-xl shrink-0 z-10 relative">
-                @php
-                    $latestJourney = $journeys->first();
-                    $mood = $latestJourney ? $latestJourney->mood : 'senang';
-                @endphp
-                @if($arType === '3d' && $file3dUrl)
-                    <model-viewer src="{{ $file3dUrl }}" auto-rotate camera-controls disable-zoom disable-pan interaction-prompt="none" shadow-intensity="1" class="w-full h-full object-contain"></model-viewer>
-                @elseif($arType === '2d' && $imageUrl)
-                    <img src="{{ $imageUrl }}" class="w-14 h-14 object-contain animate-bounce" style="animation-duration: 3s;">
-                @else
-                    <img src="/ekspresi/{{ $mood }}.png" class="w-14 h-14 object-contain animate-bounce" style="animation-duration: 3s;" onerror="this.src='/ekspresi/senang.png'">
-                @endif
-                <div class="absolute bottom-0 right-0 w-6 h-6 bg-teal-500 rounded-full border-2 border-slate-800 flex items-center justify-center">
-                    <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
+            <div class="relative shrink-0 z-10">
+                <div class="w-24 h-24 bg-slate-800 rounded-full flex items-center justify-center border-4 border-slate-700 shadow-xl overflow-hidden relative">
+                    @php
+                        $latestJourney = $journeys->first();
+                        $mood = $latestJourney ? $latestJourney->mood : 'senang';
+                    @endphp
+                    @if($arType === '3d' && $file3dUrl)
+                        <model-viewer src="{{ $file3dUrl }}" auto-rotate camera-controls disable-zoom disable-pan interaction-prompt="none" shadow-intensity="1" class="w-full h-full object-contain"></model-viewer>
+                    @elseif($arType === '2d' && $imageUrl)
+                        <img src="{{ $imageUrl }}" class="w-14 h-14 object-contain animate-bounce" style="animation-duration: 3s;">
+                    @else
+                        <img src="/ekspresi/{{ $mood }}.png" class="w-14 h-14 object-contain animate-bounce" style="animation-duration: 3s;" onerror="this.src='/ekspresi/senang.png'">
+                    @endif
+                </div>
+                <div class="absolute -bottom-1 -right-1 w-7 h-7 bg-teal-500 rounded-full border-2 border-slate-800 flex items-center justify-center z-10 shadow-lg">
+                    <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" /></svg>
                 </div>
             </div>
             
