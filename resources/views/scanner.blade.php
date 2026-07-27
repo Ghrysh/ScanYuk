@@ -245,9 +245,14 @@
                         <!-- Content -->
                         <div class="flex-1 pb-4">
                             <p class="text-white text-sm font-medium" x-text="entry.status_text"></p>
-                            <div class="flex items-center gap-2 mt-1">
+                            <div class="flex flex-wrap items-center gap-2 mt-1">
                                 <span class="text-slate-500 text-[11px]" x-text="entry.date + ' • ' + entry.time"></span>
-                                <span class="text-[10px] px-1.5 py-0.5 rounded-full" 
+                                <template x-if="entry.location_name">
+                                    <span class="text-slate-400 text-[11px] flex items-center gap-0.5 max-w-[120px] truncate">
+                                        📍 <span class="truncate" x-text="entry.location_name"></span>
+                                    </span>
+                                </template>
+                                <span class="text-[10px] px-1.5 py-0.5 rounded-full shrink-0" 
                                     :class="getExpBadgeClass(entry.exp_points)" 
                                     x-text="Math.floor(entry.exp_points) + ' pts'"></span>
                             </div>
