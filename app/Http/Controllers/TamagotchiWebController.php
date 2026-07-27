@@ -11,6 +11,39 @@ use Illuminate\Support\Facades\DB;
 class TamagotchiWebController extends Controller
 {
     /**
+     * Tampilkan halaman Login Global
+     */
+    public function globalLoginView()
+    {
+        return view('tamagotchi.global_login');
+    }
+
+    /**
+     * Proses Login Global
+     */
+    public function globalLoginPost(Request $request)
+    {
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string'
+        ]);
+
+        $username = strtolower(trim($request->username));
+        $session = TamagotchiSession::where('username', $username)->first();
+
+        if (!$session) {
+            return back()->with('error', 'Username Tamagotchi tidak ditemukan.');
+        }
+
+        if (Hash::check($request->password, $session->password)) {
+            session()->put('tamagotchi_logged_in_' . $session->id, true);
+            return redirect()->route('tamagotchi.index', $session->username)->with('success', 'Berhasil masuk ke Journey!');
+        }
+
+        return back()->with('error', 'Password salah.');
+    }
+
+    /**
      * Tampilkan halaman utama Journey (List)
      */
     public function index($username)

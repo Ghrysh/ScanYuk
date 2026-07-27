@@ -264,6 +264,9 @@ Route::post('/api/tamagotchi/journal', [\App\Http\Controllers\Api\TamagotchiCont
 Route::get('/api/tamagotchi/journey/{sessionId}', [\App\Http\Controllers\Api\TamagotchiController::class, 'getJourney']);
 
 // Tamagotchi Web Journey
+Route::get('/tamagotchi', [\App\Http\Controllers\TamagotchiWebController::class, 'globalLoginView'])->name('tamagotchi.global-login');
+Route::post('/tamagotchi/login', [\App\Http\Controllers\TamagotchiWebController::class, 'globalLoginPost'])->name('tamagotchi.global-login-post');
+
 Route::get('/tamagotchi/{username}', [\App\Http\Controllers\TamagotchiWebController::class, 'index'])->name('tamagotchi.index');
 Route::post('/tamagotchi/{username}/login', [\App\Http\Controllers\TamagotchiWebController::class, 'login'])->name('tamagotchi.login');
 Route::get('/tamagotchi/{username}/journey/{id}', [\App\Http\Controllers\TamagotchiWebController::class, 'show'])->name('tamagotchi.journey');
