@@ -435,6 +435,8 @@
          x-data="{
             showRejectModal: false,
             rejectTxnId: null,
+            showDetailModal: false,
+            detailTxn: {},
             fetchTransactions(query) {
                 fetch(`/admin/transactions/search?query=${query}`)
                     .then(response => response.text())
@@ -445,6 +447,10 @@
             openRejectModal(id) {
                 this.rejectTxnId = id;
                 this.showRejectModal = true;
+            },
+            openDetailModal(data) {
+                this.detailTxn = data;
+                this.showDetailModal = true;
             }
          }"
          style="display: none;" 
@@ -496,6 +502,78 @@
                         <button type="submit" class="flex-1 py-2 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition-colors">Tolak Transaksi</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <div x-show="showDetailModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div x-show="showDetailModal" x-transition.opacity.duration.300ms class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showDetailModal = false"></div>
+            <div x-show="showDetailModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 overflow-hidden max-h-[90vh] overflow-y-auto">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-slate-900 text-lg">Detail Transaksi</h3>
+                    <button @click="showDetailModal = false" class="text-slate-400 hover:text-slate-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4 border-b border-slate-100 pb-4">
+                        <div>
+                            <p class="text-xs text-slate-500 mb-1">Nama Pengguna</p>
+                            <p class="font-semibold text-slate-900" x-text="detailTxn.name"></p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 mb-1">Email</p>
+                            <p class="font-semibold text-slate-900" x-text="detailTxn.email"></p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 mb-1">Status Transaksi</p>
+                            <span class="px-2 py-0.5 rounded text-xs font-semibold"
+                                  :class="{
+                                      'bg-amber-100 text-amber-700': detailTxn.status === 'Pending',
+                                      'bg-teal-100 text-teal-700': ['Berhasil', 'Paid', 'Success', 'unsettled'].includes(detailTxn.status),
+                                      'bg-red-100 text-red-700': ['Ditolak', 'Batal', 'Failed'].includes(detailTxn.status)
+                                  }" x-text="detailTxn.status"></span>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 mb-1">Total Tagihan</p>
+                            <p class="font-bold text-indigo-600" x-text="detailTxn.amount"></p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 grid grid-cols-2 gap-2 text-center">
+                        <div>
+                            <p class="text-xs text-slate-500 mb-1">Paket Saat Ini</p>
+                            <p class="font-bold text-slate-800 capitalize" x-text="detailTxn.current_role"></p>
+                        </div>
+                        <div class="flex items-center justify-center text-slate-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                        </div>
+                        <div class="col-start-2">
+                            <p class="text-xs text-slate-500 mb-1">Upgrade Paket</p>
+                            <p class="font-bold text-teal-600 capitalize" x-text="detailTxn.package"></p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-bold text-slate-700 mb-2">Bukti Pembayaran</p>
+                        <template x-if="detailTxn.proof_url">
+                            <a :href="detailTxn.proof_url" target="_blank" class="block border border-slate-200 rounded-lg overflow-hidden hover:border-teal-500 transition-colors group relative">
+                                <img :src="detailTxn.proof_url" alt="Bukti Pembayaran" class="w-full object-contain max-h-64">
+                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <span class="bg-white text-slate-900 px-3 py-1.5 rounded-lg text-sm font-bold shadow-lg flex items-center gap-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                        Buka Gambar Penuh
+                                    </span>
+                                </div>
+                            </a>
+                        </template>
+                        <template x-if="!detailTxn.proof_url">
+                            <div class="bg-slate-50 border border-slate-200 border-dashed rounded-lg p-6 text-center text-slate-400">
+                                Tidak ada bukti yang diunggah
+                            </div>
+                        </template>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
