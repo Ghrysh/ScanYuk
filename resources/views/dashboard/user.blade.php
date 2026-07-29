@@ -247,7 +247,7 @@
                 @if($user->role === 'business')
                     <a href="{{ route('contact') }}" class="w-full block py-3.5 px-4 rounded-xl btn-gradient text-white font-bold shadow-lg shadow-indigo-200">Hubungi Tim Kami</a>
                 @else
-                    <button @click="showLimitModal = false; showPackages = true;..." class="w-full block py-3.5 px-4 rounded-xl btn-gradient text-white font-bold shadow-lg shadow-indigo-200">Lihat Pilihan Paket</button>
+                    <button @click="showLimitModal = false; showPackages = true; setTimeout(() => document.getElementById('packages-section').scrollIntoView({behavior: 'smooth'}), 150);" class="w-full block py-3.5 px-4 rounded-xl btn-gradient text-white font-bold shadow-lg shadow-indigo-200">Lihat Pilihan Paket</button>
                 @endif
                 <button @click="showLimitModal = false" class="w-full py-3.5 px-4 rounded-xl border-2 border-slate-200 text-slate-500 font-bold hover:bg-slate-50 hover:text-slate-700 transition-colors">Nanti Saja</button>
             </div>
