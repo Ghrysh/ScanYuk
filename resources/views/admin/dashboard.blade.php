@@ -540,15 +540,15 @@
                         </div>
                     </div>
                     
-                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 grid grid-cols-2 gap-2 text-center">
-                        <div>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 flex items-center justify-between text-center">
+                        <div class="flex-1">
                             <p class="text-xs text-slate-500 mb-1">Paket Saat Ini</p>
                             <p class="font-bold text-slate-800 capitalize" x-text="detailTxn.current_role"></p>
                         </div>
-                        <div class="flex items-center justify-center text-slate-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                        <div class="px-4 text-slate-400">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                         </div>
-                        <div class="col-start-2">
+                        <div class="flex-1">
                             <p class="text-xs text-slate-500 mb-1">Upgrade Paket</p>
                             <p class="font-bold text-teal-600 capitalize" x-text="detailTxn.package"></p>
                         </div>
@@ -911,7 +911,7 @@
          x-data="{ 
             pendingChats: [], activeChats: [], endedChats: [], currentChat: null, inputText: '',
             notifEnabled: false, unreadChats: {},
-            showHistory: false, // Tambahan state untuk membuka/menutup menu riwayat
+            showHistory: false, isFirstPoll: true,
             
             initLive() {
                 if (Notification.permission === 'granted') this.notifEnabled = true;
@@ -937,12 +937,14 @@
                 try {
                     let res = await fetch('/admin/live-chat/poll');
                     let data = await res.json();
-                    
+                    let initial = this.isFirstPoll;
                     if (data.pending.length > this.pendingChats.length) {
-                        this.playPing();
-                        if (this.notifEnabled && Notification.permission === 'granted') {
-                            let notif = new Notification('💬 Live Chat Baru!', { body: 'Ada user yang menunggu.', icon: '/favicon.ico' });
-                            notif.onclick = function() { window.focus(); };
+                        if (!initial) {
+                            this.playPing();
+                            if (this.notifEnabled && Notification.permission === 'granted') {
+                                let notif = new Notification('💬 Live Chat Baru!', { body: 'Ada user yang menunggu.', icon: '/favicon.ico' });
+                                notif.onclick = function() { window.focus(); };
+                            }
                         }
                     }
                     
@@ -953,16 +955,18 @@
                         
                         if(newLen > oldLen) {
                             if(this.currentChat?.id === act.id) {
-                                this.playPing(); setTimeout(() => { this.scrollDown() }, 100);
+                                if(!initial) this.playPing(); 
+                                setTimeout(() => { this.scrollDown() }, 100);
                             } else {
                                 this.unreadChats[act.id] = true;
-                                this.playPing();
+                                if(!initial) this.playPing();
                             }
                         }
                     });
                     
                     this.pendingChats = data.pending;
                     this.activeChats = data.active;
+                    this.isFirstPoll = false;
                     this.endedChats = data.ended || [];
                     
                     if(this.currentChat) {
