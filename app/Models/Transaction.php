@@ -9,7 +9,15 @@ class Transaction extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $fillable = ['id', 'user_id', 'pricing_package_id', 'amount', 'status'];
+    protected $fillable = [
+        'id',
+        'user_id',
+        'pricing_package_id',
+        'amount',
+        'status',
+        'payment_proof',
+        'reject_reason'
+    ];
 
     public function user() {
         return $this->belongsTo(User::class);

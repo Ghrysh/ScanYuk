@@ -118,6 +118,8 @@ Route::middleware(['auth'])->group(function () {
         Route::patch('/admin/users/{user}/toggle-status', [AdminController::class, 'toggleStatus'])->name('admin.users.toggle-status');
         Route::get('/admin/users/search', [AdminController::class, 'search'])->name('admin.users.search');
         Route::get('/admin/transactions/search', [AdminController::class, 'searchTransactions'])->name('admin.transactions.search');
+        Route::post('/admin/transactions/{id}/confirm', [AdminController::class, 'confirmTransaction'])->name('admin.transactions.confirm');
+        Route::post('/admin/transactions/{id}/reject', [AdminController::class, 'rejectTransaction'])->name('admin.transactions.reject');
         Route::patch('/admin/packages/{package}', [AdminController::class, 'updatePackage'])->name('admin.packages.update');
         Route::post('/admin/chatbot/knowledge', [\App\Http\Controllers\AdminController::class, 'storeChatbotKnowledge'])->name('admin.chatbot.store');
         Route::patch('/admin/chatbot/knowledge/{id}', [\App\Http\Controllers\AdminController::class, 'updateChatbotKnowledge'])->name('admin.chatbot.update');
@@ -133,6 +135,14 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/admin/live-chat/action', [\App\Http\Controllers\AdminController::class, 'actionLiveChat']);
         Route::post('/admin/live-chat/send', [\App\Http\Controllers\AdminController::class, 'sendLiveChatMessage']);
     });
+
+    Route::post('/notifications/{id}/read', function ($id) {
+        $notification = auth()->user()->notifications()->find($id);
+        if ($notification) {
+            $notification->markAsRead();
+        }
+        return response()->json(['success' => true]);
+    })->name('notifications.read');
 
     Route::middleware(['auth', 'role:free,starter,professional,business'])->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\UserDashboardController::class, 'index'])->name('user.dashboard');

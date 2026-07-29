@@ -189,6 +189,54 @@ class AdminController extends Controller
         return view('admin.partials._transaction_table', compact('transactions'))->render();
     }
 
+    public function confirmTransaction(Request $request, $id)
+    {
+        $transaction = Transaction::findOrFail($id);
+        if ($transaction->status !== 'Pending') {
+            return back()->with(['error' => 'Transaksi tidak berstatus Pending.', 'active_tab' => 'transaksi']);
+        }
+
+        $transaction->update(['status' => 'Berhasil']);
+
+        $user = $transaction->user;
+        $package = $transaction->package;
+
+        $roleMap = ['Bisnis' => User::ROLE_BUSINESS, 'Profesional' => User::ROLE_PROFESSIONAL, 'Pemula' => User::ROLE_STARTER, 'Gratis' => User::ROLE_FREE];
+        $newRole = $roleMap[$package->name] ?? strtolower($package->name);
+
+        \App\Models\QrCode::where('user_id', $user->id)->delete();
+        $user->update(['role' => $newRole, 'image' => 0, 'voice' => 0, 'scan' => 0]);
+
+        $user->notify(new \App\Notifications\PaymentStatusNotification('diterima', 'Pembayaran Anda untuk paket ' . $package->name . ' telah berhasil dikonfirmasi.'));
+
+        try {
+            \Illuminate\Support\Facades\Mail::to($user->email)->send(new \App\Mail\PaymentSuccessMail($user, $package, $transaction));
+        } catch (\Exception $e) {
+            // Abaikan error email jika gagal agar proses tetap jalan
+        }
+
+        return back()->with(['success' => 'Transaksi berhasil dikonfirmasi!', 'active_tab' => 'transaksi']);
+    }
+
+    public function rejectTransaction(Request $request, $id)
+    {
+        $request->validate(['reject_reason' => 'required|string|max:1000']);
+        
+        $transaction = Transaction::findOrFail($id);
+        if ($transaction->status !== 'Pending') {
+            return back()->with(['error' => 'Transaksi tidak berstatus Pending.', 'active_tab' => 'transaksi']);
+        }
+
+        $transaction->update([
+            'status' => 'Ditolak',
+            'reject_reason' => $request->reject_reason
+        ]);
+
+        $transaction->user->notify(new \App\Notifications\PaymentStatusNotification('ditolak', $request->reject_reason));
+
+        return back()->with(['success' => 'Transaksi berhasil ditolak!', 'active_tab' => 'transaksi']);
+    }
+
     public function storeChatbotKnowledge(Request $request)
     {
         $request->validate(['topic' => 'required', 'intent_name' => 'required', 'keywords' => 'required', 'response' => 'required']);

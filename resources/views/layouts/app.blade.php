@@ -138,6 +138,49 @@
         });
     </script>
 
+    @auth
+    @php
+        $paymentNotification = auth()->user()->unreadNotifications->where('data.type', 'payment_verification')->first();
+    @endphp
+    @if($paymentNotification)
+        <div x-data="{ 
+                show: true,
+                markAsRead() {
+                    fetch('/notifications/{{ $paymentNotification->id }}/read', {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                            'Accept': 'application/json'
+                        }
+                    });
+                    this.show = false;
+                }
+            }" 
+            x-show="show" 
+            class="fixed inset-0 z-[200] flex items-center justify-center p-4" style="display: none;">
+            <div x-show="show" x-transition.opacity class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+            <div x-show="show" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col p-6 text-center border-t-4 {{ $paymentNotification->data['status'] == 'diterima' ? 'border-teal-500' : 'border-red-500' }}">
+                <div class="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 {{ $paymentNotification->data['status'] == 'diterima' ? 'bg-teal-50 text-teal-500' : 'bg-red-50 text-red-500' }}">
+                    @if($paymentNotification->data['status'] == 'diterima')
+                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                    @else
+                        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                    @endif
+                </div>
+                <h3 class="font-bold text-slate-900 text-xl mb-2">
+                    {{ $paymentNotification->data['status'] == 'diterima' ? 'Pembayaran Berhasil' : 'Pembayaran Ditolak' }}
+                </h3>
+                <p class="text-sm text-slate-600 mb-6">
+                    {{ $paymentNotification->data['message'] }}
+                </p>
+                <button @click="markAsRead()" class="w-full py-3 rounded-xl text-white font-bold transition-all shadow-md {{ $paymentNotification->data['status'] == 'diterima' ? 'bg-teal-500 hover:bg-teal-600' : 'bg-red-500 hover:bg-red-600' }}">
+                    Tutup
+                </button>
+            </div>
+        </div>
+    @endif
+    @endauth
+
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.store('ai3d', {

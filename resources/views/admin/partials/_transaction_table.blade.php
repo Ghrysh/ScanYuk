@@ -18,9 +18,27 @@
         </span>
     </td>
     <td class="px-6 py-4 text-slate-500">{{ $txn->created_at->format('Y-m-d') }}</td>
+    <td class="px-6 py-4 text-right">
+        @if($txn->status === 'Pending')
+            <div class="flex items-center justify-end gap-2">
+                @if($txn->payment_proof)
+                    <a href="{{ asset('storage/' . $txn->payment_proof) }}" target="_blank" class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-semibold hover:bg-slate-200">Lihat Bukti</a>
+                @endif
+                <form action="{{ route('admin.transactions.confirm', $txn->id) }}" method="POST" class="m-0 p-0 inline">
+                    @csrf
+                    <button type="submit" class="px-2 py-1 bg-teal-500 text-white rounded text-xs font-semibold hover:bg-teal-600">Terima</button>
+                </form>
+                <button type="button" @click="openRejectModal('{{ $txn->id }}')" class="px-2 py-1 bg-red-500 text-white rounded text-xs font-semibold hover:bg-red-600">Tolak</button>
+            </div>
+        @else
+            @if($txn->payment_proof)
+                <a href="{{ asset('storage/' . $txn->payment_proof) }}" target="_blank" class="text-xs text-indigo-600 hover:underline">Lihat Bukti</a>
+            @endif
+        @endif
+    </td>
 </tr>   
 @empty
 <tr>
-    <td colspan="6" class="px-6 py-8 text-center text-slate-400">Tidak ada transaksi yang cocok.</td>
+    <td colspan="7" class="px-6 py-8 text-center text-slate-400">Tidak ada transaksi yang cocok.</td>
 </tr>
 @endforelse

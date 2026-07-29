@@ -22,7 +22,7 @@
     $scanPercent = $isScanUnlimited ? 100 : ($scanLimit > 0 ? min(($user->scan / $scanLimit) * 100, 100) : 0);
 @endphp
 
-<div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-10" x-data="{ showPackages: false, showLimitModal: false, showWarningModal: false, selectedPkg: null, showDownloadModal: false, selectedQrId: null, isGeneratingFlyer: false, flyerProgress: 0 }">
+<div class="max-w-[100rem] mx-auto w-full px-4 sm:px-6 lg:px-8 py-10" x-data="{ showPackages: false, showLimitModal: false, showWarningModal: false, selectedPkg: null, selectedPkgPrice: 0, showDownloadModal: false, selectedQrId: null, isGeneratingFlyer: false, flyerProgress: 0 }">
     
     <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
         <div>
@@ -97,14 +97,14 @@
                             Paket Aktif
                         </div>
                     @else
-                        <button type="button" @click="selectedPkg = {{ $pkg->id }}; showWarningModal = true" class="w-full py-2.5 rounded-lg btn-gradient text-white font-bold text-sm transition-colors">
+                        <button type="button" @click="selectedPkg = {{ $pkg->id }}; selectedPkgPrice = {{ $pkg->price + ($pkg->price * 0.11) }}; showWarningModal = true" class="w-full py-2.5 rounded-lg btn-gradient text-white font-bold text-sm transition-colors">
                             Bayar
                         </button>
                     @endif
                 </div>
                 @endforeach
             </div>
-            <p class="text-xs text-slate-400 mt-6">Pembayaran akan diproses melalui iPaymu. Kuota ditambahkan setelah pembayaran berhasil.</p>
+            <p class="text-xs text-slate-400 mt-6">Pembayaran akan diproses secara transfer manual. Kuota ditambahkan setelah pembayaran berhasil dikonfirmasi oleh Admin.</p>
         </div>
     </div>
 
@@ -255,22 +255,40 @@
     </div>
     <div x-show="showWarningModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center">
         <div x-show="showWarningModal" x-transition.opacity class="absolute inset-0 bg-slate-900/80 backdrop-blur-sm" @click="showWarningModal = false"></div>
-        <div x-show="showWarningModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 p-8 text-center">
+        <div x-show="showWarningModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-8 scale-95" x-transition:enter-end="opacity-100 translate-y-0 scale-100" class="relative bg-white rounded-3xl shadow-2xl w-full max-w-lg mx-4 p-8 text-center max-h-[90vh] overflow-y-auto">
             
-            <div class="w-20 h-20 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-5 border-4 border-amber-100">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            <h3 class="font-extrabold text-slate-900 text-xl mb-4">Pembayaran Manual</h3>
+            
+            <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-left mb-6">
+                <p class="text-sm text-slate-600 mb-2">Total yang harus dibayar (termasuk PPN 11%):</p>
+                <div class="text-3xl font-extrabold text-slate-900 mb-4" x-text="new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(selectedPkgPrice)"></div>
+                
+                <p class="text-sm text-slate-600 mb-1">Silakan transfer ke rekening berikut:</p>
+                <div class="bg-white border border-slate-200 rounded-lg p-3">
+                    <p class="font-bold text-slate-900">Bank BNI</p>
+                    <p class="text-lg font-mono text-indigo-600 tracking-wider">1813197382</p>
+                    <p class="text-sm font-semibold text-slate-700">a.n PT Berkah Teknologi Terdepan</p>
+                </div>
             </div>
-            
-            <h3 class="font-extrabold text-slate-900 text-xl mb-2">Peringatan Penting!</h3>
-            <p class="text-sm text-slate-600 mb-6 bg-amber-50 border border-amber-100 p-4 rounded-xl text-left">
-                Membeli paket baru (meskipun paket yang sama) akan <strong>MENGHAPUS & MERESET</strong> seluruh data QR Code Anda saat ini ke 0. Harap <span class="font-bold">Download</span> QR Code Anda jika masih ingin menggunakannya!
+
+            <p class="text-xs text-slate-600 mb-6 bg-amber-50 border border-amber-100 p-3 rounded-lg text-left">
+                <strong>Peringatan!</strong> Membeli paket baru (meskipun paket yang sama) akan MENGHAPUS & MERESET seluruh data QR Code Anda saat ini ke 0.
             </p>
             
-            <form action="{{ route('payment.checkout') }}" method="POST" class="w-full flex gap-3">
+            <form action="{{ route('payment.checkout') }}" method="POST" enctype="multipart/form-data" class="w-full flex flex-col gap-4 text-left">
                 @csrf
                 <input type="hidden" name="package_id" x-bind:value="selectedPkg">
-                <button type="button" @click="showWarningModal = false" class="w-1/2 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors">Batal</button>
-                <button type="submit" class="w-1/2 py-3 rounded-xl btn-gradient text-white font-bold transition-colors shadow-lg">Lanjut Bayar</button>
+                
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Unggah Bukti Pembayaran <span class="text-red-500">*</span></label>
+                    <input type="file" name="payment_proof" required accept="image/jpeg,image/png,image/jpg" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100">
+                    <p class="text-xs text-slate-400 mt-1">Format: JPG, JPEG, PNG. Maksimal 5MB.</p>
+                </div>
+
+                <div class="flex gap-3 mt-4">
+                    <button type="button" @click="showWarningModal = false" class="w-1/2 py-3 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors">Batal</button>
+                    <button type="submit" class="w-1/2 py-3 rounded-xl btn-gradient text-white font-bold transition-colors shadow-lg">Kirim</button>
+                </div>
             </form>
         </div>
     </div>

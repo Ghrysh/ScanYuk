@@ -433,12 +433,18 @@
 
     <div x-show="activeTab === 'transaksi'" 
          x-data="{
+            showRejectModal: false,
+            rejectTxnId: null,
             fetchTransactions(query) {
                 fetch(`/admin/transactions/search?query=${query}`)
                     .then(response => response.text())
                     .then(html => {
                         document.getElementById('transaction-table-body').innerHTML = html;
                     });
+            },
+            openRejectModal(id) {
+                this.rejectTxnId = id;
+                this.showRejectModal = true;
             }
          }"
          style="display: none;" 
@@ -463,6 +469,7 @@
                         <th class="px-6 py-4 whitespace-nowrap">Jumlah</th>
                         <th class="px-6 py-4 whitespace-nowrap">Status</th>
                         <th class="px-6 py-4 whitespace-nowrap">Tanggal</th>
+                        <th class="px-6 py-4 whitespace-nowrap text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="transaction-table-body" class="divide-y divide-slate-100">
@@ -472,6 +479,24 @@
         </div>
         <div class="p-4 border-t border-slate-100 flex overflow-x-auto">
             {{ $transactions->appends(['active_tab' => 'transaksi', 'users_page' => request('users_page')])->links() }}
+        </div>
+
+        <div x-show="showRejectModal" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div x-show="showRejectModal" x-transition.opacity.duration.300ms class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="showRejectModal = false"></div>
+            <div x-show="showRejectModal" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 overflow-hidden">
+                <h3 class="font-bold text-slate-900 text-lg mb-4">Tolak Transaksi</h3>
+                <form :action="`/admin/transactions/${rejectTxnId}/reject`" method="POST">
+                    @csrf
+                    <div class="mb-4">
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Alasan Penolakan</label>
+                        <textarea name="reject_reason" required rows="3" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-all" placeholder="Tulis pesan untuk pengguna..."></textarea>
+                    </div>
+                    <div class="flex gap-3">
+                        <button type="button" @click="showRejectModal = false" class="flex-1 py-2 rounded-lg border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors">Batal</button>
+                        <button type="submit" class="flex-1 py-2 rounded-lg bg-red-500 text-white font-bold hover:bg-red-600 transition-colors">Tolak Transaksi</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
