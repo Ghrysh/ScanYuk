@@ -29,20 +29,22 @@
                 'status' => $txn->status,
                 'proof_url' => $txn->payment_proof ? asset('storage/' . $txn->payment_proof) : null
             ];
-            $jsonData = htmlspecialchars(json_encode($modalData), ENT_QUOTES, 'UTF-8');
         @endphp
         
         @if($txn->status === 'Pending')
             <div class="flex items-center justify-end gap-2">
-                <button type="button" @click="openDetailModal({{ $jsonData }})" class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-xs font-semibold hover:bg-slate-200">Detail Transaksi</button>
+                <button type="button" @click='openDetailModal({!! json_encode($modalData, JSON_HEX_APOS) !!})' class="px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors shadow-sm">Detail</button>
                 <form action="{{ route('admin.transactions.confirm', $txn->id) }}" method="POST" class="m-0 p-0 inline">
                     @csrf
-                    <button type="submit" class="px-2 py-1 bg-teal-500 text-white rounded text-xs font-semibold hover:bg-teal-600">Terima</button>
+                    <button type="submit" class="px-3 py-1.5 bg-teal-500 text-white rounded-lg text-xs font-bold hover:bg-teal-600 transition-colors shadow-sm">Terima</button>
                 </form>
-                <button type="button" @click="openRejectModal('{{ $txn->id }}')" class="px-2 py-1 bg-red-500 text-white rounded text-xs font-semibold hover:bg-red-600">Tolak</button>
+                <button type="button" @click="openRejectModal('{{ $txn->id }}')" class="px-3 py-1.5 bg-red-500 text-white rounded-lg text-xs font-bold hover:bg-red-600 transition-colors shadow-sm">Tolak</button>
             </div>
         @else
-            <button type="button" @click="openDetailModal({{ $jsonData }})" class="text-xs text-indigo-600 hover:underline">Detail Transaksi</button>
+            <button type="button" @click='openDetailModal({!! json_encode($modalData, JSON_HEX_APOS) !!})' class="px-3 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors shadow-sm inline-flex items-center gap-1.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                Detail
+            </button>
         @endif
     </td>
 </tr>   
