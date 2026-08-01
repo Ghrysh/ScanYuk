@@ -20,68 +20,36 @@ class AdminSeoController extends Controller
         $keyword = $request->target_keyword;
         $url = url($pagePath);
 
-        // Coba ambil isi halaman saat ini agar AI punya konteks (Scrape Title & Meta Description)
-        $currentTitle = "Tidak diketahui";
-        $currentDesc = "Tidak diketahui";
+        // Coba ambil seluruh isi halaman saat ini agar AI punya konteks penuh
+        $pageHtml = "";
         try {
-            $pageHtml = Http::timeout(10)->get($url)->body();
-            if (preg_match('/<title>(.*?)<\/title>/is', $pageHtml, $m)) {
-                $currentTitle = trim(strip_tags($m[1]));
-            }
-            if (preg_match('/<meta\s+name=["\']description["\']\s+content=["\'](.*?)["\']/is', $pageHtml, $m)) {
-                $currentDesc = trim($m[1]);
-            }
+            $pageHtml = Http::timeout(15)->get($url)->body();
         } catch (\Exception $e) {}
 
+        $safeHtml = substr($pageHtml, 0, 8000);
+
         $prompt = "You are an expert SEO Consultant. I have a webpage at '$url' and I want to target the keyword '$keyword'.
-Here is the current state of the page:
-- Current Meta Title: $currentTitle
-- Current Meta Description: $currentDesc
+Here is a snippet of the current HTML source code of the page:
+```html
+$safeHtml
+```
 
-Please generate a comprehensive SEO recommendation report.
+Please generate a comprehensive list of actionable SEO recommendations. 
 IMPORTANT RULES YOU MUST FOLLOW:
-1. The content of your recommendations MUST be in BAHASA INDONESIA.
-2. Meta Title MUST be under 60 characters, catchy, and include the brand name 'ScanYuk'.
-3. Meta Description MUST be between 120-160 characters, persuasive, and include a Call to Action (CTA).
-4. H1 Heading MUST be short, punchy, and relevant to the page content (not a full sentence).
+1. The content MUST be in BAHASA INDONESIA.
+2. Provide a dynamic list of recommendations. You can use standard categories like 'FAQ', 'Backlink', 'Internal Link', 'Update Heading', 'Optimasi Gambar', 'Page Speed', or INVENT NEW CATEGORIES if you find specific opportunities (e.g., 'Feature Addition', 'Keyword Optimization').
+3. You MUST output ONLY a valid JSON ARRAY of objects, with no markdown formatting.
 
-You MUST output ONLY a valid JSON object with the following exact structure, no markdown:
-{
-    \"overall_score\": 75,
-    \"meta_title\": {
-        \"current\": \"$currentTitle\",
-        \"recommendation\": \"Saran Judul Meta Baru (max 60 chars)\",
-        \"reason\": \"Alasan kenapa judul ini lebih baik\"
-    },
-    \"meta_description\": {
-        \"current\": \"$currentDesc\",
-        \"recommendation\": \"Saran Deskripsi Meta Baru (120-160 chars)\",
-        \"reason\": \"Alasan kenapa deskripsi ini lebih baik\"
-    },
-    \"h1_heading\": {
-        \"recommendation\": \"Saran Heading H1 (Singkat & Padat)\",
-        \"reason\": \"Alasan pemilihan H1 ini\"
-    },
-    \"faq_schema\": [
-        {\"question\": \"Pertanyaan FAQ 1\", \"answer\": \"Jawaban FAQ 1\", \"reason\": \"Alasan menambah FAQ ini\"}
-    ],
-    \"backlink_strategy\": {
-        \"recommendation\": \"Saran strategi backlink\",
-        \"reason\": \"Alasan strategi backlink ini\"
-    },
-    \"internal_link_strategy\": {
-        \"recommendation\": \"Saran strategi tautan internal\",
-        \"reason\": \"Alasan strategi ini\"
-    },
-    \"image_optimization\": {
-        \"recommendation\": \"Saran optimasi gambar\",
-        \"reason\": \"Alasan perlunya optimasi ini\"
-    },
-    \"page_speed\": {
-        \"recommendation\": \"Saran optimasi kecepatan loading\",
-        \"reason\": \"Dampak pada SEO\"
+Format the output EXACTLY like this JSON array:
+[
+    {
+        \"category\": \"Nama Kategori (contoh: Optimasi Gambar / Page Speed)\",
+        \"research_finding\": \"Fakta/riset tren SEO saat ini terkait hal ini\",
+        \"current_condition\": \"Kondisi yang Anda temukan di kode HTML web ini\",
+        \"impact\": \"Dampak negatif jika dibiarkan atau dampak positif jika diperbaiki\",
+        \"recommendation_text\": \"Saran konkret apa yang harus dilakukan oleh tim kami\"
     }
-}";
+]";
 
         try {
             $response = Http::timeout(300)->post('http://scanyuk-ollama:11434/api/generate', [
@@ -93,34 +61,37 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
 
             if ($response->successful()) {
                 $data = $response->json();
-                $resultText = $data['response'] ?? '{}';
+                $resultText = $data['response'] ?? '[]';
                 
-                // Coba ekstrak JSON dengan regex jika terbungkus teks lain
-                preg_match('/\{.*\}/s', $resultText, $matches);
+                preg_match('/\[.*\]/s', $resultText, $matches);
                 if (!empty($matches)) {
                     $resultText = $matches[0];
                 }
                 
                 $parsed = json_decode($resultText, true);
 
-                if ($parsed) {
-                    $recommendation = SeoRecommendation::create([
-                        'page_path' => $pagePath,
-                        'target_keyword' => $keyword,
-                        'overall_score' => $parsed['overall_score'] ?? 0,
-                        'recommendations' => $parsed,
-                        'status' => 'pending',
-                        'manual_status' => 'pending',
-                        'ai_type' => 'manual'
-                    ]);
-
-                    return response()->json(['success' => true, 'data' => $recommendation]);
+                if ($parsed && is_array($parsed)) {
+                    $createdItems = [];
+                    foreach ($parsed as $rec) {
+                        if (isset($rec['category']) && isset($rec['recommendation_text'])) {
+                            $createdItems[] = SeoRecommendation::create([
+                                'page_path' => $pagePath,
+                                'category' => $rec['category'],
+                                'research_finding' => $rec['research_finding'] ?? '',
+                                'current_condition' => $rec['current_condition'] ?? '',
+                                'impact' => $rec['impact'] ?? '',
+                                'recommendation_text' => $rec['recommendation_text'],
+                                'status' => 'pending'
+                            ]);
+                        }
+                    }
+                    return response()->json(['success' => true, 'data' => $createdItems, 'message' => 'Berhasil mendapatkan ' . count($createdItems) . ' rekomendasi.']);
                 }
                 
-                return response()->json(['success' => false, 'message' => 'Gagal mendapatkan response valid dari AI. Respons mentah: ' . $data['response']]);
+                return response()->json(['success' => false, 'message' => 'Gagal mendapatkan response array JSON valid dari AI.']);
             }
 
-            return response()->json(['success' => false, 'message' => 'Gagal mendapat response HTTP 200 dari Ollama. Status: ' . $response->status() . ' Body: ' . $response->body()]);
+            return response()->json(['success' => false, 'message' => 'Gagal mendapat response HTTP 200 dari Ollama. Status: ' . $response->status()]);
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => 'Gagal terhubung ke AI: ' . $e->getMessage()]);
         }
@@ -129,28 +100,9 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
     public function apply(Request $request, $id)
     {
         $recommendation = SeoRecommendation::findOrFail($id);
-        
-        $recData = $recommendation->recommendations;
-
-        $pageSeo = PageSeoContent::firstOrNew(['page_path' => $recommendation->page_path]);
-        
-        if (isset($recData['meta_title'])) $pageSeo->meta_title = $recData['meta_title'];
-        if (isset($recData['meta_description'])) $pageSeo->meta_description = $recData['meta_description'];
-        if (isset($recData['h1_heading'])) $pageSeo->h1_heading = $recData['h1_heading'];
-        if (isset($recData['faq_schema'])) $pageSeo->faq_schema = $recData['faq_schema'];
-        
-        $pageSeo->save();
-
         $recommendation->update(['status' => 'applied']);
 
-        return response()->json(['success' => true, 'message' => 'Rekomendasi SEO berhasil diterapkan ke website!']);
-    }
-    public function updateManualStatus(Request $request, $id)
-    {
-        $request->validate(['status' => 'required|in:pending,proses,selesai']);
-        $recommendation = SeoRecommendation::findOrFail($id);
-        $recommendation->update(['manual_status' => $request->status]);
-        return response()->json(['success' => true, 'message' => 'Status manual berhasil diperbarui.']);
+        return response()->json(['success' => true, 'message' => 'Rekomendasi SEO ditandai sebagai selesai.']);
     }
 
     public function getRecommendations()

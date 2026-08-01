@@ -62,70 +62,39 @@ class AutonomousSeoScan extends Command
             // 3. Analisa SEO dengan AI
             $url = url($pagePath);
             
-            // Coba ambil isi halaman saat ini agar AI punya konteks (Scrape Title & Meta Description)
-            $currentTitle = "Tidak diketahui";
-            $currentDesc = "Tidak diketahui";
+            // Coba ambil seluruh isi halaman saat ini agar AI punya konteks penuh
+            $pageHtml = "";
             try {
-                $pageHtml = \Illuminate\Support\Facades\Http::timeout(10)->get($url)->body();
-                if (preg_match('/<title>(.*?)<\/title>/is', $pageHtml, $m)) {
-                    $currentTitle = trim(strip_tags($m[1]));
-                }
-                if (preg_match('/<meta\s+name=["\']description["\']\s+content=["\'](.*?)["\']/is', $pageHtml, $m)) {
-                    $currentDesc = trim($m[1]);
-                }
+                $pageHtml = \Illuminate\Support\Facades\Http::timeout(15)->get($url)->body();
             } catch (\Exception $e) {
-                // Abaikan jika gagal scrape
+                $this->warn("Gagal scrape halaman $url, melanjutkan tanpa HTML penuh.");
             }
 
+            // Batasi panjang HTML agar tidak meledak di konteks model Llama (potong jika sangat panjang)
+            $safeHtml = substr($pageHtml, 0, 8000); 
+
             $prompt = "You are an expert SEO Consultant. I have a webpage at '$url' and I want to target the trending keyword '$trendingKeyword'.
-Here is the current state of the page:
-- Current Meta Title: $currentTitle
-- Current Meta Description: $currentDesc
+Here is a snippet of the current HTML source code of the page:
+```html
+$safeHtml
+```
 
-Please generate a comprehensive SEO recommendation report. 
+Please generate a comprehensive list of actionable SEO recommendations. 
 IMPORTANT RULES YOU MUST FOLLOW:
-1. The content of your recommendations MUST be in BAHASA INDONESIA.
-2. Meta Title MUST be under 60 characters, catchy, and include the brand name 'ScanYuk'.
-3. Meta Description MUST be between 120-160 characters, persuasive, and include a Call to Action (CTA).
-4. H1 Heading MUST be short, punchy, and relevant to the page content (not a full sentence).
+1. The content MUST be in BAHASA INDONESIA.
+2. Provide a dynamic list of recommendations. You can use standard categories like 'FAQ', 'Backlink', 'Internal Link', 'Update Heading', 'Optimasi Gambar', 'Page Speed', or INVENT NEW CATEGORIES if you find specific opportunities (e.g., 'Feature Addition', 'Keyword Optimization').
+3. You MUST output ONLY a valid JSON ARRAY of objects, with no markdown formatting.
 
-You MUST output ONLY a valid JSON object with the following exact structure, no markdown:
-{
-    \"overall_score\": 75,
-    \"meta_title\": {
-        \"current\": \"$currentTitle\",
-        \"recommendation\": \"Saran Judul Meta Baru (max 60 chars)\",
-        \"reason\": \"Alasan kenapa judul ini lebih baik\"
-    },
-    \"meta_description\": {
-        \"current\": \"$currentDesc\",
-        \"recommendation\": \"Saran Deskripsi Meta Baru (120-160 chars)\",
-        \"reason\": \"Alasan kenapa deskripsi ini lebih baik\"
-    },
-    \"h1_heading\": {
-        \"recommendation\": \"Saran Heading H1 (Singkat & Padat)\",
-        \"reason\": \"Alasan pemilihan H1 ini\"
-    },
-    \"faq_schema\": [
-        {\"question\": \"Pertanyaan FAQ 1\", \"answer\": \"Jawaban FAQ 1\", \"reason\": \"Alasan menambah FAQ ini\"}
-    ],
-    \"backlink_strategy\": {
-        \"recommendation\": \"Saran strategi backlink\",
-        \"reason\": \"Alasan strategi backlink ini\"
-    },
-    \"internal_link_strategy\": {
-        \"recommendation\": \"Saran strategi tautan internal\",
-        \"reason\": \"Alasan strategi ini\"
-    },
-    \"image_optimization\": {
-        \"recommendation\": \"Saran optimasi gambar\",
-        \"reason\": \"Alasan perlunya optimasi ini\"
-    },
-    \"page_speed\": {
-        \"recommendation\": \"Saran optimasi kecepatan loading\",
-        \"reason\": \"Dampak pada SEO\"
+Format the output EXACTLY like this JSON array:
+[
+    {
+        \"category\": \"Nama Kategori (contoh: Optimasi Gambar / Page Speed)\",
+        \"research_finding\": \"Fakta/riset tren SEO saat ini terkait hal ini\",
+        \"current_condition\": \"Kondisi yang Anda temukan di kode HTML web ini\",
+        \"impact\": \"Dampak negatif jika dibiarkan atau dampak positif jika diperbaiki\",
+        \"recommendation_text\": \"Saran konkret apa yang harus dilakukan oleh tim kami\"
     }
-}";
+]";
 
             try {
                 $this->info("Menganalisa halaman dengan Ollama...");
@@ -138,32 +107,36 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
 
                 if ($response->successful()) {
                     $data = $response->json();
-                    $resultText = $data['response'] ?? '{}';
+                    $resultText = $data['response'] ?? '[]';
                     
-                    preg_match('/\{.*\}/s', $resultText, $matches);
+                    preg_match('/\[.*\]/s', $resultText, $matches);
                     if (!empty($matches)) {
                         $resultText = $matches[0];
                     }
                     
                     $parsed = json_decode($resultText, true);
 
-                    if ($parsed) {
-                        \App\Models\SeoRecommendation::create([
-                            'page_path' => $pagePath,
-                            'target_keyword' => $trendingKeyword,
-                            'overall_score' => $parsed['overall_score'] ?? rand(70,95),
-                            'recommendations' => $parsed,
-                            'status' => 'pending',
-                            'manual_status' => 'pending',
-                            'ai_type' => 'proactive'
-                        ]);
-                        $this->info("Berhasil! Rekomendasi SEO Proaktif telah ditambahkan ke database.");
+                    if ($parsed && is_array($parsed)) {
+                        foreach ($parsed as $rec) {
+                            if (isset($rec['category']) && isset($rec['recommendation_text'])) {
+                                \App\Models\SeoRecommendation::create([
+                                    'page_path' => $pagePath,
+                                    'category' => $rec['category'],
+                                    'research_finding' => $rec['research_finding'] ?? '',
+                                    'current_condition' => $rec['current_condition'] ?? '',
+                                    'impact' => $rec['impact'] ?? '',
+                                    'recommendation_text' => $rec['recommendation_text'],
+                                    'status' => 'pending'
+                                ]);
+                            }
+                        }
+                        $this->info("Berhasil! " . count($parsed) . " Rekomendasi SEO Proaktif telah ditambahkan ke database.");
                     } else {
                         $this->error("Gagal memparsing respons JSON dari AI. Respons mentah: \n" . $data['response']);
                         $hasError = true;
                     }
                 } else {
-                    $this->error("Gagal mendapat response HTTP 200 dari Ollama. Status: " . $response->status() . "\nBody: " . $response->body());
+                    $this->error("Gagal mendapat response HTTP 200 dari Ollama. Status: " . $response->status());
                     $hasError = true;
                 }
             } catch (\Exception $e) {

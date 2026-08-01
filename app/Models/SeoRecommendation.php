@@ -11,15 +11,11 @@ class SeoRecommendation extends Model
 
     protected $fillable = [
         'page_path',
-        'target_keyword',
-        'overall_score',
-        'recommendations',
+        'category',
+        'research_finding',
+        'current_condition',
+        'impact',
+        'recommendation_text',
         'status',
-        'manual_status',
-        'ai_type',
-    ];
-
-    protected $casts = [
-        'recommendations' => 'array',
     ];
 }

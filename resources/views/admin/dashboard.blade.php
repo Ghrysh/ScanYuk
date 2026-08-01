@@ -718,7 +718,6 @@
              recommendation: null,
              activeTasks: [],
              completedTasks: [],
-             currentTaskType: null,
              showManualForm: false,
              async init() {
                  this.fetchHistory();
@@ -727,22 +726,8 @@
                  try {
                      let res = await fetch('/admin/seo/recommendations');
                      let raw = await res.json();
-                     let active = [];
-                     let completed = [];
-                     raw.forEach(item => {
-                         if (item.status === 'applied' && item.manual_status === 'selesai') {
-                             completed.push(item);
-                         } else {
-                             if (item.status === 'pending') {
-                                 active.push({...item, task_type: 'auto'});
-                             }
-                             if (item.manual_status !== 'selesai') {
-                                 active.push({...item, task_type: 'programmer'});
-                             }
-                         }
-                     });
-                     this.activeTasks = active;
-                     this.completedTasks = completed;
+                     this.activeTasks = raw.filter(item => item.status === 'pending');
+                     this.completedTasks = raw.filter(item => item.status === 'applied');
                  } catch(e) {}
              },
              async analyze() {
@@ -762,9 +747,9 @@
                      let res = await fetch('/admin/seo/analyze', { method: 'POST', body: formData });
                      let data = await res.json();
                      if (data.success) {
-                         this.recommendation = data.data;
                          this.fetchHistory();
                          if(data.warning) alert(data.warning);
+                         else alert('Analisis selesai! Data telah dimuat ke dalam daftar.');
                      } else {
                          alert(data.message || 'Gagal menganalisa');
                      }
@@ -775,7 +760,7 @@
                  }
              },
              async applyRec(id) {
-                 if(!confirm('Terapkan perubahan ini secara otomatis ke halaman?')) return;
+                 if(!confirm('Tandai rekomendasi ini sebagai Selesai?')) return;
                  let formData = new FormData();
                  formData.append('_token', document.querySelector('meta[name=csrf-token]').content);
                  try {
@@ -783,26 +768,11 @@
                      let data = await res.json();
                      if(data.success) {
                          alert(data.message);
-                         this.recommendation.status = 'applied';
+                         this.recommendation = null;
                          this.fetchHistory();
                      }
                  } catch (e) {
                      alert('Gagal apply');
-                 }
-             },
-             async updateManualStatus(id, newStatus) {
-                 let formData = new FormData();
-                 formData.append('_token', document.querySelector('meta[name=csrf-token]').content);
-                 formData.append('status', newStatus);
-                 try {
-                     let res = await fetch('/admin/seo/update-manual-status/' + id, { method: 'POST', body: formData });
-                     let data = await res.json();
-                     if(data.success) {
-                         this.recommendation.manual_status = newStatus;
-                         this.fetchHistory();
-                     }
-                 } catch (e) {
-                     alert('Gagal update status manual');
                  }
              }
          }">
@@ -851,35 +821,32 @@
                          <table class="w-full text-left text-sm">
                              <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
                                  <tr>
-                                     <th class="px-6 py-3 font-semibold">Tipe Tugas</th>
+                                     <th class="px-6 py-3 font-semibold">Kategori Saran</th>
                                      <th class="px-6 py-3 font-semibold">Halaman</th>
-                                     <th class="px-6 py-3 font-semibold">Target Keyword</th>
+                                     <th class="px-6 py-3 font-semibold">Cuplikan Solusi</th>
                                      <th class="px-6 py-3 font-semibold text-right">Aksi</th>
                                  </tr>
                              </thead>
                              <tbody class="divide-y divide-slate-100">
-                                 <template x-for="item in activeTasks" :key="item.id + '_' + item.task_type">
+                                 <template x-for="item in activeTasks" :key="item.id">
                                      <tr class="hover:bg-slate-50 transition-colors">
                                          <td class="px-6 py-4">
-                                             <div x-show="item.task_type === 'auto'" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                                                <span>Tugas Otomatis</span>
-                                             </div>
-                                             <div x-show="item.task_type === 'programmer'" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                                <span>Tugas Programmer</span>
+                                             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                                <span x-text="item.category"></span>
                                              </div>
                                              <div class="text-slate-400 text-xs mt-1" x-text="new Date(item.created_at).toLocaleString('id-ID')"></div>
                                          </td>
                                          <td class="px-6 py-4 font-semibold text-indigo-600" x-text="item.page_path"></td>
                                          <td class="px-6 py-4">
-                                             <span class="text-slate-700 font-medium" x-text="item.target_keyword"></span>
+                                             <span class="text-slate-700 text-sm line-clamp-2" x-text="item.recommendation_text"></span>
                                          </td>
                                          <td class="px-6 py-4 text-right">
-                                             <button @click="recommendation = item; currentTaskType = item.task_type" class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">Lihat Detail &rarr;</button>
+                                             <button @click="recommendation = item" class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap">Lihat Analisa &rarr;</button>
                                          </td>
                                      </tr>
                                  </template>
                                  <tr x-show="activeTasks.length === 0">
-                                     <td colspan="4" class="px-6 py-8 text-center text-slate-500">Hebat! Semua tugas SEO sudah selesai dikerjakan.</td>
+                                     <td colspan="4" class="px-6 py-8 text-center text-slate-500">Hebat! Semua saran SEO sudah Anda kerjakan.</td>
                                  </tr>
                              </tbody>
                          </table>
@@ -889,42 +856,31 @@
                  <!-- Tabel Riwayat Selesai -->
                  <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
                      <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                         <h3 class="font-bold text-slate-800">Riwayat Pekerjaan Selesai</h3>
+                         <h3 class="font-bold text-slate-800">Riwayat Perbaikan SEO (Selesai)</h3>
                      </div>
                      <div class="overflow-x-auto">
                          <table class="w-full text-left text-sm opacity-70">
                              <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
                                  <tr>
-                                     <th class="px-6 py-3 font-semibold">Waktu / Tipe</th>
+                                     <th class="px-6 py-3 font-semibold">Waktu Selesai</th>
+                                     <th class="px-6 py-3 font-semibold">Kategori</th>
                                      <th class="px-6 py-3 font-semibold">Halaman</th>
-                                     <th class="px-6 py-3 font-semibold">Target Keyword</th>
-                                     <th class="px-6 py-3 font-semibold">Status Auto</th>
-                                     <th class="px-6 py-3 font-semibold">Tugas Programmer</th>
+                                     <th class="px-6 py-3 font-semibold">Solusi Diterapkan</th>
                                  </tr>
                              </thead>
                              <tbody class="divide-y divide-slate-100">
                                  <template x-for="item in completedTasks" :key="item.id">
                                      <tr class="hover:bg-slate-50 transition-colors">
                                          <td class="px-6 py-4">
-                                             <div class="text-slate-600 mb-1" x-text="new Date(item.created_at).toLocaleString('id-ID')"></div>
-                                             <span x-show="item.ai_type === 'proactive'" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700">AI Proactive</span>
-                                             <span x-show="item.ai_type === 'manual'" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">Manual Req</span>
+                                             <div class="text-slate-600" x-text="new Date(item.updated_at).toLocaleString('id-ID')"></div>
                                          </td>
+                                         <td class="px-6 py-4 font-bold text-slate-700" x-text="item.category"></td>
                                          <td class="px-6 py-4 font-semibold text-indigo-600" x-text="item.page_path"></td>
-                                         <td class="px-6 py-4">
-                                             <span class="text-slate-700 font-medium" x-text="item.target_keyword"></span>
-                                             <div class="mt-1 flex items-center gap-1 text-[10px] text-slate-500">Skor: <span class="font-bold px-1 rounded text-white" :class="item.overall_score >= 80 ? 'bg-teal-500' : (item.overall_score >= 50 ? 'bg-amber-500' : 'bg-red-500')" x-text="item.overall_score"></span></div>
-                                         </td>
-                                         <td class="px-6 py-4">
-                                             <span class="text-teal-600 font-bold text-xs bg-teal-50 px-2 py-1 rounded">Applied</span>
-                                         </td>
-                                         <td class="px-6 py-4">
-                                             <span class="text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-1 rounded">Selesai</span>
-                                         </td>
+                                         <td class="px-6 py-4 text-slate-700 text-sm" x-text="item.recommendation_text"></td>
                                      </tr>
                                  </template>
                                  <tr x-show="completedTasks.length === 0">
-                                     <td colspan="5" class="px-6 py-8 text-center text-slate-500">Belum ada riwayat analisa SEO.</td>
+                                     <td colspan="4" class="px-6 py-8 text-center text-slate-500">Belum ada riwayat perbaikan SEO.</td>
                                  </tr>
                              </tbody>
                          </table>
@@ -940,185 +896,61 @@
                          <button @click="recommendation = null" class="text-sm font-semibold text-slate-500 hover:text-slate-800 mb-2 flex items-center gap-1">&larr; Kembali ke List</button>
                          <h3 class="text-2xl font-black text-slate-900 flex items-center gap-3">
                             <span class="text-indigo-600" x-text="recommendation.page_path"></span>
-                            <span x-show="recommendation.ai_type === 'proactive'" class="px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-100 text-indigo-700 tracking-wide uppercase">AI Proactive</span>
+                            <span class="px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-100 text-indigo-700 tracking-wide uppercase" x-text="recommendation.category"></span>
                          </h3>
                      </div>
                      <div class="flex items-center gap-3 mt-4 md:mt-0">
-                        <span class="text-sm font-semibold text-slate-500">Skor SEO Target:</span>
-                        <div class="px-4 py-1.5 rounded-full text-white font-black text-lg" :class="recommendation.overall_score >= 80 ? 'bg-teal-500' : (recommendation.overall_score >= 50 ? 'bg-amber-500' : 'bg-red-500')" x-text="recommendation.overall_score + '/100'"></div>
+                         <button x-show="recommendation.status !== 'applied'" @click="applyRec(recommendation.id)" class="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white font-bold rounded-xl shadow-lg shadow-teal-200 transition-all flex items-center gap-2">
+                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Tandai Selesai
+                         </button>
                      </div>
                  </div>
                  
-                 <!-- BAGIAN 1: AUTO APPLY VARIABLES -->
-                 <div x-show="currentTaskType === 'auto'" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
-                    <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-                        <div>
-                            <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                                <svg class="w-6 h-6 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                                Perubahan Meta Otomatis
-                            </h3>
-                            <p class="text-sm text-slate-500 mt-1">Bagian ini dapat diterapkan secara instan ke website tanpa coding.</p>
+                 <!-- Detail Rekomendasi AI -->
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <!-- Riset & Kondisi -->
+                    <div class="space-y-6">
+                        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-1 h-full bg-blue-400"></div>
+                            <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2 text-sm uppercase">
+                                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Hasil Riset & Tren AI
+                            </h4>
+                            <p class="text-slate-600 text-sm leading-relaxed" x-text="recommendation.research_finding || 'Tidak ada catatan riset spesifik.'"></p>
                         </div>
-                        <div>
-                            <button x-show="recommendation.status !== 'applied'" @click="applyRec(recommendation.id)" class="px-6 py-2 bg-teal-500 hover:bg-teal-600 text-white font-bold rounded-xl shadow-lg shadow-teal-200 transition-all flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Terapkan Otomatis
-                            </button>
-                            <div x-show="recommendation.status === 'applied'" class="px-6 py-2 bg-slate-100 text-teal-600 font-bold rounded-xl flex items-center gap-2">
-                                <svg class="w-5 h-5 text-teal-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Sudah Diterapkan
-                            </div>
+
+                        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-1 h-full bg-slate-400"></div>
+                            <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2 text-sm uppercase">
+                                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg> Kondisi ScanYuk Saat Ini
+                            </h4>
+                            <p class="text-slate-600 text-sm leading-relaxed" x-text="recommendation.current_condition || 'Kondisi tidak disebutkan secara spesifik.'"></p>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-6 mb-6">
-                        <!-- Meta Title -->
-                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                            <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-sm uppercase">Meta Title</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-white p-4 rounded-lg border border-red-100 shadow-sm relative overflow-hidden">
-                                    <div class="absolute top-0 left-0 w-1 h-full bg-red-400"></div>
-                                    <p class="text-xs font-bold text-red-500 mb-1 uppercase tracking-wider">Kondisi Saat Ini</p>
-                                    <p class="text-slate-600 font-medium" x-text="recommendation.recommendations.meta_title?.current || recommendation.recommendations.meta_title"></p>
-                                </div>
-                                <div class="bg-white p-4 rounded-lg border border-teal-100 shadow-sm relative overflow-hidden">
-                                    <div class="absolute top-0 left-0 w-1 h-full bg-teal-400"></div>
-                                    <p class="text-xs font-bold text-teal-600 mb-1 uppercase tracking-wider">Rekomendasi AI</p>
-                                    <p class="text-slate-800 font-bold" x-text="recommendation.recommendations.meta_title?.recommendation || recommendation.recommendations.meta_title"></p>
-                                </div>
-                            </div>
-                            <div class="mt-3 bg-amber-50 text-amber-800 p-3 rounded-lg text-sm border border-amber-100 flex items-start gap-2">
-                                <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <div>
-                                    <strong class="block mb-0.5 text-amber-900">Alasan Perubahan:</strong>
-                                    <span x-text="recommendation.recommendations.meta_title?.reason || 'Mengandung target keyword yang relevan dengan tren saat ini.'"></span>
-                                </div>
-                            </div>
+                    <!-- Dampak & Solusi -->
+                    <div class="space-y-6">
+                        <div class="bg-rose-50/50 rounded-xl border border-rose-100 p-6 relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-1 h-full bg-rose-400"></div>
+                            <h4 class="font-bold text-rose-800 mb-3 flex items-center gap-2 text-sm uppercase">
+                                <svg class="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg> Prediksi Dampak SEO
+                            </h4>
+                            <p class="text-rose-700 text-sm font-medium leading-relaxed" x-text="recommendation.impact || 'Dampak tidak dijabarkan.'"></p>
                         </div>
 
-                        <!-- Meta Description -->
-                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                            <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-sm uppercase">Meta Description</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div class="bg-white p-4 rounded-lg border border-red-100 shadow-sm relative overflow-hidden">
-                                    <div class="absolute top-0 left-0 w-1 h-full bg-red-400"></div>
-                                    <p class="text-xs font-bold text-red-500 mb-1 uppercase tracking-wider">Kondisi Saat Ini</p>
-                                    <p class="text-slate-600 font-medium text-sm" x-text="recommendation.recommendations.meta_description?.current || recommendation.recommendations.meta_description"></p>
-                                </div>
-                                <div class="bg-white p-4 rounded-lg border border-teal-100 shadow-sm relative overflow-hidden">
-                                    <div class="absolute top-0 left-0 w-1 h-full bg-teal-400"></div>
-                                    <p class="text-xs font-bold text-teal-600 mb-1 uppercase tracking-wider">Rekomendasi AI</p>
-                                    <p class="text-slate-800 font-bold text-sm" x-text="recommendation.recommendations.meta_description?.recommendation || recommendation.recommendations.meta_description"></p>
-                                </div>
-                            </div>
-                            <div class="mt-3 bg-amber-50 text-amber-800 p-3 rounded-lg text-sm border border-amber-100 flex items-start gap-2">
-                                <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <div>
-                                    <strong class="block mb-0.5 text-amber-900">Alasan Perubahan:</strong>
-                                    <span x-text="recommendation.recommendations.meta_description?.reason || 'Meningkatkan CTR (Click-Through Rate) di hasil pencarian Google.'"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- H1 Heading -->
-                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                            <h4 class="font-bold text-slate-800 mb-2 flex items-center gap-2 text-sm uppercase">Heading (H1) Utama</h4>
-                            <div class="bg-white p-4 rounded-lg border border-teal-100 shadow-sm mb-3 relative overflow-hidden">
-                                <div class="absolute top-0 left-0 w-1 h-full bg-teal-400"></div>
-                                <p class="text-slate-800 font-bold text-lg" x-text="recommendation.recommendations.h1_heading?.recommendation || recommendation.recommendations.h1_heading"></p>
-                            </div>
-                            <div class="bg-amber-50 text-amber-800 p-3 rounded-lg text-sm border border-amber-100 flex items-start gap-2">
-                                <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <div>
-                                    <strong class="block mb-0.5 text-amber-900">Alasan:</strong>
-                                    <span x-text="recommendation.recommendations.h1_heading?.reason || 'Heading utama harus relevan dengan maksud pencarian pengunjung.'"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                        <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2 text-sm uppercase">FAQ Schema (JSON-LD)</h4>
-                        <div class="space-y-4">
-                            <template x-for="(faq, index) in recommendation.recommendations.faq_schema" :key="index">
-                                <div class="bg-white p-5 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden">
-                                    <div class="absolute top-0 left-0 w-1 h-full bg-indigo-400"></div>
-                                    <p class="font-bold text-slate-800 text-sm mb-1" x-text="'Tanya: ' + faq.question"></p>
-                                    <p class="text-slate-600 text-sm mb-3" x-text="'Jawab: ' + faq.answer"></p>
-                                    <div x-show="faq.reason" class="bg-slate-50 p-2.5 rounded text-xs text-slate-600 border border-slate-100 italic flex gap-1.5">
-                                        <svg class="w-4 h-4 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        <span x-text="faq.reason"></span>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                 </div>
-
-                 <!-- BAGIAN 2: MANUAL TASKS -->
-                 <div x-show="currentTaskType === 'programmer'" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
-                    <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-                        <div>
-                            <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                                <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-                                Tugas Teknisi / Programmer
-                            </h3>
-                            <p class="text-sm text-slate-500 mt-1">Bagian ini memerlukan tindakan manual dari developer.</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="text-sm font-semibold text-slate-600">Status Tugas:</span>
-                            <select :value="recommendation.manual_status" @change="updateManualStatus(recommendation.id, $event.target.value)" class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-sm"
-                                :class="{'text-slate-600': recommendation.manual_status === 'pending', 'text-blue-600': recommendation.manual_status === 'proses', 'text-emerald-600': recommendation.manual_status === 'selesai'}">
-                                <option value="pending">Pending</option>
-                                <option value="proses">Dalam Proses</option>
-                                <option value="selesai">Selesai</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="bg-indigo-50/50 p-5 rounded-xl border border-indigo-100">
-                            <h4 class="font-bold text-indigo-800 text-sm mb-3 uppercase flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg> Link Strategy</h4>
-                            
-                            <div class="mb-4">
-                                <strong class="block text-indigo-900 mb-1 text-xs uppercase tracking-wide">Tugas Backlink:</strong> 
-                                <p class="text-indigo-700 text-sm font-medium mb-1" x-text="recommendation.recommendations.backlink_strategy?.recommendation || recommendation.recommendations.backlink_strategy"></p>
-                                <div class="bg-indigo-100/50 text-indigo-800 p-2 rounded text-xs" x-show="recommendation.recommendations.backlink_strategy?.reason">
-                                    <strong class="font-semibold">Alasan:</strong> <span x-text="recommendation.recommendations.backlink_strategy.reason"></span>
-                                </div>
-                            </div>
-
-                            <div>
-                                <strong class="block text-indigo-900 mb-1 text-xs uppercase tracking-wide">Tugas Internal Link:</strong> 
-                                <p class="text-indigo-700 text-sm font-medium mb-1" x-text="recommendation.recommendations.internal_link_strategy?.recommendation || recommendation.recommendations.internal_link_strategy"></p>
-                                <div class="bg-indigo-100/50 text-indigo-800 p-2 rounded text-xs" x-show="recommendation.recommendations.internal_link_strategy?.reason">
-                                    <strong class="font-semibold">Alasan:</strong> <span x-text="recommendation.recommendations.internal_link_strategy.reason"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="space-y-6">
-                            <div class="bg-amber-50/50 p-5 rounded-xl border border-amber-100">
-                                <h4 class="font-bold text-amber-800 text-sm mb-3 uppercase flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Image Optimization</h4>
-                                <p class="text-amber-700 text-sm font-medium mb-2 leading-relaxed" x-text="recommendation.recommendations.image_optimization?.recommendation || recommendation.recommendations.image_optimization"></p>
-                                <div class="bg-amber-100/50 text-amber-900 p-2.5 rounded-lg text-xs" x-show="recommendation.recommendations.image_optimization?.reason">
-                                    <strong class="font-bold block mb-0.5">Alasan Perlu Dilakukan:</strong>
-                                    <span x-text="recommendation.recommendations.image_optimization.reason"></span>
-                                </div>
-                            </div>
-                            
-                            <div class="bg-rose-50/50 p-5 rounded-xl border border-rose-100">
-                                <h4 class="font-bold text-rose-800 text-sm mb-3 uppercase flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> Page Speed</h4>
-                                <p class="text-rose-700 text-sm font-medium mb-2 leading-relaxed" x-text="recommendation.recommendations.page_speed?.recommendation || recommendation.recommendations.page_speed"></p>
-                                <div class="bg-rose-100/50 text-rose-900 p-2.5 rounded-lg text-xs" x-show="recommendation.recommendations.page_speed?.reason">
-                                    <strong class="font-bold block mb-0.5">Dampak pada SEO:</strong>
-                                    <span x-text="recommendation.recommendations.page_speed.reason"></span>
-                                </div>
-                            </div>
+                        <div class="bg-emerald-50/50 rounded-xl border border-emerald-200 p-6 shadow-sm shadow-emerald-100 relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
+                            <h4 class="font-bold text-emerald-800 mb-3 flex items-center gap-2 text-sm uppercase">
+                                <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg> Rekomendasi Solusi Praktis
+                            </h4>
+                            <p class="text-emerald-900 text-sm font-bold leading-relaxed whitespace-pre-wrap" x-text="recommendation.recommendation_text"></p>
                         </div>
                     </div>
                  </div>
 
              </div>
          </template>
+
+
     </div>
 
     @endif
