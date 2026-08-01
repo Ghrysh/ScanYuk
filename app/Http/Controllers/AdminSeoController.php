@@ -44,12 +44,11 @@ Berikut ini cuplikan dari source code HTML halamannya:
 $safeHtml
 ```
 
-Tugas Anda adalah mengevaluasi SEO halaman tersebut dan memberikan 2-3 rekomendasi paling krusial.
+Tugas Anda adalah mengevaluasi SEO halaman tersebut dan memberikan semua rekomendasi krusial yang Anda temukan (idealnya 3 hingga 7 rekomendasi).
 ATURAN WAJIB:
 1. Seluruh jawaban WAJIB menggunakan BAHASA INDONESIA yang detail dan mudah dipahami.
 2. Output HANYA boleh berupa JSON ARRAY. Jangan ada teks markdown atau penjelasan di luar JSON.
-3. Maksimal 3 rekomendasi saja.
-4. Anda harus mencantumkan KODE SPESIFIK yang Anda temukan di kerangka HTML yang diberikan.
+3. Anda harus mencantumkan KODE SPESIFIK yang Anda temukan di kerangka HTML yang diberikan.
 
 Format JSON WAJIB seperti ini:
 [
@@ -69,9 +68,9 @@ Format JSON WAJIB seperti ini:
                 'stream' => false,
                 'format' => 'json',
                 'options' => [
-                    'num_predict' => 1024,
+                    'num_predict' => 2048,
                     'temperature' => 0.5,
-                    'num_ctx' => 2048
+                    'num_ctx' => 4096
                 ]
             ]);
 
