@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use App\Models\SeoRecommendation;
 
 class AutonomousSeoScan extends Command
@@ -13,7 +14,15 @@ class AutonomousSeoScan extends Command
 
     public function handle()
     {
-        $this->info("Memulai Autonomous AI SEO Scan...");
+        $lock = Cache::lock('seo_autonomous_scan', 3600); // Kunci selama 1 jam maksimal
+
+        if (!$lock->get()) {
+            $this->warn("Proses AI SEO Scan sedang berjalan di background (kemungkinan oleh scheduler). Harap tunggu hingga selesai agar server tidak kelebihan beban.");
+            return;
+        }
+
+        try {
+            $this->info("Memulai Autonomous AI SEO Scan...");
 
         $pages = [
             '/', 
@@ -72,8 +81,7 @@ Contoh 1 rekomendasi dengan level detail yang BENAR (ikuti format dan tingkat de
 
 Sekarang analisis data SEO halaman {$pagePath} di atas dan berikan 3-7 rekomendasi Anda. Output HANYA JSON array, tidak boleh ada teks lain di luar JSON.
 PROMPT;
-
-            // 4. Kirim ke Ollama dengan parameter system terpisah (format Llama 3)
+            // 4. Kirim ke Ollama
             try {
                 $this->info("Mengirim ke Ollama untuk dianalisis...");
                 $response = Http::timeout(3600)->post('http://scanyuk-ollama:11434/api/generate', [
