@@ -22,21 +22,21 @@ class AdminSeoController extends Controller
         $url = url($pagePath);
         
         $prompt = "You are an expert SEO Consultant. I have a webpage at '$url' and I want to target the keyword '$keyword'.
-Please generate a comprehensive SEO recommendation report for this page.
-You MUST output ONLY a valid JSON object with the following exact structure, no markdown, no other text:
+Please generate a comprehensive SEO recommendation report.
+IMPORTANT: The content of your recommendations MUST be in BAHASA INDONESIA.
+You MUST output ONLY a valid JSON object with the following exact structure, no markdown:
 {
     \"overall_score\": 75,
-    \"meta_title\": \"Suggested Meta Title (max 60 chars)\",
-    \"meta_description\": \"Suggested Meta Description (max 160 chars)\",
-    \"h1_heading\": \"Suggested H1 Heading containing the keyword\",
+    \"meta_title\": \"Saran Judul Meta (max 60 chars, in Indonesian)\",
+    \"meta_description\": \"Saran Deskripsi Meta (max 160 chars, in Indonesian)\",
+    \"h1_heading\": \"Saran Heading H1 yang mengandung keyword (in Indonesian)\",
     \"faq_schema\": [
-        {\"question\": \"FAQ Question 1\", \"answer\": \"FAQ Answer 1\"},
-        {\"question\": \"FAQ Question 2\", \"answer\": \"FAQ Answer 2\"}
+        {\"question\": \"Pertanyaan FAQ 1\", \"answer\": \"Jawaban FAQ 1\"}
     ],
-    \"backlink_strategy\": \"Suggestion for acquiring backlinks for this keyword\",
-    \"internal_link_strategy\": \"Suggestion for internal links\",
-    \"image_optimization\": \"Suggestions for alt texts and image compression\",
-    \"page_speed\": \"Suggestions for improving page speed (e.g. caching, minification)\"
+    \"backlink_strategy\": \"Saran mencari backlink untuk keyword ini (in Indonesian)\",
+    \"internal_link_strategy\": \"Saran untuk tautan internal (in Indonesian)\",
+    \"image_optimization\": \"Saran untuk alt text dan optimasi gambar (in Indonesian)\",
+    \"page_speed\": \"Saran untuk mempercepat loading halaman (in Indonesian)\"
 }";
 
         try {

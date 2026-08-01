@@ -34,7 +34,7 @@ class AutonomousSeoScan extends Command
             $this->info("\n=== Menganalisa Halaman: " . $pagePath . " ===");
 
             // 2. Tanya AI (Ollama) untuk memberikan "Trending Keyword" terkait AR QR Code
-            $keywordPrompt = "You are a Market Researcher. What is a highly searched, trending long-tail keyword related to 'AR QR Code Scanner' or 'Platform AR' this month? Please reply with ONLY the keyword string itself, no quotes, no explanation.";
+            $keywordPrompt = "You are a Market Researcher. What is a highly searched, trending long-tail keyword related to 'AR QR Code Scanner' or 'Platform AR' this month? Please reply with ONLY the keyword string itself in BAHASA INDONESIA, no quotes, no explanation.";
             
             $trendingKeyword = "Platform AR Interaktif"; // Fallback
             
@@ -60,20 +60,21 @@ class AutonomousSeoScan extends Command
             // 3. Analisa SEO dengan AI
             $url = url($pagePath);
             $prompt = "You are an expert SEO Consultant. I have a webpage at '$url' and I want to target the trending keyword '$trendingKeyword'.
-Please generate a comprehensive SEO recommendation report.
+Please generate a comprehensive SEO recommendation report. 
+IMPORTANT: The content of your recommendations MUST be in BAHASA INDONESIA.
 You MUST output ONLY a valid JSON object with the following exact structure, no markdown:
 {
     \"overall_score\": 75,
-    \"meta_title\": \"Suggested Meta Title (max 60 chars)\",
-    \"meta_description\": \"Suggested Meta Description (max 160 chars)\",
-    \"h1_heading\": \"Suggested H1 Heading containing the keyword\",
+    \"meta_title\": \"Saran Judul Meta (max 60 chars, in Indonesian)\",
+    \"meta_description\": \"Saran Deskripsi Meta (max 160 chars, in Indonesian)\",
+    \"h1_heading\": \"Saran Heading H1 yang mengandung keyword (in Indonesian)\",
     \"faq_schema\": [
-        {\"question\": \"FAQ Question 1\", \"answer\": \"FAQ Answer 1\"}
+        {\"question\": \"Pertanyaan FAQ 1\", \"answer\": \"Jawaban FAQ 1\"}
     ],
-    \"backlink_strategy\": \"Suggestion for acquiring backlinks for this keyword\",
-    \"internal_link_strategy\": \"Suggestion for internal links\",
-    \"image_optimization\": \"Suggestions for alt texts and image compression\",
-    \"page_speed\": \"Suggestions for improving page speed\"
+    \"backlink_strategy\": \"Saran mencari backlink untuk keyword ini (in Indonesian)\",
+    \"internal_link_strategy\": \"Saran untuk tautan internal (in Indonesian)\",
+    \"image_optimization\": \"Saran untuk alt text dan optimasi gambar (in Indonesian)\",
+    \"page_speed\": \"Saran untuk mempercepat loading halaman (in Indonesian)\"
 }";
 
             try {
