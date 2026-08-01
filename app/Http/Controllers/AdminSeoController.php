@@ -62,7 +62,9 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
                         'target_keyword' => $keyword,
                         'overall_score' => $parsed['overall_score'] ?? 0,
                         'recommendations' => $parsed,
-                        'status' => 'pending'
+                        'status' => 'pending',
+                        'manual_status' => 'pending',
+                        'ai_type' => 'manual'
                     ]);
 
                     return response()->json(['success' => true, 'data' => $recommendation]);
@@ -92,7 +94,9 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
                 'target_keyword' => $keyword,
                 'overall_score' => $mockParsed['overall_score'],
                 'recommendations' => $mockParsed,
-                'status' => 'pending'
+                'status' => 'pending',
+                'manual_status' => 'pending',
+                'ai_type' => 'manual'
             ]);
 
             return response()->json(['success' => true, 'data' => $recommendation, 'warning' => 'Ollama offline, menggunakan fallback AI mock. Error: ' . $e->getMessage()]);
@@ -118,7 +122,14 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
 
         return response()->json(['success' => true, 'message' => 'Rekomendasi SEO berhasil diterapkan ke website!']);
     }
-    
+    public function updateManualStatus(Request $request, $id)
+    {
+        $request->validate(['status' => 'required|in:pending,proses,selesai']);
+        $recommendation = SeoRecommendation::findOrFail($id);
+        $recommendation->update(['manual_status' => $request->status]);
+        return response()->json(['success' => true, 'message' => 'Status manual berhasil diperbarui.']);
+    }
+
     public function getRecommendations()
     {
         $recs = SeoRecommendation::latest()->get();

@@ -15,6 +15,8 @@ class SeoRecommendation extends Model
         'overall_score',
         'recommendations',
         'status',
+        'manual_status',
+        'ai_type',
     ];
 
     protected $casts = [
