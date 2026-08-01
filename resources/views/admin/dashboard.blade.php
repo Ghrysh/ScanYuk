@@ -807,7 +807,7 @@
                 <div class="w-full sm:w-1/3">
                     <button @click="analyze()" :disabled="isAnalyzing" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-lg shadow-md transition-all flex items-center justify-center gap-2">
                         <svg x-show="isAnalyzing" style="display: none;" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        <span x-text="isAnalyzing ? 'AI sedang menganalisa...' : '✨ Analisa dengan AI'"></span>
+                        <span x-text="isAnalyzing ? 'AI sedang menganalisa...' : 'Analisa dengan AI'"></span>
                     </button>
                 </div>
              </div>
@@ -838,8 +838,8 @@
                                  <tr class="hover:bg-slate-50 transition-colors">
                                      <td class="px-6 py-4">
                                          <div class="text-slate-600 mb-1" x-text="new Date(item.created_at).toLocaleString('id-ID')"></div>
-                                         <span x-show="item.ai_type === 'proactive'" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700">🤖 AI Proactive</span>
-                                         <span x-show="item.ai_type === 'manual'" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">👤 Manual Req</span>
+                                         <span x-show="item.ai_type === 'proactive'" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700">AI Proactive</span>
+                                         <span x-show="item.ai_type === 'manual'" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">Manual Req</span>
                                      </td>
                                      <td class="px-6 py-4 font-semibold text-indigo-600" x-text="item.page_path"></td>
                                      <td class="px-6 py-4">
@@ -851,9 +851,9 @@
                                          <span x-show="item.status === 'pending'" class="text-amber-600 font-bold text-xs bg-amber-50 px-2 py-1 rounded">Pending</span>
                                      </td>
                                      <td class="px-6 py-4">
-                                         <span x-show="item.manual_status === 'pending'" class="text-slate-600 font-bold text-xs border border-slate-200 px-2 py-1 rounded">⏳ Pending</span>
-                                         <span x-show="item.manual_status === 'proses'" class="text-blue-600 font-bold text-xs bg-blue-50 px-2 py-1 rounded">👨‍💻 Proses</span>
-                                         <span x-show="item.manual_status === 'selesai'" class="text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-1 rounded">✅ Selesai</span>
+                                         <span x-show="item.manual_status === 'pending'" class="text-slate-600 font-bold text-xs border border-slate-200 px-2 py-1 rounded">Pending</span>
+                                         <span x-show="item.manual_status === 'proses'" class="text-blue-600 font-bold text-xs bg-blue-50 px-2 py-1 rounded">Proses</span>
+                                         <span x-show="item.manual_status === 'selesai'" class="text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-1 rounded">Selesai</span>
                                      </td>
                                      <td class="px-6 py-4 text-right">
                                          <button @click="recommendation = item" class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">Lihat Detail &rarr;</button>
@@ -876,7 +876,7 @@
                          <button @click="recommendation = null" class="text-sm font-semibold text-slate-500 hover:text-slate-800 mb-2 flex items-center gap-1">&larr; Kembali ke List</button>
                          <h3 class="text-2xl font-black text-slate-900 flex items-center gap-3">
                             <span class="text-indigo-600" x-text="recommendation.page_path"></span>
-                            <span x-show="recommendation.ai_type === 'proactive'" class="px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-100 text-indigo-700 tracking-wide uppercase">🤖 AI Proactive</span>
+                            <span x-show="recommendation.ai_type === 'proactive'" class="px-2.5 py-1 rounded-md text-xs font-bold bg-indigo-100 text-indigo-700 tracking-wide uppercase">AI Proactive</span>
                          </h3>
                      </div>
                      <div class="flex items-center gap-3 mt-4 md:mt-0">
@@ -946,9 +946,9 @@
                             <span class="text-sm font-semibold text-slate-600">Status Tugas:</span>
                             <select :value="recommendation.manual_status" @change="updateManualStatus(recommendation.id, $event.target.value)" class="px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none font-bold text-sm"
                                 :class="{'text-slate-600': recommendation.manual_status === 'pending', 'text-blue-600': recommendation.manual_status === 'proses', 'text-emerald-600': recommendation.manual_status === 'selesai'}">
-                                <option value="pending">⏳ Pending</option>
-                                <option value="proses">👨‍💻 Dalam Proses</option>
-                                <option value="selesai">✅ Selesai</option>
+                                <option value="pending">Pending</option>
+                                <option value="proses">Dalam Proses</option>
+                                <option value="selesai">Selesai</option>
                             </select>
                         </div>
                     </div>
@@ -1043,7 +1043,7 @@
                                 <form action="{{ route('admin.chatbot.lead.status', $lead->id) }}" method="POST">
                                     @csrf @method('PATCH')
                                     <button type="submit" class="text-[10px] font-bold px-2 py-1.5 rounded-lg border w-full transition-colors {{ $lead->status === 'contacted' ? 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100' : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100' }}">
-                                        {{ $lead->status === 'contacted' ? '✅ Selesai Dihubungi' : '⚠️ Belum Dihubungi' }}
+                                        {{ $lead->status === 'contacted' ? 'Selesai Dihubungi' : 'Belum Dihubungi' }}
                                     </button>
                                 </form>
                                 <button @click="openModal({{ $lead->id }}, {{ $lead->chat_history ?? '[]' }})" class="text-xs text-white bg-slate-800 hover:bg-slate-900 px-3 py-1.5 rounded-lg w-full font-semibold transition-colors flex items-center justify-center gap-1 shadow-sm">
