@@ -13,7 +13,7 @@ class AdminSeoController extends Controller
     {
         $request->validate([
             'page_path' => 'required|string',
-            'target_keyword' => 'required|string'
+            'target_keyword' => 'nullable|string'
         ]);
 
         $pagePath = $request->page_path;
@@ -28,22 +28,24 @@ class AdminSeoController extends Controller
 
         $safeHtml = substr($pageHtml, 0, 8000);
 
-        $prompt = "You are an expert SEO Consultant. I have a webpage at '$url' and I want to target the keyword '$keyword'.
+        $keywordPrompt = $keyword ? "I specifically want to target the keyword '$keyword', so evaluate if the page is optimized for it." : "Please evaluate the page's current SEO holistically and suggest target keywords if necessary.";
+
+        $prompt = "You are an expert SEO Consultant. I have a webpage at '$url'. $keywordPrompt
 Here is a snippet of the current HTML source code of the page:
 ```html
 $safeHtml
 ```
 
-Please generate a comprehensive list of actionable SEO recommendations. 
+Please evaluate the page's current SEO and generate a comprehensive list of actionable SEO recommendations. 
 IMPORTANT RULES YOU MUST FOLLOW:
 1. The content MUST be in BAHASA INDONESIA.
-2. Provide a dynamic list of recommendations. You can use standard categories like 'FAQ', 'Backlink', 'Internal Link', 'Update Heading', 'Optimasi Gambar', 'Page Speed', or INVENT NEW CATEGORIES if you find specific opportunities (e.g., 'Feature Addition', 'Keyword Optimization').
+2. Provide a dynamic list of recommendations. You can use standard categories like 'Keyword Target Baru', 'FAQ', 'Backlink', 'Internal Link', 'Update Heading', 'Optimasi Gambar', 'Page Speed', or INVENT NEW CATEGORIES if you find specific opportunities.
 3. You MUST output ONLY a valid JSON ARRAY of objects, with no markdown formatting.
 
 Format the output EXACTLY like this JSON array:
 [
     {
-        \"category\": \"Nama Kategori (contoh: Optimasi Gambar / Page Speed)\",
+        \"category\": \"Nama Kategori (contoh: Keyword Target Baru / Optimasi Gambar)\",
         \"research_finding\": \"Fakta/riset tren SEO saat ini terkait hal ini\",
         \"current_condition\": \"Kondisi yang Anda temukan di kode HTML web ini\",
         \"impact\": \"Dampak negatif jika dibiarkan atau dampak positif jika diperbaiki\",

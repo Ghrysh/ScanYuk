@@ -731,8 +731,8 @@
                  } catch(e) {}
              },
              async analyze() {
-                 if(!this.pagePath || !this.targetKeyword) {
-                     alert('Harap isi halaman dan target keyword');
+                 if(!this.pagePath) {
+                     alert('Harap pilih halaman yang ingin dianalisa.');
                      return;
                  }
                  this.isAnalyzing = true;
@@ -740,7 +740,9 @@
                  
                  let formData = new FormData();
                  formData.append('page_path', this.pagePath);
-                 formData.append('target_keyword', this.targetKeyword);
+                 if (this.targetKeyword) {
+                     formData.append('target_keyword', this.targetKeyword);
+                 }
                  formData.append('_token', document.querySelector('meta[name=csrf-token]').content);
                  
                  try {
@@ -795,8 +797,8 @@
                     </select>
                 </div>
                 <div class="w-full sm:w-1/3">
-                    <label class="block text-sm font-bold text-slate-700 mb-1">Target Keyword</label>
-                    <input type="text" x-model="targetKeyword" placeholder="Misal: AR QR Code Scanner" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-teal-500">
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Target Keyword <span class="text-xs font-normal text-slate-400">(Opsional)</span></label>
+                    <input type="text" x-model="targetKeyword" placeholder="Biarkan AI yang mencari, atau ketik di sini..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-teal-500">
                 </div>
                 <div class="w-full sm:w-1/3">
                     <button @click="analyze()" :disabled="isAnalyzing" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-lg shadow-md transition-all flex items-center justify-center gap-2">

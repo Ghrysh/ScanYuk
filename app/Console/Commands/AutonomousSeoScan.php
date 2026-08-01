@@ -33,33 +33,6 @@ class AutonomousSeoScan extends Command
         foreach ($pages as $pagePath) {
             $this->info("\n=== Menganalisa Halaman: " . $pagePath . " ===");
 
-            // 2. Tanya AI (Ollama) untuk memberikan "Trending Keyword" terkait AR QR Code
-            $keywordPrompt = "You are a Market Researcher. What is a highly searched, trending long-tail keyword related to 'AR QR Code Scanner' or 'Platform AR' this month? Please reply with ONLY the keyword string itself in BAHASA INDONESIA, no quotes, no explanation.";
-            $trendingKeyword = "";
-
-            try {
-                $this->info("Menghubungi Ollama untuk mencari tren kata kunci...");
-                $res = \Illuminate\Support\Facades\Http::timeout(120)->post('http://scanyuk-ollama:11434/api/generate', [
-                    'model' => 'llama3',
-                    'prompt' => $keywordPrompt,
-                    'stream' => false
-                ]);
-                
-                if ($res->successful()) {
-                    $trendingKeyword = trim($res->json('response'));
-                    $trendingKeyword = str_replace(['"', "'"], '', $trendingKeyword);
-                } else {
-                    $this->error("Ollama HTTP Error: " . $res->status() . " - " . $res->body());
-                    return;
-                }
-            } catch (\Exception $e) {
-                $this->error("Gagal terhubung ke Ollama untuk mencari keyword: " . $e->getMessage());
-                return;
-            }
-
-            $this->info("Target Keyword dari AI: " . $trendingKeyword);
-
-            // 3. Analisa SEO dengan AI
             $url = url($pagePath);
             
             // Coba ambil seluruh isi halaman saat ini agar AI punya konteks penuh
@@ -70,25 +43,25 @@ class AutonomousSeoScan extends Command
                 $this->warn("Gagal scrape halaman $url, melanjutkan tanpa HTML penuh.");
             }
 
-            // Batasi panjang HTML agar tidak meledak di konteks model Llama (potong jika sangat panjang)
+            // Batasi panjang HTML agar tidak meledak di konteks model Llama
             $safeHtml = substr($pageHtml, 0, 8000); 
 
-            $prompt = "You are an expert SEO Consultant. I have a webpage at '$url' and I want to target the trending keyword '$trendingKeyword'.
+            $prompt = "You are an expert SEO Consultant. I have a webpage at '$url'.
 Here is a snippet of the current HTML source code of the page:
 ```html
 $safeHtml
 ```
 
-Please generate a comprehensive list of actionable SEO recommendations. 
+Please evaluate the page's current SEO and generate a comprehensive list of actionable SEO recommendations. 
 IMPORTANT RULES YOU MUST FOLLOW:
 1. The content MUST be in BAHASA INDONESIA.
-2. Provide a dynamic list of recommendations. You can use standard categories like 'FAQ', 'Backlink', 'Internal Link', 'Update Heading', 'Optimasi Gambar', 'Page Speed', or INVENT NEW CATEGORIES if you find specific opportunities (e.g., 'Feature Addition', 'Keyword Optimization').
+2. Provide a dynamic list of recommendations. You can use standard categories like 'Keyword Target Baru', 'FAQ', 'Backlink', 'Internal Link', 'Update Heading', 'Optimasi Gambar', 'Page Speed', or INVENT NEW CATEGORIES if you find specific opportunities.
 3. You MUST output ONLY a valid JSON ARRAY of objects, with no markdown formatting.
 
 Format the output EXACTLY like this JSON array:
 [
     {
-        \"category\": \"Nama Kategori (contoh: Optimasi Gambar / Page Speed)\",
+        \"category\": \"Nama Kategori (contoh: Keyword Target Baru / Optimasi Gambar)\",
         \"research_finding\": \"Fakta/riset tren SEO saat ini terkait hal ini\",
         \"current_condition\": \"Kondisi yang Anda temukan di kode HTML web ini\",
         \"impact\": \"Dampak negatif jika dibiarkan atau dampak positif jika diperbaiki\",
