@@ -15,7 +15,22 @@ class AutonomousSeoScan extends Command
     {
         $this->info("Memulai Autonomous AI SEO Scan...");
 
-        $pages = ['/', '/pricing', '/business', '/consumer', '/faq'];
+        $pages = [
+            '/', 
+            '/consumer',
+            '/business',
+            '/pricing',
+            '/demo',
+            '/solutions',
+            '/how-it-works',
+            '/case-studies',
+            '/partners',
+            '/faq',
+            '/contact',
+            '/security',
+            '/terms',
+            '/refund-policy'
+        ];
         $hasError = false;
 
         foreach ($pages as $pagePath) {
