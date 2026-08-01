@@ -16,6 +16,7 @@ class SeoRecommendation extends Model
         'current_condition',
         'impact',
         'recommendation_text',
+        'expected_outcome',
         'status',
     ];
 }

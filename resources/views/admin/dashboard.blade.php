@@ -949,6 +949,16 @@
                     </div>
                  </div>
 
+                 <!-- Hasil yang Diharapkan -->
+                 <div x-show="recommendation.expected_outcome" class="bg-gradient-to-r from-indigo-50 via-blue-50 to-teal-50 rounded-xl border border-indigo-200 p-6 mb-6 relative overflow-hidden">
+                     <div class="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-indigo-500 to-teal-500"></div>
+                     <h4 class="font-bold text-indigo-900 mb-3 flex items-center gap-2 text-sm uppercase">
+                         <svg class="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                         Hasil yang Diharapkan Setelah Perbaikan
+                     </h4>
+                     <p class="text-indigo-800 text-sm font-medium leading-relaxed" x-text="recommendation.expected_outcome"></p>
+                 </div>
+
              </div>
          </template>
 
