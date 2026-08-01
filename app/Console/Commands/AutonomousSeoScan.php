@@ -35,9 +35,8 @@ class AutonomousSeoScan extends Command
 
             // 2. Tanya AI (Ollama) untuk memberikan "Trending Keyword" terkait AR QR Code
             $keywordPrompt = "You are a Market Researcher. What is a highly searched, trending long-tail keyword related to 'AR QR Code Scanner' or 'Platform AR' this month? Please reply with ONLY the keyword string itself in BAHASA INDONESIA, no quotes, no explanation.";
-            
-            $trendingKeyword = "Platform AR Interaktif"; // Fallback
-            
+            $trendingKeyword = "";
+
             try {
                 $this->info("Menghubungi Ollama untuk mencari tren kata kunci...");
                 $res = \Illuminate\Support\Facades\Http::timeout(120)->post('http://scanyuk-ollama:11434/api/generate', [
@@ -49,10 +48,13 @@ class AutonomousSeoScan extends Command
                 if ($res->successful()) {
                     $trendingKeyword = trim($res->json('response'));
                     $trendingKeyword = str_replace(['"', "'"], '', $trendingKeyword);
+                } else {
+                    $this->error("Ollama HTTP Error: " . $res->status() . " - " . $res->body());
+                    return;
                 }
             } catch (\Exception $e) {
-                $this->warn("Ollama offline untuk pencarian tren. Memakai keyword fallback.");
-                $trendingKeyword = "Solusi AR Marketing " . rand(100, 999);
+                $this->error("Gagal terhubung ke Ollama untuk mencari keyword: " . $e->getMessage());
+                return;
             }
 
             $this->info("Target Keyword dari AI: " . $trendingKeyword);
