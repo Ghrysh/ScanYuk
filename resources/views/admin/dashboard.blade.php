@@ -717,6 +717,7 @@
              targetKeyword: '',
              recommendation: null,
              history: [],
+             showManualForm: false,
              async init() {
                  this.fetchHistory();
              },
@@ -787,8 +788,13 @@
                  }
              }
          }">
-         
-         <div class="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+         <div class="mb-4 flex justify-end">
+             <button @click="showManualForm = !showManualForm" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-4 py-2 rounded-lg transition-colors border border-indigo-100">
+                 <span x-text="showManualForm ? 'Tutup Form Analisa Manual' : '+ Punya Strategi Sendiri? Analisa Manual'"></span>
+             </button>
+         </div>
+
+         <div x-show="showManualForm" style="display: none;" x-transition class="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
              <div class="flex-1 w-full flex flex-col sm:flex-row gap-4 items-end">
                 <div class="w-full sm:w-1/3">
                     <label class="block text-sm font-bold text-slate-700 mb-1">Pilih Halaman</label>
