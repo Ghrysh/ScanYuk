@@ -40,8 +40,9 @@ RUN pip3 install opencv-python-headless --break-system-packages
 COPY TripoSR/requirements.txt /tmp/requirements.txt
 
 # Instal requirements dengan tambahan flags agar kompatibel
-# (Gunakan sed untuk merelaksasi versi Pillow karena Pillow 10.1.0 gagal di-build di Python 3.13)
+# (Gunakan sed untuk merelaksasi versi karena gagal di-build di Python 3.13)
 RUN sed -i 's/Pillow==10.1.0/Pillow>=10.1.0/g' /tmp/requirements.txt
+RUN sed -i 's/transformers==4.35.0/transformers>=4.35.0/g' /tmp/requirements.txt
 RUN pip3 install -r /tmp/requirements.txt --break-system-packages
 
 # Composer
