@@ -74,12 +74,23 @@ PROMPT;
                 $data = $response->json();
                 $resultText = $data['response'] ?? '[]';
 
-                preg_match('/\[.*\]/s', $resultText, $matches);
-                if (!empty($matches)) {
-                    $resultText = $matches[0];
+                // Ekstrak JSON menggunakan regex untuk mencari pola array [...] atau object {...}
+                $jsonStr = '';
+                if (preg_match('/\[.*\]/s', $resultText, $matches)) {
+                    $jsonStr = $matches[0];
+                } elseif (preg_match('/\{.*\}/s', $resultText, $matches)) {
+                    $jsonStr = $matches[0];
                 }
 
-                $parsed = json_decode($resultText, true);
+                $parsed = null;
+                if (!empty($jsonStr)) {
+                    $parsed = json_decode($jsonStr, true);
+                    
+                    // Jika hasilnya single object, ubah jadi array of object
+                    if ($parsed !== null && !isset($parsed[0])) {
+                        $parsed = [$parsed];
+                    }
+                }
 
                 if ($parsed && is_array($parsed)) {
                     $createdItems = [];
