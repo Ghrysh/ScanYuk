@@ -68,9 +68,9 @@ PROMPT;
                     'stream' => false,
                     'format' => 'json',
                     'options' => [
-                        'num_predict' => 1536,
+                        'num_predict' => 2048,
                         'temperature' => 0.4,
-                        'num_ctx' => 2048,
+                        'num_ctx' => 4096,
                     ]
                 ]);
 
