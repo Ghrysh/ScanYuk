@@ -43,8 +43,17 @@ class AutonomousSeoScan extends Command
                 $this->warn("Gagal scrape halaman $url, melanjutkan tanpa HTML penuh.");
             }
 
+            // Bersihkan HTML dari script, style, dan elemen tidak penting agar proses AI jauh lebih cepat (mengurangi beban token)
+            $cleanHtml = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $pageHtml);
+            $cleanHtml = preg_replace('/<style\b[^>]*>(.*?)<\/style>/is', '', $cleanHtml);
+            $cleanHtml = preg_replace('/<svg\b[^>]*>(.*?)<\/svg>/is', '', $cleanHtml);
+            $cleanHtml = preg_replace('/<!--(.*?)-->/is', '', $cleanHtml);
+            // Hapus atribut class/style yang panjang dan tidak berguna untuk SEO
+            $cleanHtml = preg_replace('/\s(class|style|id|data-[^=]*)=["\'][^"\']*["\']/is', '', $cleanHtml);
+            $cleanHtml = preg_replace('/\s+/', ' ', $cleanHtml);
+            
             // Batasi panjang HTML agar tidak meledak di konteks model Llama
-            $safeHtml = substr($pageHtml, 0, 8000); 
+            $safeHtml = substr(trim($cleanHtml), 0, 4000); // 4000 char sudah cukup untuk ambil judul, meta, dan awal body
 
             $prompt = "You are an expert SEO Consultant. I have a webpage at '$url'.
 Here is a snippet of the current HTML source code of the page:
@@ -71,7 +80,7 @@ Format the output EXACTLY like this JSON array:
 
             try {
                 $this->info("Menganalisa halaman dengan Ollama...");
-                $response = \Illuminate\Support\Facades\Http::timeout(300)->post('http://scanyuk-ollama:11434/api/generate', [
+                $response = \Illuminate\Support\Facades\Http::timeout(600)->post('http://scanyuk-ollama:11434/api/generate', [
                     'model' => 'llama3', 
                     'prompt' => $prompt,
                     'stream' => false,

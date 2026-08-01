@@ -26,7 +26,15 @@ class AdminSeoController extends Controller
             $pageHtml = Http::timeout(15)->get($url)->body();
         } catch (\Exception $e) {}
 
-        $safeHtml = substr($pageHtml, 0, 8000);
+        // Bersihkan HTML dari elemen panjang yang tidak berguna untuk AI
+        $cleanHtml = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $pageHtml);
+        $cleanHtml = preg_replace('/<style\b[^>]*>(.*?)<\/style>/is', '', $cleanHtml);
+        $cleanHtml = preg_replace('/<svg\b[^>]*>(.*?)<\/svg>/is', '', $cleanHtml);
+        $cleanHtml = preg_replace('/<!--(.*?)-->/is', '', $cleanHtml);
+        $cleanHtml = preg_replace('/\s(class|style|id|data-[^=]*)=["\'][^"\']*["\']/is', '', $cleanHtml);
+        $cleanHtml = preg_replace('/\s+/', ' ', $cleanHtml);
+
+        $safeHtml = substr(trim($cleanHtml), 0, 4000);
 
         $keywordPrompt = $keyword ? "I specifically want to target the keyword '$keyword', so evaluate if the page is optimized for it." : "Please evaluate the page's current SEO holistically and suggest target keywords if necessary.";
 
@@ -54,7 +62,7 @@ Format the output EXACTLY like this JSON array:
 ]";
 
         try {
-            $response = Http::timeout(300)->post('http://scanyuk-ollama:11434/api/generate', [
+            $response = Http::timeout(600)->post('http://scanyuk-ollama:11434/api/generate', [
                 'model' => 'llama3', 
                 'prompt' => $prompt,
                 'stream' => false,
