@@ -27,40 +27,39 @@ class AutonomousSeoScan extends Command
     {
         $this->info("Memulai Autonomous AI SEO Scan...");
 
-        // 1. Tentukan halaman yang akan dianalisa (misal, dipilih secara acak untuk mensimulasikan cron harian)
         $pages = ['/', '/pricing', '/business', '/consumer', '/faq'];
-        $pagePath = $pages[array_rand($pages)];
-        
-        $this->info("Halaman target: " . $pagePath);
+        $hasError = false;
 
-        // 2. Tanya AI (Ollama) untuk memberikan "Trending Keyword" terkait AR QR Code
-        $keywordPrompt = "You are a Market Researcher. What is a highly searched, trending long-tail keyword related to 'AR QR Code Scanner' or 'Platform AR' this month? Please reply with ONLY the keyword string itself, no quotes, no explanation.";
-        
-        $trendingKeyword = "Platform AR Interaktif"; // Fallback
-        
-        try {
-            $this->info("Menghubungi Ollama untuk mencari tren kata kunci...");
-            $res = \Illuminate\Support\Facades\Http::timeout(30)->post('http://scanyuk-ollama:11434/api/generate', [
-                'model' => 'llama3',
-                'prompt' => $keywordPrompt,
-                'stream' => false
-            ]);
+        foreach ($pages as $pagePath) {
+            $this->info("\n=== Menganalisa Halaman: " . $pagePath . " ===");
+
+            // 2. Tanya AI (Ollama) untuk memberikan "Trending Keyword" terkait AR QR Code
+            $keywordPrompt = "You are a Market Researcher. What is a highly searched, trending long-tail keyword related to 'AR QR Code Scanner' or 'Platform AR' this month? Please reply with ONLY the keyword string itself, no quotes, no explanation.";
             
-            if ($res->successful()) {
-                $trendingKeyword = trim($res->json('response'));
-                // Bersihkan quote jika AI bandel
-                $trendingKeyword = str_replace(['"', "'"], '', $trendingKeyword);
+            $trendingKeyword = "Platform AR Interaktif"; // Fallback
+            
+            try {
+                $this->info("Menghubungi Ollama untuk mencari tren kata kunci...");
+                $res = \Illuminate\Support\Facades\Http::timeout(30)->post('http://scanyuk-ollama:11434/api/generate', [
+                    'model' => 'llama3',
+                    'prompt' => $keywordPrompt,
+                    'stream' => false
+                ]);
+                
+                if ($res->successful()) {
+                    $trendingKeyword = trim($res->json('response'));
+                    $trendingKeyword = str_replace(['"', "'"], '', $trendingKeyword);
+                }
+            } catch (\Exception $e) {
+                $this->warn("Ollama offline untuk pencarian tren. Memakai keyword fallback.");
+                $trendingKeyword = "Solusi AR Marketing " . rand(100, 999);
             }
-        } catch (\Exception $e) {
-            $this->warn("Ollama offline untuk pencarian tren. Memakai keyword fallback.");
-            $trendingKeyword = "Solusi AR Marketing " . rand(100, 999);
-        }
 
-        $this->info("Target Keyword dari AI: " . $trendingKeyword);
+            $this->info("Target Keyword dari AI: " . $trendingKeyword);
 
-        // 3. Analisa SEO dengan AI
-        $url = url($pagePath);
-        $prompt = "You are an expert SEO Consultant. I have a webpage at '$url' and I want to target the trending keyword '$trendingKeyword'.
+            // 3. Analisa SEO dengan AI
+            $url = url($pagePath);
+            $prompt = "You are an expert SEO Consultant. I have a webpage at '$url' and I want to target the trending keyword '$trendingKeyword'.
 Please generate a comprehensive SEO recommendation report.
 You MUST output ONLY a valid JSON object with the following exact structure, no markdown:
 {
@@ -77,77 +76,74 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
     \"page_speed\": \"Suggestions for improving page speed\"
 }";
 
-        try {
-            $this->info("Menganalisa halaman dengan Ollama...");
-            $response = \Illuminate\Support\Facades\Http::timeout(60)->post('http://scanyuk-ollama:11434/api/generate', [
-                'model' => 'llama3', 
-                'prompt' => $prompt,
-                'stream' => false,
-                'format' => 'json'
-            ]);
+            try {
+                $this->info("Menganalisa halaman dengan Ollama...");
+                $response = \Illuminate\Support\Facades\Http::timeout(60)->post('http://scanyuk-ollama:11434/api/generate', [
+                    'model' => 'llama3', 
+                    'prompt' => $prompt,
+                    'stream' => false,
+                    'format' => 'json'
+                ]);
 
-            if ($response->successful()) {
-                $data = $response->json();
-                $resultText = $data['response'] ?? '{}';
-                
-                // Coba ekstrak JSON dengan regex jika terbungkus teks lain
-                preg_match('/\{.*\}/s', $resultText, $matches);
-                if (!empty($matches)) {
-                    $resultText = $matches[0];
-                }
-                
-                $parsed = json_decode($resultText, true);
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $resultText = $data['response'] ?? '{}';
+                    
+                    preg_match('/\{.*\}/s', $resultText, $matches);
+                    if (!empty($matches)) {
+                        $resultText = $matches[0];
+                    }
+                    
+                    $parsed = json_decode($resultText, true);
 
-                if ($parsed) {
-                    \App\Models\SeoRecommendation::create([
-                        'page_path' => $pagePath,
-                        'target_keyword' => $trendingKeyword,
-                        'overall_score' => $parsed['overall_score'] ?? rand(70,95),
-                        'recommendations' => $parsed,
-                        'status' => 'pending',
-                        'manual_status' => 'pending',
-                        'ai_type' => 'proactive'
-                    ]);
-                    $this->info("Berhasil! Rekomendasi SEO Proaktif telah ditambahkan ke database.");
-                    return 0;
+                    if ($parsed) {
+                        \App\Models\SeoRecommendation::create([
+                            'page_path' => $pagePath,
+                            'target_keyword' => $trendingKeyword,
+                            'overall_score' => $parsed['overall_score'] ?? rand(70,95),
+                            'recommendations' => $parsed,
+                            'status' => 'pending',
+                            'manual_status' => 'pending',
+                            'ai_type' => 'proactive'
+                        ]);
+                        $this->info("Berhasil! Rekomendasi SEO Proaktif telah ditambahkan ke database.");
+                    } else {
+                        $this->error("Gagal memparsing respons JSON dari AI. Respons mentah: \n" . $data['response']);
+                        $hasError = true;
+                    }
                 } else {
-                    $this->error("Gagal memparsing respons JSON dari AI. Respons mentah: \n" . $data['response']);
-                    return 1;
+                    $this->error("Gagal mendapat response HTTP 200 dari Ollama. Status: " . $response->status() . "\nBody: " . $response->body());
+                    $hasError = true;
                 }
-            } else {
-                $this->error("Gagal mendapat response HTTP 200 dari Ollama. Status: " . $response->status() . "\nBody: " . $response->body());
-                return 1;
-            }
-        } catch (\Exception $e) {
-            $this->warn("Ollama offline untuk analisa SEO. Membuat data mock (simulasi) karena cron harus berjalan...");
-            $mockParsed = [
-                "overall_score" => rand(80, 98),
-                "meta_title" => "Raih Keuntungan dengan " . ucfirst($trendingKeyword),
-                "meta_description" => "Tingkatkan interaksi pelanggan menggunakan " . $trendingKeyword . ". Solusi masa depan.",
-                "h1_heading" => "Inovasi " . ucfirst($trendingKeyword) . " untuk Bisnis",
-                "faq_schema" => [
-                    ["question" => "Apa fungsi " . $trendingKeyword . "?", "answer" => "Ini sangat membantu kampanye marketing."]
-                ],
-                "backlink_strategy" => "Cari backlink dari situs berita teknologi terkemuka (DR > 50).",
-                "internal_link_strategy" => "Tautkan halaman blog bertema AR ke halaman ini.",
-                "image_optimization" => "Gunakan Lazy-Loading dan konversi semua PNG ke WebP.",
-                "page_speed" => "Minifikasi CSS dan JS, kurangi ukuran bundle Alpine."
-            ];
+            } catch (\Exception $e) {
+                $this->warn("Ollama offline untuk analisa SEO. Membuat data mock (simulasi) karena cron harus berjalan...");
+                $mockParsed = [
+                    "overall_score" => rand(80, 98),
+                    "meta_title" => "Raih Keuntungan dengan " . ucfirst($trendingKeyword),
+                    "meta_description" => "Tingkatkan interaksi pelanggan menggunakan " . $trendingKeyword . ". Solusi masa depan.",
+                    "h1_heading" => "Inovasi " . ucfirst($trendingKeyword) . " untuk Bisnis",
+                    "faq_schema" => [
+                        ["question" => "Apa fungsi " . $trendingKeyword . "?", "answer" => "Ini sangat membantu kampanye marketing."]
+                    ],
+                    "backlink_strategy" => "Cari backlink dari situs berita teknologi terkemuka (DR > 50).",
+                    "internal_link_strategy" => "Tautkan halaman blog bertema AR ke halaman ini.",
+                    "image_optimization" => "Gunakan Lazy-Loading dan konversi semua PNG ke WebP.",
+                    "page_speed" => "Minifikasi CSS dan JS, kurangi ukuran bundle Alpine."
+                ];
 
-            \App\Models\SeoRecommendation::create([
-                'page_path' => $pagePath,
-                'target_keyword' => $trendingKeyword,
-                'overall_score' => $mockParsed['overall_score'],
-                'recommendations' => $mockParsed,
-                'status' => 'pending',
-                'manual_status' => 'pending',
-                'ai_type' => 'proactive'
-            ]);
-            $this->info("Data mock proaktif berhasil ditambahkan.");
-            return 0;
+                \App\Models\SeoRecommendation::create([
+                    'page_path' => $pagePath,
+                    'target_keyword' => $trendingKeyword,
+                    'overall_score' => $mockParsed['overall_score'],
+                    'recommendations' => $mockParsed,
+                    'status' => 'pending',
+                    'manual_status' => 'pending',
+                    'ai_type' => 'proactive'
+                ]);
+                $this->info("Data mock proaktif berhasil ditambahkan.");
+            }
         }
 
-        $this->error("Gagal memproses analisa.");
-        return 1;
+        return $hasError ? 1 : 0;
     }
 }
