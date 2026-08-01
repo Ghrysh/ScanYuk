@@ -55,27 +55,25 @@ class AutonomousSeoScan extends Command
             // Batasi panjang HTML agar tidak meledak di konteks model Llama
             $safeHtml = substr(trim($cleanHtml), 0, 4000); // 4000 char sudah cukup untuk ambil judul, meta, dan awal body
 
-            $prompt = "You are an expert SEO Consultant. I have a webpage at '$url'.
-Here is a snippet of the current HTML source code of the page:
+            $prompt = "Anda adalah Konsultan SEO Senior. Berikut adalah kerangka HTML dari halaman '$url':
 ```html
 $safeHtml
 ```
 
-Please evaluate the page's current SEO and generate a short list of the 2-3 most critical SEO recommendations. 
-IMPORTANT RULES YOU MUST FOLLOW:
-1. The content MUST be in BAHASA INDONESIA.
-2. Provide a dynamic list of recommendations. You can use standard categories like 'Keyword Target Baru', 'FAQ', 'Backlink', 'Internal Link', 'Update Heading', 'Optimasi Gambar', 'Page Speed', or INVENT NEW CATEGORIES.
-3. You MUST output ONLY a valid JSON ARRAY of objects, with no markdown formatting.
-4. DO NOT output more than 3 recommendations. Keep descriptions concise.
+Tugas Anda adalah mengevaluasi SEO halaman tersebut dan memberikan 2-3 rekomendasi paling krusial.
+ATURAN WAJIB:
+1. Seluruh jawaban WAJIB menggunakan BAHASA INDONESIA yang detail dan mudah dipahami.
+2. Output HANYA boleh berupa JSON ARRAY. Jangan ada teks markdown atau penjelasan di luar JSON.
+3. Maksimal 3 rekomendasi saja.
 
-Format the output EXACTLY like this JSON array:
+Format JSON WAJIB seperti ini:
 [
     {
-        \"category\": \"Nama Kategori\",
-        \"research_finding\": \"Fakta singkat\",
-        \"current_condition\": \"Kondisi web saat ini\",
-        \"impact\": \"Dampak singkat\",
-        \"recommendation_text\": \"Saran konkret\"
+        \"category\": \"Nama Kategori (Contoh: Optimasi Kecepatan, Konten, Meta Tag)\",
+        \"research_finding\": \"Sebutkan temuan riset dan sumber atau alasannya (contoh: 'Menurut algoritma Google terbaru...')\",
+        \"current_condition\": \"Sebutkan secara spesifik bagian/tag HTML mana di web ScanYuk yang bermasalah\",
+        \"impact\": \"Jelaskan detail apa dampak buruknya saat ini dan dampak positifnya jika diperbaiki\",
+        \"recommendation_text\": \"Jelaskan panduan teknis yang harus dilakukan programmer, dan hasil akhir yang diharapkan (contoh: 'Ubah X menjadi Y, agar website bisa masuk halaman pertama pencarian')\"
     }
 ]";
 
