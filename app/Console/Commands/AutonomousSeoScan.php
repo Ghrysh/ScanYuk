@@ -78,41 +78,46 @@ PROMPT;
                     $data = $response->json();
                     $resultText = $data['response'] ?? '[]';
 
-                    // Coba ekstrak JSON array dari response
                     preg_match('/\[.*\]/s', $resultText, $matches);
-                    if (!empty($matches)) {
-                        $resultText = $matches[0];
-                    }
 
-                    $parsed = json_decode($resultText, true);
+                    if (isset($matches[0])) {
+                        $parsed = json_decode($matches[0], true);
+                        if (is_array($parsed)) {
+                            $inserted = 0;
+                            $skipped = 0;
+                            foreach ($parsed as $rec) {
+                                if (isset($rec['category']) && isset($rec['recommendation_text'])) {
+                                    $existing = SeoRecommendation::where('page_path', $pagePath)
+                                        ->where('category', $rec['category'])
+                                        ->where('current_condition', $rec['current_condition'] ?? '')
+                                        ->first();
 
-                    if ($parsed && is_array($parsed)) {
-                        $inserted = 0;
-                        foreach ($parsed as $rec) {
-                            if (isset($rec['category']) && isset($rec['recommendation_text'])) {
-                                $existing = SeoRecommendation::where('page_path', $pagePath)
-                                    ->where('category', $rec['category'])
-                                    ->where('current_condition', $rec['current_condition'] ?? '')
-                                    ->first();
-
-                                if (!$existing) {
-                                    SeoRecommendation::create([
-                                        'page_path' => $pagePath,
-                                        'category' => $rec['category'],
-                                        'research_finding' => $rec['research_finding'] ?? '',
-                                        'current_condition' => $rec['current_condition'] ?? '',
-                                        'impact' => $rec['impact'] ?? '',
-                                        'recommendation_text' => $rec['recommendation_text'],
-                                        'expected_outcome' => $rec['expected_outcome'] ?? '',
-                                        'status' => 'pending'
-                                    ]);
-                                    $inserted++;
+                                    if (!$existing) {
+                                        SeoRecommendation::create([
+                                            'page_path' => $pagePath,
+                                            'category' => $rec['category'],
+                                            'research_finding' => $rec['research_finding'] ?? '',
+                                            'current_condition' => $rec['current_condition'] ?? '',
+                                            'impact' => $rec['impact'] ?? '',
+                                            'recommendation_text' => $rec['recommendation_text'],
+                                            'expected_outcome' => $rec['expected_outcome'] ?? '',
+                                            'status' => 'pending'
+                                        ]);
+                                        $inserted++;
+                                    } else {
+                                        $skipped++;
+                                    }
                                 }
                             }
+                            $this->info("Berhasil! $inserted rekomendasi baru ditambahkan. ($skipped dilewati karena duplikat)");
+                        } else {
+                            $this->error("Gagal mem-parsing JSON dari Ollama.");
+                            $this->line("Raw Output: " . substr($resultText, 0, 500) . "...");
+                            $hasError = true;
                         }
-                        $this->info("Berhasil! $inserted rekomendasi SEO telah ditambahkan ke database.");
                     } else {
-                        $this->error("Gagal parsing JSON dari AI. Response: " . substr($data['response'] ?? '', 0, 500));
+                        $this->error("Format JSON tidak ditemukan dalam response.");
+                        $this->line("Raw Output: " . substr($resultText, 0, 500) . "...");
                         $hasError = true;
                     }
                 } else {
