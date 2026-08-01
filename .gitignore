@@ -22,3 +22,10 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+/minio_data
+/TripoSR
+*.sql
+*.php.patch
+fix_*.php
+update_*.php
+test-*.js
