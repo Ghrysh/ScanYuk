@@ -39,22 +39,27 @@ Here is the current state of the page:
 - Current Meta Description: $currentDesc
 
 Please generate a comprehensive SEO recommendation report.
-IMPORTANT: The content of your recommendations MUST be in BAHASA INDONESIA.
+IMPORTANT RULES YOU MUST FOLLOW:
+1. The content of your recommendations MUST be in BAHASA INDONESIA.
+2. Meta Title MUST be under 60 characters, catchy, and include the brand name 'ScanYuk'.
+3. Meta Description MUST be between 120-160 characters, persuasive, and include a Call to Action (CTA).
+4. H1 Heading MUST be short, punchy, and relevant to the page content (not a full sentence).
+
 You MUST output ONLY a valid JSON object with the following exact structure, no markdown:
 {
     \"overall_score\": 75,
     \"meta_title\": {
         \"current\": \"$currentTitle\",
-        \"recommendation\": \"Saran Judul Meta Baru\",
+        \"recommendation\": \"Saran Judul Meta Baru (max 60 chars)\",
         \"reason\": \"Alasan kenapa judul ini lebih baik\"
     },
     \"meta_description\": {
         \"current\": \"$currentDesc\",
-        \"recommendation\": \"Saran Deskripsi Meta Baru\",
+        \"recommendation\": \"Saran Deskripsi Meta Baru (120-160 chars)\",
         \"reason\": \"Alasan kenapa deskripsi ini lebih baik\"
     },
     \"h1_heading\": {
-        \"recommendation\": \"Saran Heading H1\",
+        \"recommendation\": \"Saran Heading H1 (Singkat & Padat)\",
         \"reason\": \"Alasan pemilihan H1 ini\"
     },
     \"faq_schema\": [
