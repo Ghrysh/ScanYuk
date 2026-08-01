@@ -7,9 +7,15 @@
         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-qr-code w-12 h-12 text-primary"><rect width="5" height="5" x="3" y="3" rx="1"></rect><rect width="5" height="5" x="16" y="3" rx="1"></rect><rect width="5" height="5" x="3" y="16" rx="1"></rect><path d="M21 16h-3a2 2 0 0 0-2 2v3"></path><path d="M21 21v.01"></path><path d="M12 7v3a2 2 0 0 1-2 2H7"></path><path d="M3 12h.01"></path><path d="M12 3h.01"></path><path d="M12 16v.01"></path><path d="M16 12h1"></path><path d="M21 12v.01"></path><path d="M12 21v-1"></path></svg>
     </div>
 
+    @if(isset($seoData->h1_heading))
+    <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 text-slate-900">
+        {{ $seoData->h1_heading }}
+    </h1>
+    @else
     <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6">
         <span class="text-slate-900">Scan</span><span class="text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-indigo-600">Yuk</span>
     </h1>
+    @endif
 
     <p class="text-lg md:text-xl text-slate-500 max-w-2xl leading-relaxed mb-10">
         Arahkan kamera untuk scan QR Code atau objek dan lihat pengalaman Augmented Reality.

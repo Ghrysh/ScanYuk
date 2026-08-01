@@ -126,6 +126,11 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/admin/chatbot/knowledge/{id}', [\App\Http\Controllers\AdminController::class, 'destroyChatbotKnowledge'])->name('admin.chatbot.destroy');
         Route::patch('/admin/chatbot/leads/{id}/status', [\App\Http\Controllers\AdminController::class, 'toggleLeadStatus'])->name('admin.chatbot.lead.status');
         Route::get('/admin/chatbot/leads/{id}/history', [\App\Http\Controllers\AdminController::class, 'getLeadHistory'])->name('admin.chatbot.lead.history');
+        
+        // AI SEO Rank Routes
+        Route::get('/admin/seo/recommendations', [\App\Http\Controllers\AdminSeoController::class, 'getRecommendations'])->name('admin.seo.recommendations');
+        Route::post('/admin/seo/analyze', [\App\Http\Controllers\AdminSeoController::class, 'analyze'])->name('admin.seo.analyze');
+        Route::post('/admin/seo/apply/{id}', [\App\Http\Controllers\AdminSeoController::class, 'apply'])->name('admin.seo.apply');
     });
 
     Route::middleware(['role:admin,live_chat_admin'])->group(function () {
