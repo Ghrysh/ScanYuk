@@ -115,7 +115,7 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
                     return 1;
                 }
             } else {
-                $this->error("Gagal mendapat response HTTP 200 dari Ollama.");
+                $this->error("Gagal mendapat response HTTP 200 dari Ollama. Status: " . $response->status() . "\nBody: " . $response->body());
                 return 1;
             }
         } catch (\Exception $e) {

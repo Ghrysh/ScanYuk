@@ -72,9 +72,11 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
 
                     return response()->json(['success' => true, 'data' => $recommendation]);
                 }
+                
+                return response()->json(['success' => false, 'message' => 'Gagal mendapatkan response valid dari AI. Respons mentah: ' . $data['response']]);
             }
 
-            return response()->json(['success' => false, 'message' => 'Gagal mendapatkan response valid dari AI.']);
+            return response()->json(['success' => false, 'message' => 'Gagal mendapat response HTTP 200 dari Ollama. Status: ' . $response->status() . ' Body: ' . $response->body()]);
         } catch (\Exception $e) {
             // Jika ollama tidak jalan, pakai fallback mock agar sistem tidak freeze total saat demo
             $mockParsed = [
