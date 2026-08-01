@@ -78,33 +78,7 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
 
             return response()->json(['success' => false, 'message' => 'Gagal mendapat response HTTP 200 dari Ollama. Status: ' . $response->status() . ' Body: ' . $response->body()]);
         } catch (\Exception $e) {
-            // Jika ollama tidak jalan, pakai fallback mock agar sistem tidak freeze total saat demo
-            $mockParsed = [
-                "overall_score" => rand(70, 95),
-                "meta_title" => "Optimasi " . ucfirst($keyword) . " Terbaik - ScanYuk",
-                "meta_description" => "Tingkatkan interaksi dengan " . $keyword . ". Solusi AR QR Code terdepan untuk bisnis Anda.",
-                "h1_heading" => "Solusi Inovatif " . ucfirst($keyword) . " untuk Bisnis",
-                "faq_schema" => [
-                    ["question" => "Apa itu " . $keyword . "?", "answer" => "Ini adalah layanan terintegrasi dari ScanYuk."],
-                    ["question" => "Bagaimana cara kerja " . $keyword . "?", "answer" => "Sangat mudah, cukup scan QR Code Anda."]
-                ],
-                "backlink_strategy" => "Cari backlink dari situs teknologi dan marketing dengan DR tinggi.",
-                "internal_link_strategy" => "Tambahkan link dari blog post ke halaman ini.",
-                "image_optimization" => "Gunakan format WebP dan tambahkan alt text yang relevan.",
-                "page_speed" => "Aktifkan lazy loading untuk gambar di bawah lipatan (below the fold)."
-            ];
-
-            $recommendation = SeoRecommendation::create([
-                'page_path' => $pagePath,
-                'target_keyword' => $keyword,
-                'overall_score' => $mockParsed['overall_score'],
-                'recommendations' => $mockParsed,
-                'status' => 'pending',
-                'manual_status' => 'pending',
-                'ai_type' => 'manual'
-            ]);
-
-            return response()->json(['success' => true, 'data' => $recommendation, 'warning' => 'Ollama offline, menggunakan fallback AI mock. Error: ' . $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Gagal terhubung ke AI: ' . $e->getMessage()]);
         }
     }
 

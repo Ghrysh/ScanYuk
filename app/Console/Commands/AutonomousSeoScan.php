@@ -116,31 +116,8 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
                     $hasError = true;
                 }
             } catch (\Exception $e) {
-                $this->warn("Ollama offline untuk analisa SEO. Membuat data mock (simulasi) karena cron harus berjalan...");
-                $mockParsed = [
-                    "overall_score" => rand(80, 98),
-                    "meta_title" => "Raih Keuntungan dengan " . ucfirst($trendingKeyword),
-                    "meta_description" => "Tingkatkan interaksi pelanggan menggunakan " . $trendingKeyword . ". Solusi masa depan.",
-                    "h1_heading" => "Inovasi " . ucfirst($trendingKeyword) . " untuk Bisnis",
-                    "faq_schema" => [
-                        ["question" => "Apa fungsi " . $trendingKeyword . "?", "answer" => "Ini sangat membantu kampanye marketing."]
-                    ],
-                    "backlink_strategy" => "Cari backlink dari situs berita teknologi terkemuka (DR > 50).",
-                    "internal_link_strategy" => "Tautkan halaman blog bertema AR ke halaman ini.",
-                    "image_optimization" => "Gunakan Lazy-Loading dan konversi semua PNG ke WebP.",
-                    "page_speed" => "Minifikasi CSS dan JS, kurangi ukuran bundle Alpine."
-                ];
-
-                \App\Models\SeoRecommendation::create([
-                    'page_path' => $pagePath,
-                    'target_keyword' => $trendingKeyword,
-                    'overall_score' => $mockParsed['overall_score'],
-                    'recommendations' => $mockParsed,
-                    'status' => 'pending',
-                    'manual_status' => 'pending',
-                    'ai_type' => 'proactive'
-                ]);
-                $this->info("Data mock proaktif berhasil ditambahkan.");
+                $this->error("Gagal terhubung ke Ollama atau terjadi error: " . $e->getMessage());
+                $hasError = true;
             }
         }
 

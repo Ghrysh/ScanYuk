@@ -716,7 +716,9 @@
              pagePath: '/',
              targetKeyword: '',
              recommendation: null,
-             history: [],
+             activeTasks: [],
+             completedTasks: [],
+             currentTaskType: null,
              showManualForm: false,
              async init() {
                  this.fetchHistory();
@@ -724,7 +726,23 @@
              async fetchHistory() {
                  try {
                      let res = await fetch('/admin/seo/recommendations');
-                     this.history = await res.json();
+                     let raw = await res.json();
+                     let active = [];
+                     let completed = [];
+                     raw.forEach(item => {
+                         if (item.status === 'applied' && item.manual_status === 'selesai') {
+                             completed.push(item);
+                         } else {
+                             if (item.status === 'pending') {
+                                 active.push({...item, task_type: 'auto'});
+                             }
+                             if (item.manual_status !== 'selesai') {
+                                 active.push({...item, task_type: 'programmer'});
+                             }
+                         }
+                     });
+                     this.activeTasks = active;
+                     this.completedTasks = completed;
                  } catch(e) {}
              },
              async analyze() {
@@ -820,57 +838,97 @@
          </div>
 
          <template x-if="!recommendation">
-             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
-                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-                     <h3 class="font-bold text-slate-800">Riwayat Rekomendasi SEO</h3>
-                     <button @click="fetchHistory()" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Refresh
-                     </button>
-                 </div>
-                 <div class="overflow-x-auto">
-                     <table class="w-full text-left text-sm">
-                         <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
-                             <tr>
-                                 <th class="px-6 py-3 font-semibold">Waktu / Tipe</th>
-                                 <th class="px-6 py-3 font-semibold">Halaman</th>
-                                 <th class="px-6 py-3 font-semibold">Target Keyword</th>
-                                 <th class="px-6 py-3 font-semibold">Status Auto</th>
-                                 <th class="px-6 py-3 font-semibold">Tugas Programmer</th>
-                                 <th class="px-6 py-3 font-semibold text-right">Aksi</th>
-                             </tr>
-                         </thead>
-                         <tbody class="divide-y divide-slate-100">
-                             <template x-for="item in history" :key="item.id">
-                                 <tr class="hover:bg-slate-50 transition-colors">
-                                     <td class="px-6 py-4">
-                                         <div class="text-slate-600 mb-1" x-text="new Date(item.created_at).toLocaleString('id-ID')"></div>
-                                         <span x-show="item.ai_type === 'proactive'" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700">AI Proactive</span>
-                                         <span x-show="item.ai_type === 'manual'" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">Manual Req</span>
-                                     </td>
-                                     <td class="px-6 py-4 font-semibold text-indigo-600" x-text="item.page_path"></td>
-                                     <td class="px-6 py-4">
-                                         <span class="text-slate-700 font-medium" x-text="item.target_keyword"></span>
-                                         <div class="mt-1 flex items-center gap-1 text-[10px] text-slate-500">Skor: <span class="font-bold px-1 rounded text-white" :class="item.overall_score >= 80 ? 'bg-teal-500' : (item.overall_score >= 50 ? 'bg-amber-500' : 'bg-red-500')" x-text="item.overall_score"></span></div>
-                                     </td>
-                                     <td class="px-6 py-4">
-                                         <span x-show="item.status === 'applied'" class="text-teal-600 font-bold text-xs bg-teal-50 px-2 py-1 rounded">Applied</span>
-                                         <span x-show="item.status === 'pending'" class="text-amber-600 font-bold text-xs bg-amber-50 px-2 py-1 rounded">Pending</span>
-                                     </td>
-                                     <td class="px-6 py-4">
-                                         <span x-show="item.manual_status === 'pending'" class="text-slate-600 font-bold text-xs border border-slate-200 px-2 py-1 rounded">Pending</span>
-                                         <span x-show="item.manual_status === 'proses'" class="text-blue-600 font-bold text-xs bg-blue-50 px-2 py-1 rounded">Proses</span>
-                                         <span x-show="item.manual_status === 'selesai'" class="text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-1 rounded">Selesai</span>
-                                     </td>
-                                     <td class="px-6 py-4 text-right">
-                                         <button @click="recommendation = item" class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">Lihat Detail &rarr;</button>
-                                     </td>
+             <div>
+                 <!-- Tabel Tugas Baru -->
+                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+                     <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                         <h3 class="font-bold text-slate-800">Daftar Rekomendasi SEO (Tugas Baru)</h3>
+                         <button @click="fetchHistory()" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Refresh
+                         </button>
+                     </div>
+                     <div class="overflow-x-auto">
+                         <table class="w-full text-left text-sm">
+                             <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                                 <tr>
+                                     <th class="px-6 py-3 font-semibold">Tipe Tugas</th>
+                                     <th class="px-6 py-3 font-semibold">Halaman</th>
+                                     <th class="px-6 py-3 font-semibold">Target Keyword</th>
+                                     <th class="px-6 py-3 font-semibold text-right">Aksi</th>
                                  </tr>
-                             </template>
-                             <tr x-show="history.length === 0">
-                                 <td colspan="6" class="px-6 py-8 text-center text-slate-500">Belum ada riwayat analisa SEO. Silakan lakukan analisa pertama Anda.</td>
-                             </tr>
-                         </tbody>
-                     </table>
+                             </thead>
+                             <tbody class="divide-y divide-slate-100">
+                                 <template x-for="item in activeTasks" :key="item.id + '_' + item.task_type">
+                                     <tr class="hover:bg-slate-50 transition-colors">
+                                         <td class="px-6 py-4">
+                                             <div x-show="item.task_type === 'auto'" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                                                <span>⚙️ Tugas Otomatis</span>
+                                             </div>
+                                             <div x-show="item.task_type === 'programmer'" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                                                <span>👨‍💻 Tugas Programmer</span>
+                                             </div>
+                                             <div class="text-slate-400 text-xs mt-1" x-text="new Date(item.created_at).toLocaleString('id-ID')"></div>
+                                         </td>
+                                         <td class="px-6 py-4 font-semibold text-indigo-600" x-text="item.page_path"></td>
+                                         <td class="px-6 py-4">
+                                             <span class="text-slate-700 font-medium" x-text="item.target_keyword"></span>
+                                         </td>
+                                         <td class="px-6 py-4 text-right">
+                                             <button @click="recommendation = item; currentTaskType = item.task_type" class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">Lihat Detail &rarr;</button>
+                                         </td>
+                                     </tr>
+                                 </template>
+                                 <tr x-show="activeTasks.length === 0">
+                                     <td colspan="4" class="px-6 py-8 text-center text-slate-500">Hebat! Semua tugas SEO sudah selesai dikerjakan.</td>
+                                 </tr>
+                             </tbody>
+                         </table>
+                     </div>
+                 </div>
+
+                 <!-- Tabel Riwayat Selesai -->
+                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+                     <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                         <h3 class="font-bold text-slate-800">Riwayat Pekerjaan Selesai</h3>
+                     </div>
+                     <div class="overflow-x-auto">
+                         <table class="w-full text-left text-sm opacity-70">
+                             <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                                 <tr>
+                                     <th class="px-6 py-3 font-semibold">Waktu / Tipe</th>
+                                     <th class="px-6 py-3 font-semibold">Halaman</th>
+                                     <th class="px-6 py-3 font-semibold">Target Keyword</th>
+                                     <th class="px-6 py-3 font-semibold">Status Auto</th>
+                                     <th class="px-6 py-3 font-semibold">Tugas Programmer</th>
+                                 </tr>
+                             </thead>
+                             <tbody class="divide-y divide-slate-100">
+                                 <template x-for="item in completedTasks" :key="item.id">
+                                     <tr class="hover:bg-slate-50 transition-colors">
+                                         <td class="px-6 py-4">
+                                             <div class="text-slate-600 mb-1" x-text="new Date(item.created_at).toLocaleString('id-ID')"></div>
+                                             <span x-show="item.ai_type === 'proactive'" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700">AI Proactive</span>
+                                             <span x-show="item.ai_type === 'manual'" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">Manual Req</span>
+                                         </td>
+                                         <td class="px-6 py-4 font-semibold text-indigo-600" x-text="item.page_path"></td>
+                                         <td class="px-6 py-4">
+                                             <span class="text-slate-700 font-medium" x-text="item.target_keyword"></span>
+                                             <div class="mt-1 flex items-center gap-1 text-[10px] text-slate-500">Skor: <span class="font-bold px-1 rounded text-white" :class="item.overall_score >= 80 ? 'bg-teal-500' : (item.overall_score >= 50 ? 'bg-amber-500' : 'bg-red-500')" x-text="item.overall_score"></span></div>
+                                         </td>
+                                         <td class="px-6 py-4">
+                                             <span class="text-teal-600 font-bold text-xs bg-teal-50 px-2 py-1 rounded">Applied</span>
+                                         </td>
+                                         <td class="px-6 py-4">
+                                             <span class="text-emerald-600 font-bold text-xs bg-emerald-50 px-2 py-1 rounded">Selesai</span>
+                                         </td>
+                                     </tr>
+                                 </template>
+                                 <tr x-show="completedTasks.length === 0">
+                                     <td colspan="5" class="px-6 py-8 text-center text-slate-500">Belum ada riwayat analisa SEO.</td>
+                                 </tr>
+                             </tbody>
+                         </table>
+                     </div>
                  </div>
              </div>
          </template>
@@ -892,7 +950,7 @@
                  </div>
                  
                  <!-- BAGIAN 1: AUTO APPLY VARIABLES -->
-                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
+                 <div x-show="currentTaskType === 'auto'" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
                     <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
                         <div>
                             <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
@@ -939,7 +997,7 @@
                  </div>
 
                  <!-- BAGIAN 2: MANUAL TASKS -->
-                 <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
+                 <div x-show="currentTaskType === 'programmer'" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-6">
                     <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
                         <div>
                             <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
