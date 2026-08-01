@@ -78,9 +78,11 @@ class AdminController extends Controller
         $chatbotKnowledges = \App\Models\ChatbotKnowledge::orderBy('topic')->get();
         $chatbotLeads = \App\Models\ChatbotLead::with('user')->latest()->paginate(10, ['*'], 'leads_page');
 
+        $pendingSeoRecsCount = \App\Models\SeoRecommendation::where('status', 'pending')->count();
+
         return view('admin.dashboard', compact(
             'packages', 'users', 'transactions', 'totalUsers', 'totalQrCodes', 'totalScans', 'totalRevenue',
-            'contactMessages', 'visitorLogs', 'totalVisitors', 'filter', 'chartData', 'chatbotKnowledges', 'chatbotLeads'
+            'contactMessages', 'visitorLogs', 'totalVisitors', 'filter', 'chartData', 'chatbotKnowledges', 'chatbotLeads', 'pendingSeoRecsCount'
         ));
     }
 

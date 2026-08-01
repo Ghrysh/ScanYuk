@@ -15,6 +15,25 @@ services:
     networks:
       - scanyuk-network
 
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: scanyuk-app
+    container_name: scanyuk-scheduler
+    restart: unless-stopped
+    command: php artisan schedule:work
+    working_dir: /var/www
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+    volumes:
+      - ./:/var/www
+    depends_on:
+      - app
+    networks:
+      - scanyuk-network
+
   web:
     image: nginx:alpine
     container_name: scanyuk-web

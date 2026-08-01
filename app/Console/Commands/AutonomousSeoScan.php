@@ -61,16 +61,16 @@ PROMPT;
             // 4. Kirim ke Ollama dengan parameter system terpisah (format Llama 3)
             try {
                 $this->info("Mengirim ke Ollama untuk dianalisis...");
-                $response = Http::timeout(1200)->post('http://scanyuk-ollama:11434/api/generate', [
+                $response = Http::timeout(3600)->post('http://scanyuk-ollama:11434/api/generate', [
                     'model' => 'llama3',
                     'system' => $system,
                     'prompt' => $prompt,
                     'stream' => false,
                     'format' => 'json',
                     'options' => [
-                        'num_predict' => 2048,
+                        'num_predict' => 1536,
                         'temperature' => 0.4,
-                        'num_ctx' => 4096,
+                        'num_ctx' => 2048,
                     ]
                 ]);
 
@@ -90,17 +90,24 @@ PROMPT;
                         $inserted = 0;
                         foreach ($parsed as $rec) {
                             if (isset($rec['category']) && isset($rec['recommendation_text'])) {
-                                SeoRecommendation::create([
-                                    'page_path' => $pagePath,
-                                    'category' => $rec['category'],
-                                    'research_finding' => $rec['research_finding'] ?? '',
-                                    'current_condition' => $rec['current_condition'] ?? '',
-                                    'impact' => $rec['impact'] ?? '',
-                                    'recommendation_text' => $rec['recommendation_text'],
-                                    'expected_outcome' => $rec['expected_outcome'] ?? '',
-                                    'status' => 'pending'
-                                ]);
-                                $inserted++;
+                                $existing = SeoRecommendation::where('page_path', $pagePath)
+                                    ->where('category', $rec['category'])
+                                    ->where('current_condition', $rec['current_condition'] ?? '')
+                                    ->first();
+
+                                if (!$existing) {
+                                    SeoRecommendation::create([
+                                        'page_path' => $pagePath,
+                                        'category' => $rec['category'],
+                                        'research_finding' => $rec['research_finding'] ?? '',
+                                        'current_condition' => $rec['current_condition'] ?? '',
+                                        'impact' => $rec['impact'] ?? '',
+                                        'recommendation_text' => $rec['recommendation_text'],
+                                        'expected_outcome' => $rec['expected_outcome'] ?? '',
+                                        'status' => 'pending'
+                                    ]);
+                                    $inserted++;
+                                }
                             }
                         }
                         $this->info("Berhasil! $inserted rekomendasi SEO telah ditambahkan ke database.");

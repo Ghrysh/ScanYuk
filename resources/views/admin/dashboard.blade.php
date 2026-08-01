@@ -73,8 +73,11 @@
 
             <button @click="activeTab = 'seo'" 
                 :class="activeTab === 'seo' ? 'bg-teal-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-100'"
-                class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap">
+                class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 whitespace-nowrap relative">
                 AI SEO Rank
+                @if($pendingSeoRecsCount > 0)
+                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">{{ $pendingSeoRecsCount }}</span>
+                @endif
             </button>
 
             <button @click="activeTab = 'chatbot'" 

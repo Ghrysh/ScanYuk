@@ -57,16 +57,16 @@ PROMPT;
 
         // 4. Kirim ke Ollama
         try {
-            $response = Http::timeout(1200)->post('http://scanyuk-ollama:11434/api/generate', [
+            $response = Http::timeout(3600)->post('http://scanyuk-ollama:11434/api/generate', [
                 'model' => 'llama3',
                 'system' => $system,
                 'prompt' => $prompt,
                 'stream' => false,
                 'format' => 'json',
                 'options' => [
-                    'num_predict' => 2048,
+                    'num_predict' => 1536,
                     'temperature' => 0.4,
-                    'num_ctx' => 4096,
+                    'num_ctx' => 2048,
                 ]
             ]);
 
@@ -85,16 +85,23 @@ PROMPT;
                     $createdItems = [];
                     foreach ($parsed as $rec) {
                         if (isset($rec['category']) && isset($rec['recommendation_text'])) {
-                            $createdItems[] = SeoRecommendation::create([
-                                'page_path' => $pagePath,
-                                'category' => $rec['category'],
-                                'research_finding' => $rec['research_finding'] ?? '',
-                                'current_condition' => $rec['current_condition'] ?? '',
-                                'impact' => $rec['impact'] ?? '',
-                                'recommendation_text' => $rec['recommendation_text'],
-                                'expected_outcome' => $rec['expected_outcome'] ?? '',
-                                'status' => 'pending'
-                            ]);
+                            $existing = SeoRecommendation::where('page_path', $pagePath)
+                                ->where('category', $rec['category'])
+                                ->where('current_condition', $rec['current_condition'] ?? '')
+                                ->first();
+
+                            if (!$existing) {
+                                $createdItems[] = SeoRecommendation::create([
+                                    'page_path' => $pagePath,
+                                    'category' => $rec['category'],
+                                    'research_finding' => $rec['research_finding'] ?? '',
+                                    'current_condition' => $rec['current_condition'] ?? '',
+                                    'impact' => $rec['impact'] ?? '',
+                                    'recommendation_text' => $rec['recommendation_text'],
+                                    'expected_outcome' => $rec['expected_outcome'] ?? '',
+                                    'status' => 'pending'
+                                ]);
+                            }
                         }
                     }
                     return response()->json(['success' => true, 'data' => $createdItems, 'message' => 'Berhasil mendapatkan ' . count($createdItems) . ' rekomendasi.']);
