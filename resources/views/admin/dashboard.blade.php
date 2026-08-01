@@ -715,13 +715,9 @@
 
             <div x-show="activeTab === 'seo'" style="display: none;" x-transition.opacity.duration.300ms
          x-data="{
-             isAnalyzing: false,
-             pagePath: '/',
-             targetKeyword: '',
              recommendation: null,
              activeTasks: [],
              completedTasks: [],
-             showManualForm: false,
              async init() {
                  this.fetchHistory();
              },
@@ -733,37 +729,7 @@
                      this.completedTasks = raw.filter(item => item.status === 'applied');
                  } catch(e) {}
              },
-             async analyze() {
-                 if(!this.pagePath) {
-                     alert('Harap pilih halaman yang ingin dianalisa.');
-                     return;
-                 }
-                 this.isAnalyzing = true;
-                 this.recommendation = null;
-                 
-                 let formData = new FormData();
-                 formData.append('page_path', this.pagePath);
-                 if (this.targetKeyword) {
-                     formData.append('target_keyword', this.targetKeyword);
-                 }
-                 formData.append('_token', document.querySelector('meta[name=csrf-token]').content);
-                 
-                 try {
-                     let res = await fetch('/admin/seo/analyze', { method: 'POST', body: formData });
-                     let data = await res.json();
-                     if (data.success) {
-                         this.fetchHistory();
-                         if(data.warning) alert(data.warning);
-                         else alert('Analisis selesai! Data telah dimuat ke dalam daftar.');
-                     } else {
-                         alert(data.message || 'Gagal menganalisa');
-                     }
-                 } catch (e) {
-                     alert('Terjadi kesalahan server');
-                 } finally {
-                     this.isAnalyzing = false;
-                 }
-             },
+
              async applyRec(id) {
                  if(!confirm('Tandai rekomendasi ini sebagai Selesai?')) return;
                  let formData = new FormData();
@@ -781,36 +747,6 @@
                  }
              }
          }">
-         <div class="mb-4 flex justify-end">
-             <button @click="showManualForm = !showManualForm" class="text-sm font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-4 py-2 rounded-lg transition-colors border border-indigo-100">
-                 <span x-text="showManualForm ? 'Tutup Form Analisa Manual' : '+ Punya Strategi Sendiri? Analisa Manual'"></span>
-             </button>
-         </div>
-
-         <div x-show="showManualForm" style="display: none;" x-transition class="mb-6 flex flex-col md:flex-row justify-between md:items-end gap-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-             <div class="flex-1 w-full flex flex-col sm:flex-row gap-4 items-end">
-                <div class="w-full sm:w-1/3">
-                    <label class="block text-sm font-bold text-slate-700 mb-1">Pilih Halaman</label>
-                    <select x-model="pagePath" class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-teal-500">
-                        <option value="/">Home (/)</option>
-                        <option value="/pricing">Pricing (/pricing)</option>
-                        <option value="/consumer">Consumer (/consumer)</option>
-                        <option value="/business">Business (/business)</option>
-                        <option value="/faq">FAQ (/faq)</option>
-                    </select>
-                </div>
-                <div class="w-full sm:w-1/3">
-                    <label class="block text-sm font-bold text-slate-700 mb-1">Target Keyword <span class="text-xs font-normal text-slate-400">(Opsional)</span></label>
-                    <input type="text" x-model="targetKeyword" placeholder="Biarkan AI yang mencari, atau ketik di sini..." class="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-lg outline-none focus:border-teal-500">
-                </div>
-                <div class="w-full sm:w-1/3">
-                    <button @click="analyze()" :disabled="isAnalyzing" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-lg shadow-md transition-all flex items-center justify-center gap-2">
-                        <svg x-show="isAnalyzing" style="display: none;" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        <span x-text="isAnalyzing ? 'AI sedang menganalisa...' : 'Analisa dengan AI'"></span>
-                    </button>
-                </div>
-             </div>
-         </div>
 
          <template x-if="!recommendation">
              <div>

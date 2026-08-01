@@ -129,7 +129,7 @@ Route::middleware(['auth'])->group(function () {
         
         // AI SEO Rank Routes
         Route::get('/admin/seo/recommendations', [\App\Http\Controllers\AdminSeoController::class, 'getRecommendations'])->name('admin.seo.recommendations');
-        Route::post('/admin/seo/analyze', [\App\Http\Controllers\AdminSeoController::class, 'analyze'])->name('admin.seo.analyze');
+
         Route::post('/admin/seo/apply/{id}', [\App\Http\Controllers\AdminSeoController::class, 'apply'])->name('admin.seo.apply');
         Route::post('/admin/seo/update-manual-status/{id}', [AppHttpControllersAdminSeoController::class, 'updateManualStatus'])->name('admin.seo.update_manual_status');
     });
