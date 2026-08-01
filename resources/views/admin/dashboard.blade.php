@@ -710,12 +710,22 @@
 
     </div>
 
-    <div x-show="activeTab === 'seo'" style="display: none;" x-transition.opacity.duration.300ms
+        <div x-show="activeTab === 'seo'" style="display: none;" x-transition.opacity.duration.300ms
          x-data="{
              isAnalyzing: false,
              pagePath: '/',
              targetKeyword: '',
              recommendation: null,
+             history: [],
+             async init() {
+                 this.fetchHistory();
+             },
+             async fetchHistory() {
+                 try {
+                     let res = await fetch('/admin/seo/recommendations');
+                     this.history = await res.json();
+                 } catch(e) {}
+             },
              async analyze() {
                  if(!this.pagePath || !this.targetKeyword) {
                      alert('Harap isi halaman dan target keyword');
@@ -734,6 +744,7 @@
                      let data = await res.json();
                      if (data.success) {
                          this.recommendation = data.data;
+                         this.fetchHistory();
                          if(data.warning) alert(data.warning);
                      } else {
                          alert(data.message || 'Gagal menganalisa');
@@ -754,6 +765,7 @@
                      if(data.success) {
                          alert(data.message);
                          this.recommendation.status = 'applied';
+                         this.fetchHistory();
                      }
                  } catch (e) {
                      alert('Gagal apply');
@@ -786,10 +798,57 @@
              </div>
          </div>
 
+         <template x-if="!recommendation">
+             <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+                 <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                     <h3 class="font-bold text-slate-800">Riwayat Rekomendasi SEO</h3>
+                 </div>
+                 <div class="overflow-x-auto">
+                     <table class="w-full text-left text-sm">
+                         <thead class="bg-slate-50 text-slate-500 border-b border-slate-200">
+                             <tr>
+                                 <th class="px-6 py-3 font-semibold">Waktu</th>
+                                 <th class="px-6 py-3 font-semibold">Halaman</th>
+                                 <th class="px-6 py-3 font-semibold">Target Keyword</th>
+                                 <th class="px-6 py-3 font-semibold">Skor</th>
+                                 <th class="px-6 py-3 font-semibold">Status</th>
+                                 <th class="px-6 py-3 font-semibold text-right">Aksi</th>
+                             </tr>
+                         </thead>
+                         <tbody class="divide-y divide-slate-100">
+                             <template x-for="item in history" :key="item.id">
+                                 <tr class="hover:bg-slate-50 transition-colors">
+                                     <td class="px-6 py-4 text-slate-600" x-text="new Date(item.created_at).toLocaleString('id-ID')"></td>
+                                     <td class="px-6 py-4 font-semibold text-indigo-600" x-text="item.page_path"></td>
+                                     <td class="px-6 py-4 text-slate-700" x-text="item.target_keyword"></td>
+                                     <td class="px-6 py-4">
+                                         <span class="px-2 py-1 rounded text-xs font-bold text-white" :class="item.overall_score >= 80 ? 'bg-teal-500' : (item.overall_score >= 50 ? 'bg-amber-500' : 'bg-red-500')" x-text="item.overall_score"></span>
+                                     </td>
+                                     <td class="px-6 py-4">
+                                         <span x-show="item.status === 'applied'" class="text-teal-600 font-bold text-xs bg-teal-50 px-2 py-1 rounded">Applied</span>
+                                         <span x-show="item.status === 'pending'" class="text-amber-600 font-bold text-xs bg-amber-50 px-2 py-1 rounded">Pending</span>
+                                     </td>
+                                     <td class="px-6 py-4 text-right">
+                                         <button @click="recommendation = item" class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm">Lihat Detail &rarr;</button>
+                                     </td>
+                                 </tr>
+                             </template>
+                             <tr x-show="history.length === 0">
+                                 <td colspan="6" class="px-6 py-8 text-center text-slate-500">Belum ada riwayat analisa SEO. Silakan lakukan analisa pertama Anda.</td>
+                             </tr>
+                         </tbody>
+                     </table>
+                 </div>
+             </div>
+         </template>
+
          <template x-if="recommendation">
              <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 mb-8">
                  <div class="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
-                     <h3 class="text-xl font-bold text-slate-900">Hasil Analisa AI SEO</h3>
+                     <div>
+                         <button @click="recommendation = null" class="text-sm font-semibold text-slate-500 hover:text-slate-800 mb-2 flex items-center gap-1">&larr; Kembali ke List</button>
+                         <h3 class="text-xl font-bold text-slate-900">Detail Analisa: <span class="text-indigo-600" x-text="recommendation.page_path"></span></h3>
+                     </div>
                      <div class="flex items-center gap-3">
                         <span class="text-sm font-semibold text-slate-500">Skor SEO:</span>
                         <div class="px-4 py-1.5 rounded-full text-white font-black text-lg" :class="recommendation.overall_score >= 80 ? 'bg-teal-500' : (recommendation.overall_score >= 50 ? 'bg-amber-500' : 'bg-red-500')" x-text="recommendation.overall_score + '/100'"></div>
