@@ -108,7 +108,7 @@
                 <div class="grid transition-all duration-300 ease-in-out px-6" :class="active === 5 ? 'grid-rows-[1fr] opacity-100 pb-5' : 'grid-rows-[0fr] opacity-0 pb-0'">
                     <div class="overflow-hidden">
                         <p class="text-sm md:text-[15px] text-slate-500 leading-relaxed border-t border-slate-100 pt-4">
-                            Pembayaran diproses melalui iPaymu, payment gateway terpercaya di Indonesia yang mendukung berbagai metode pembayaran termasuk transfer bank, e-wallet, dan kartu kredit.
+                            Pembayaran dilakukan secara manual melalui transfer bank (BNI). Anda cukup mentransfer sesuai total tagihan ke rekening yang tertera saat checkout, lalu mengunggah bukti pembayaran Anda untuk diverifikasi secara internal oleh tim kami.
                         </p>
                     </div>
                 </div>

@@ -34,9 +34,9 @@
                 </svg>
             </div>
             <div>
-                <h3 class="text-[17px] font-bold text-slate-900 mb-2">Pembayaran Aman (iPaymu)</h3>
+                <h3 class="text-[17px] font-bold text-slate-900 mb-2">Pembayaran Manual Aman</h3>
                 <p class="text-[15px] text-slate-500 leading-relaxed font-medium">
-                    Pembayaran diproses melalui iPaymu, payment gateway terpercaya di Indonesia dengan sertifikasi PCI DSS.
+                    Semua transaksi berlangganan diproses melalui transfer bank manual yang divalidasi langsung oleh tim internal kami. Kami tidak menyimpan data kartu kredit maupun e-wallet Anda.
                 </p>
             </div>
         </div>

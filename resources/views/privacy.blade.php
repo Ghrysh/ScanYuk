@@ -69,7 +69,7 @@
             <div>
                 <h3 class="text-[17px] font-bold text-slate-900 mb-2">Keterlibatan Pihak Ketiga</h3>
                 <p class="text-[15px] text-slate-500 leading-relaxed font-medium">
-                    Kami tidak akan pernah memperjualbelikan data maupun aset 3D Anda. Data hanya diteruskan ke mitra infrastruktur (hosting/VPS) dan gateway pembayaran resmi (iPaymu) secara terenkripsi untuk keperluan pemrosesan transaksi berlangganan.
+                    Kami tidak akan pernah memperjualbelikan data maupun aset 3D Anda. Data hanya diteruskan secara aman ke mitra infrastruktur (hosting/VPS) untuk keperluan penyimpanan dan pemrosesan layanan, termasuk verifikasi bukti pembayaran manual Anda secara internal.
                 </p>
             </div>
         </div>
