@@ -969,27 +969,84 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="grid grid-cols-1 gap-6 mb-6">
+                        <!-- Meta Title -->
                         <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                            <h4 class="font-bold text-slate-800 mb-2 flex items-center gap-2 text-sm uppercase">Meta Title</h4>
-                            <p class="text-slate-600 font-medium" x-text="recommendation.recommendations.meta_title"></p>
+                            <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-sm uppercase">Meta Title</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-white p-4 rounded-lg border border-red-100 shadow-sm relative overflow-hidden">
+                                    <div class="absolute top-0 left-0 w-1 h-full bg-red-400"></div>
+                                    <p class="text-xs font-bold text-red-500 mb-1 uppercase tracking-wider">Kondisi Saat Ini</p>
+                                    <p class="text-slate-600 font-medium" x-text="recommendation.recommendations.meta_title?.current || recommendation.recommendations.meta_title"></p>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg border border-teal-100 shadow-sm relative overflow-hidden">
+                                    <div class="absolute top-0 left-0 w-1 h-full bg-teal-400"></div>
+                                    <p class="text-xs font-bold text-teal-600 mb-1 uppercase tracking-wider">Rekomendasi AI</p>
+                                    <p class="text-slate-800 font-bold" x-text="recommendation.recommendations.meta_title?.recommendation || recommendation.recommendations.meta_title"></p>
+                                </div>
+                            </div>
+                            <div class="mt-3 bg-amber-50 text-amber-800 p-3 rounded-lg text-sm border border-amber-100 flex items-start gap-2">
+                                <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div>
+                                    <strong class="block mb-0.5 text-amber-900">Alasan Perubahan:</strong>
+                                    <span x-text="recommendation.recommendations.meta_title?.reason || 'Mengandung target keyword yang relevan dengan tren saat ini.'"></span>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- Meta Description -->
                         <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                            <h4 class="font-bold text-slate-800 mb-2 flex items-center gap-2 text-sm uppercase">Meta Description</h4>
-                            <p class="text-slate-600 text-sm leading-relaxed" x-text="recommendation.recommendations.meta_description"></p>
+                            <h4 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-sm uppercase">Meta Description</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="bg-white p-4 rounded-lg border border-red-100 shadow-sm relative overflow-hidden">
+                                    <div class="absolute top-0 left-0 w-1 h-full bg-red-400"></div>
+                                    <p class="text-xs font-bold text-red-500 mb-1 uppercase tracking-wider">Kondisi Saat Ini</p>
+                                    <p class="text-slate-600 font-medium text-sm" x-text="recommendation.recommendations.meta_description?.current || recommendation.recommendations.meta_description"></p>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg border border-teal-100 shadow-sm relative overflow-hidden">
+                                    <div class="absolute top-0 left-0 w-1 h-full bg-teal-400"></div>
+                                    <p class="text-xs font-bold text-teal-600 mb-1 uppercase tracking-wider">Rekomendasi AI</p>
+                                    <p class="text-slate-800 font-bold text-sm" x-text="recommendation.recommendations.meta_description?.recommendation || recommendation.recommendations.meta_description"></p>
+                                </div>
+                            </div>
+                            <div class="mt-3 bg-amber-50 text-amber-800 p-3 rounded-lg text-sm border border-amber-100 flex items-start gap-2">
+                                <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div>
+                                    <strong class="block mb-0.5 text-amber-900">Alasan Perubahan:</strong>
+                                    <span x-text="recommendation.recommendations.meta_description?.reason || 'Meningkatkan CTR (Click-Through Rate) di hasil pencarian Google.'"></span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200 md:col-span-2">
+
+                        <!-- H1 Heading -->
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
                             <h4 class="font-bold text-slate-800 mb-2 flex items-center gap-2 text-sm uppercase">Heading (H1) Utama</h4>
-                            <p class="text-slate-600 font-semibold text-lg" x-text="recommendation.recommendations.h1_heading"></p>
+                            <div class="bg-white p-4 rounded-lg border border-teal-100 shadow-sm mb-3 relative overflow-hidden">
+                                <div class="absolute top-0 left-0 w-1 h-full bg-teal-400"></div>
+                                <p class="text-slate-800 font-bold text-lg" x-text="recommendation.recommendations.h1_heading?.recommendation || recommendation.recommendations.h1_heading"></p>
+                            </div>
+                            <div class="bg-amber-50 text-amber-800 p-3 rounded-lg text-sm border border-amber-100 flex items-start gap-2">
+                                <svg class="w-5 h-5 flex-shrink-0 mt-0.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div>
+                                    <strong class="block mb-0.5 text-amber-900">Alasan:</strong>
+                                    <span x-text="recommendation.recommendations.h1_heading?.reason || 'Heading utama harus relevan dengan maksud pencarian pengunjung.'"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
+
                     <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
                         <h4 class="font-bold text-slate-800 mb-3 flex items-center gap-2 text-sm uppercase">FAQ Schema (JSON-LD)</h4>
-                        <div class="space-y-3">
+                        <div class="space-y-4">
                             <template x-for="(faq, index) in recommendation.recommendations.faq_schema" :key="index">
-                                <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
-                                    <p class="font-bold text-slate-800 text-sm mb-1" x-text="'Q: ' + faq.question"></p>
-                                    <p class="text-slate-600 text-sm" x-text="'A: ' + faq.answer"></p>
+                                <div class="bg-white p-5 rounded-lg border border-slate-200 shadow-sm relative overflow-hidden">
+                                    <div class="absolute top-0 left-0 w-1 h-full bg-indigo-400"></div>
+                                    <p class="font-bold text-slate-800 text-sm mb-1" x-text="'Tanya: ' + faq.question"></p>
+                                    <p class="text-slate-600 text-sm mb-3" x-text="'Jawab: ' + faq.answer"></p>
+                                    <div x-show="faq.reason" class="bg-slate-50 p-2.5 rounded text-xs text-slate-600 border border-slate-100 italic flex gap-1.5">
+                                        <svg class="w-4 h-4 flex-shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span x-text="faq.reason"></span>
+                                    </div>
                                 </div>
                             </template>
                         </div>
@@ -1017,19 +1074,45 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="bg-indigo-50/50 p-5 rounded-xl border border-indigo-100">
                             <h4 class="font-bold text-indigo-800 text-sm mb-3 uppercase flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg> Link Strategy</h4>
-                            <p class="text-indigo-700 text-sm mb-3"><strong class="block text-indigo-900 mb-1">Backlink:</strong> <span x-text="recommendation.recommendations.backlink_strategy"></span></p>
-                            <p class="text-indigo-700 text-sm"><strong class="block text-indigo-900 mb-1">Internal:</strong> <span x-text="recommendation.recommendations.internal_link_strategy"></span></p>
+                            
+                            <div class="mb-4">
+                                <strong class="block text-indigo-900 mb-1 text-xs uppercase tracking-wide">Tugas Backlink:</strong> 
+                                <p class="text-indigo-700 text-sm font-medium mb-1" x-text="recommendation.recommendations.backlink_strategy?.recommendation || recommendation.recommendations.backlink_strategy"></p>
+                                <div class="bg-indigo-100/50 text-indigo-800 p-2 rounded text-xs" x-show="recommendation.recommendations.backlink_strategy?.reason">
+                                    <strong class="font-semibold">Alasan:</strong> <span x-text="recommendation.recommendations.backlink_strategy.reason"></span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <strong class="block text-indigo-900 mb-1 text-xs uppercase tracking-wide">Tugas Internal Link:</strong> 
+                                <p class="text-indigo-700 text-sm font-medium mb-1" x-text="recommendation.recommendations.internal_link_strategy?.recommendation || recommendation.recommendations.internal_link_strategy"></p>
+                                <div class="bg-indigo-100/50 text-indigo-800 p-2 rounded text-xs" x-show="recommendation.recommendations.internal_link_strategy?.reason">
+                                    <strong class="font-semibold">Alasan:</strong> <span x-text="recommendation.recommendations.internal_link_strategy.reason"></span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="bg-amber-50/50 p-5 rounded-xl border border-amber-100">
-                            <h4 class="font-bold text-amber-800 text-sm mb-3 uppercase flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Image Optimization</h4>
-                            <p class="text-amber-700 text-sm leading-relaxed" x-text="recommendation.recommendations.image_optimization"></p>
-                        </div>
-                        <div class="bg-rose-50/50 p-5 rounded-xl border border-rose-100">
-                            <h4 class="font-bold text-rose-800 text-sm mb-3 uppercase flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> Page Speed</h4>
-                            <p class="text-rose-700 text-sm leading-relaxed" x-text="recommendation.recommendations.page_speed"></p>
+
+                        <div class="space-y-6">
+                            <div class="bg-amber-50/50 p-5 rounded-xl border border-amber-100">
+                                <h4 class="font-bold text-amber-800 text-sm mb-3 uppercase flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg> Image Optimization</h4>
+                                <p class="text-amber-700 text-sm font-medium mb-2 leading-relaxed" x-text="recommendation.recommendations.image_optimization?.recommendation || recommendation.recommendations.image_optimization"></p>
+                                <div class="bg-amber-100/50 text-amber-900 p-2.5 rounded-lg text-xs" x-show="recommendation.recommendations.image_optimization?.reason">
+                                    <strong class="font-bold block mb-0.5">Alasan Perlu Dilakukan:</strong>
+                                    <span x-text="recommendation.recommendations.image_optimization.reason"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-rose-50/50 p-5 rounded-xl border border-rose-100">
+                                <h4 class="font-bold text-rose-800 text-sm mb-3 uppercase flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg> Page Speed</h4>
+                                <p class="text-rose-700 text-sm font-medium mb-2 leading-relaxed" x-text="recommendation.recommendations.page_speed?.recommendation || recommendation.recommendations.page_speed"></p>
+                                <div class="bg-rose-100/50 text-rose-900 p-2.5 rounded-lg text-xs" x-show="recommendation.recommendations.page_speed?.reason">
+                                    <strong class="font-bold block mb-0.5">Dampak pada SEO:</strong>
+                                    <span x-text="recommendation.recommendations.page_speed.reason"></span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                  </div>

@@ -59,22 +59,65 @@ class AutonomousSeoScan extends Command
 
             // 3. Analisa SEO dengan AI
             $url = url($pagePath);
+            
+            // Coba ambil isi halaman saat ini agar AI punya konteks (Scrape Title & Meta Description)
+            $currentTitle = "Tidak diketahui";
+            $currentDesc = "Tidak diketahui";
+            try {
+                $pageHtml = \Illuminate\Support\Facades\Http::timeout(10)->get($url)->body();
+                if (preg_match('/<title>(.*?)<\/title>/is', $pageHtml, $m)) {
+                    $currentTitle = trim(strip_tags($m[1]));
+                }
+                if (preg_match('/<meta\s+name=["\']description["\']\s+content=["\'](.*?)["\']/is', $pageHtml, $m)) {
+                    $currentDesc = trim($m[1]);
+                }
+            } catch (\Exception $e) {
+                // Abaikan jika gagal scrape
+            }
+
             $prompt = "You are an expert SEO Consultant. I have a webpage at '$url' and I want to target the trending keyword '$trendingKeyword'.
+Here is the current state of the page:
+- Current Meta Title: $currentTitle
+- Current Meta Description: $currentDesc
+
 Please generate a comprehensive SEO recommendation report. 
 IMPORTANT: The content of your recommendations MUST be in BAHASA INDONESIA.
 You MUST output ONLY a valid JSON object with the following exact structure, no markdown:
 {
     \"overall_score\": 75,
-    \"meta_title\": \"Saran Judul Meta (max 60 chars, in Indonesian)\",
-    \"meta_description\": \"Saran Deskripsi Meta (max 160 chars, in Indonesian)\",
-    \"h1_heading\": \"Saran Heading H1 yang mengandung keyword (in Indonesian)\",
+    \"meta_title\": {
+        \"current\": \"$currentTitle\",
+        \"recommendation\": \"Saran Judul Meta Baru\",
+        \"reason\": \"Alasan kenapa judul ini lebih baik\"
+    },
+    \"meta_description\": {
+        \"current\": \"$currentDesc\",
+        \"recommendation\": \"Saran Deskripsi Meta Baru\",
+        \"reason\": \"Alasan kenapa deskripsi ini lebih baik\"
+    },
+    \"h1_heading\": {
+        \"recommendation\": \"Saran Heading H1\",
+        \"reason\": \"Alasan pemilihan H1 ini\"
+    },
     \"faq_schema\": [
-        {\"question\": \"Pertanyaan FAQ 1\", \"answer\": \"Jawaban FAQ 1\"}
+        {\"question\": \"Pertanyaan FAQ 1\", \"answer\": \"Jawaban FAQ 1\", \"reason\": \"Alasan menambah FAQ ini\"}
     ],
-    \"backlink_strategy\": \"Saran mencari backlink untuk keyword ini (in Indonesian)\",
-    \"internal_link_strategy\": \"Saran untuk tautan internal (in Indonesian)\",
-    \"image_optimization\": \"Saran untuk alt text dan optimasi gambar (in Indonesian)\",
-    \"page_speed\": \"Saran untuk mempercepat loading halaman (in Indonesian)\"
+    \"backlink_strategy\": {
+        \"recommendation\": \"Saran strategi backlink\",
+        \"reason\": \"Alasan strategi backlink ini\"
+    },
+    \"internal_link_strategy\": {
+        \"recommendation\": \"Saran strategi tautan internal\",
+        \"reason\": \"Alasan strategi ini\"
+    },
+    \"image_optimization\": {
+        \"recommendation\": \"Saran optimasi gambar\",
+        \"reason\": \"Alasan perlunya optimasi ini\"
+    },
+    \"page_speed\": {
+        \"recommendation\": \"Saran optimasi kecepatan loading\",
+        \"reason\": \"Dampak pada SEO\"
+    }
 }";
 
             try {
