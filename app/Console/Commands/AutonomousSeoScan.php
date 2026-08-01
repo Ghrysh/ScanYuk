@@ -166,6 +166,9 @@ PROMPT;
         }
 
         return $hasError ? 1 : 0;
+        } finally {
+            $lock->release();
+        }
     }
 
     /**
