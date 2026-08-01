@@ -90,10 +90,13 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
                 $data = $response->json();
                 $resultText = $data['response'] ?? '{}';
                 
-                $parsed = json_decode($resultText, true);
-                if (!$parsed) {
-                    $parsed = json_decode(preg_replace('/```json|```/', '', $resultText), true);
+                // Coba ekstrak JSON dengan regex jika terbungkus teks lain
+                preg_match('/\{.*\}/s', $resultText, $matches);
+                if (!empty($matches)) {
+                    $resultText = $matches[0];
                 }
+                
+                $parsed = json_decode($resultText, true);
 
                 if ($parsed) {
                     \App\Models\SeoRecommendation::create([
@@ -106,8 +109,14 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
                         'ai_type' => 'proactive'
                     ]);
                     $this->info("Berhasil! Rekomendasi SEO Proaktif telah ditambahkan ke database.");
-                    return Command::SUCCESS;
+                    return 0;
+                } else {
+                    $this->error("Gagal memparsing respons JSON dari AI. Respons mentah: \n" . $data['response']);
+                    return 1;
                 }
+            } else {
+                $this->error("Gagal mendapat response HTTP 200 dari Ollama.");
+                return 1;
             }
         } catch (\Exception $e) {
             $this->warn("Ollama offline untuk analisa SEO. Membuat data mock (simulasi) karena cron harus berjalan...");

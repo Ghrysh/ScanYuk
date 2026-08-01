@@ -51,10 +51,13 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
                 $data = $response->json();
                 $resultText = $data['response'] ?? '{}';
                 
-                $parsed = json_decode($resultText, true);
-                if (!$parsed) {
-                    $parsed = json_decode(preg_replace('/```json|```/', '', $resultText), true);
+                // Coba ekstrak JSON dengan regex jika terbungkus teks lain
+                preg_match('/\{.*\}/s', $resultText, $matches);
+                if (!empty($matches)) {
+                    $resultText = $matches[0];
                 }
+                
+                $parsed = json_decode($resultText, true);
 
                 if ($parsed) {
                     $recommendation = SeoRecommendation::create([
