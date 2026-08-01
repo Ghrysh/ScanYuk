@@ -40,7 +40,7 @@ class AutonomousSeoScan extends Command
             
             try {
                 $this->info("Menghubungi Ollama untuk mencari tren kata kunci...");
-                $res = \Illuminate\Support\Facades\Http::timeout(30)->post('http://scanyuk-ollama:11434/api/generate', [
+                $res = \Illuminate\Support\Facades\Http::timeout(120)->post('http://scanyuk-ollama:11434/api/generate', [
                     'model' => 'llama3',
                     'prompt' => $keywordPrompt,
                     'stream' => false
@@ -78,7 +78,7 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
 
             try {
                 $this->info("Menganalisa halaman dengan Ollama...");
-                $response = \Illuminate\Support\Facades\Http::timeout(60)->post('http://scanyuk-ollama:11434/api/generate', [
+                $response = \Illuminate\Support\Facades\Http::timeout(300)->post('http://scanyuk-ollama:11434/api/generate', [
                     'model' => 'llama3', 
                     'prompt' => $prompt,
                     'stream' => false,

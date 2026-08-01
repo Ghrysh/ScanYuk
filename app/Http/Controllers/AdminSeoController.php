@@ -40,7 +40,7 @@ You MUST output ONLY a valid JSON object with the following exact structure, no 
 }";
 
         try {
-            $response = Http::timeout(60)->post('http://scanyuk-ollama:11434/api/generate', [
+            $response = Http::timeout(300)->post('http://scanyuk-ollama:11434/api/generate', [
                 'model' => 'llama3', 
                 'prompt' => $prompt,
                 'stream' => false,
