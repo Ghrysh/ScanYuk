@@ -862,10 +862,10 @@
                                      <tr class="hover:bg-slate-50 transition-colors">
                                          <td class="px-6 py-4">
                                              <div x-show="item.task_type === 'auto'" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
-                                                <span>⚙️ Tugas Otomatis</span>
+                                                <span>Tugas Otomatis</span>
                                              </div>
                                              <div x-show="item.task_type === 'programmer'" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                                <span>👨‍💻 Tugas Programmer</span>
+                                                <span>Tugas Programmer</span>
                                              </div>
                                              <div class="text-slate-400 text-xs mt-1" x-text="new Date(item.created_at).toLocaleString('id-ID')"></div>
                                          </td>
