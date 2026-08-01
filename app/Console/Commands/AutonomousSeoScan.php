@@ -61,30 +61,36 @@ Here is a snippet of the current HTML source code of the page:
 $safeHtml
 ```
 
-Please evaluate the page's current SEO and generate a comprehensive list of actionable SEO recommendations. 
+Please evaluate the page's current SEO and generate a short list of the 2-3 most critical SEO recommendations. 
 IMPORTANT RULES YOU MUST FOLLOW:
 1. The content MUST be in BAHASA INDONESIA.
-2. Provide a dynamic list of recommendations. You can use standard categories like 'Keyword Target Baru', 'FAQ', 'Backlink', 'Internal Link', 'Update Heading', 'Optimasi Gambar', 'Page Speed', or INVENT NEW CATEGORIES if you find specific opportunities.
+2. Provide a dynamic list of recommendations. You can use standard categories like 'Keyword Target Baru', 'FAQ', 'Backlink', 'Internal Link', 'Update Heading', 'Optimasi Gambar', 'Page Speed', or INVENT NEW CATEGORIES.
 3. You MUST output ONLY a valid JSON ARRAY of objects, with no markdown formatting.
+4. DO NOT output more than 3 recommendations. Keep descriptions concise.
 
 Format the output EXACTLY like this JSON array:
 [
     {
-        \"category\": \"Nama Kategori (contoh: Keyword Target Baru / Optimasi Gambar)\",
-        \"research_finding\": \"Fakta/riset tren SEO saat ini terkait hal ini\",
-        \"current_condition\": \"Kondisi yang Anda temukan di kode HTML web ini\",
-        \"impact\": \"Dampak negatif jika dibiarkan atau dampak positif jika diperbaiki\",
-        \"recommendation_text\": \"Saran konkret apa yang harus dilakukan oleh tim kami\"
+        \"category\": \"Nama Kategori\",
+        \"research_finding\": \"Fakta singkat\",
+        \"current_condition\": \"Kondisi web saat ini\",
+        \"impact\": \"Dampak singkat\",
+        \"recommendation_text\": \"Saran konkret\"
     }
 ]";
 
             try {
                 $this->info("Menganalisa halaman dengan Ollama...");
-                $response = \Illuminate\Support\Facades\Http::timeout(600)->post('http://scanyuk-ollama:11434/api/generate', [
+                $response = \Illuminate\Support\Facades\Http::timeout(1200)->post('http://scanyuk-ollama:11434/api/generate', [
                     'model' => 'llama3', 
                     'prompt' => $prompt,
                     'stream' => false,
-                    'format' => 'json'
+                    'format' => 'json',
+                    'options' => [
+                        'num_predict' => 1024,
+                        'temperature' => 0.5,
+                        'num_ctx' => 2048 // Batasi ukuran konteks LLM agar tidak memakan RAM berlebih
+                    ]
                 ]);
 
                 if ($response->successful()) {
