@@ -55,7 +55,7 @@ class AutonomousSeoScan extends Command
             // Batasi panjang HTML agar tidak meledak di konteks model Llama
             $safeHtml = substr(trim($cleanHtml), 0, 4000); // 4000 char sudah cukup untuk ambil judul, meta, dan awal body
 
-            $prompt = "Anda adalah Konsultan SEO Senior. Berikut adalah kerangka HTML dari halaman '$url':
+            $prompt = "Anda adalah Konsultan SEO Senior. Berikut adalah kerangka HTML dari halaman '$url' (Path: $pagePath):
 ```html
 $safeHtml
 ```
@@ -65,15 +65,16 @@ ATURAN WAJIB:
 1. Seluruh jawaban WAJIB menggunakan BAHASA INDONESIA yang detail dan mudah dipahami.
 2. Output HANYA boleh berupa JSON ARRAY. Jangan ada teks markdown atau penjelasan di luar JSON.
 3. Maksimal 3 rekomendasi saja.
+4. Anda harus mencantumkan KODE SPESIFIK yang Anda temukan di kerangka HTML yang diberikan.
 
 Format JSON WAJIB seperti ini:
 [
     {
         \"category\": \"Nama Kategori (Contoh: Optimasi Kecepatan, Konten, Meta Tag)\",
-        \"research_finding\": \"Sebutkan temuan riset dan sumber atau alasannya (contoh: 'Menurut algoritma Google terbaru...')\",
-        \"current_condition\": \"Sebutkan secara spesifik bagian/tag HTML mana di web ScanYuk yang bermasalah\",
-        \"impact\": \"Jelaskan detail apa dampak buruknya saat ini dan dampak positifnya jika diperbaiki\",
-        \"recommendation_text\": \"Jelaskan panduan teknis yang harus dilakukan programmer, dan hasil akhir yang diharapkan (contoh: 'Ubah X menjadi Y, agar website bisa masuk halaman pertama pencarian')\"
+        \"research_finding\": \"Sebutkan temuan riset dan sumber (contoh: 'Menurut Google PageSpeed Insights...')\",
+        \"current_condition\": \"KUTIP SECARA SPESIFIK tag HTML atau teks dari source code di halaman $pagePath ini yang bermasalah (contoh: 'Pada halaman ini, tag <img src=\"/img/contoh.png\"> belum menggunakan format WebP dan tidak memiliki atribut alt')\",
+        \"impact\": \"Jelaskan detail dampak buruk saat ini dan dampak positifnya jika diperbaiki (contoh: 'Gambar PNG memberatkan loading, jika diubah ke WebP akan mempercepat LCP')\",
+        \"recommendation_text\": \"Jelaskan langkah teknis spesifik yang harus dilakukan (contoh: 'Ubah file gambar /img/contoh.png menjadi format .webp dan tambahkan alt=\"contoh\"')\"
     }
 ]";
 
@@ -103,6 +104,7 @@ Format JSON WAJIB seperti ini:
                     $parsed = json_decode($resultText, true);
 
                     if ($parsed && is_array($parsed)) {
+                        $inserted = 0;
                         foreach ($parsed as $rec) {
                             if (isset($rec['category']) && isset($rec['recommendation_text'])) {
                                 \App\Models\SeoRecommendation::create([
@@ -114,9 +116,10 @@ Format JSON WAJIB seperti ini:
                                     'recommendation_text' => $rec['recommendation_text'],
                                     'status' => 'pending'
                                 ]);
+                                $inserted++;
                             }
                         }
-                        $this->info("Berhasil! " . count($parsed) . " Rekomendasi SEO Proaktif telah ditambahkan ke database.");
+                        $this->info("Berhasil! " . $inserted . " Rekomendasi SEO Proaktif telah ditambahkan ke database.");
                     } else {
                         $this->error("Gagal memparsing respons JSON dari AI. Respons mentah: \n" . $data['response']);
                         $hasError = true;
