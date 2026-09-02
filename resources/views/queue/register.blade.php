@@ -4,7 +4,9 @@
 <div class="w-full max-w-lg mx-auto bg-white min-h-[calc(100vh-64px)] sm:min-h-screen sm:border-x border-slate-200 relative pb-20" x-data="{ showForm: {{ $arQrCode ? 'false' : 'true' }}, selectedService: '' }">
     
     {{-- Header --}}
-    <div class="bg-slate-900 text-white p-6 rounded-b-3xl shadow-md relative overflow-hidden">
+    <div class="bg-gradient-to-br from-teal-600 to-indigo-700 text-white p-6 rounded-b-3xl shadow-lg relative overflow-hidden">
+        <!-- Decorative patterns -->
+        <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 20px 20px;"></div>
         <div class="absolute top-0 right-0 w-32 h-32 bg-teal-500 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
         <div class="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500 rounded-full mix-blend-multiply filter blur-2xl opacity-50"></div>
         
@@ -86,7 +88,7 @@
                 </div>
 
                 @if($location->is_active)
-                <button type="submit" class="w-full py-4 rounded-xl btn-gradient text-white font-bold text-lg shadow-lg shadow-teal-200/50 hover:-translate-y-0.5 transition-transform" :disabled="!selectedService" :class="!selectedService ? 'opacity-50 cursor-not-allowed' : ''">
+                <button type="submit" class="w-full py-4 rounded-xl btn-gradient text-white font-bold text-lg shadow-lg shadow-teal-200/50 hover:-translate-y-0.5 transition-transform">
                     Daftar Antrian
                 </button>
                 @else
