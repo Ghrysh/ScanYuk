@@ -35,7 +35,7 @@ class QueueService extends Model
 
     public function isQuotaFull(): bool
     {
-        if ($this->daily_quota === null) return false;
+        if (empty($this->daily_quota) || $this->daily_quota <= 0) return false;
         return $this->getTodayTicketCount() >= $this->daily_quota;
     }
 
