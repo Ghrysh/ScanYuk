@@ -10,6 +10,7 @@ class QueueStaff extends Model
 
     protected $fillable = [
         'queue_location_id', 'queue_counter_id', 'name', 'username', 'password', 'is_active',
+    ];
 
     protected $casts = [
         'is_active' => 'boolean',
@@ -17,18 +18,23 @@ class QueueStaff extends Model
 
     protected $hidden = ['password'];
 
+    public function setPasswordAttribute($value)
     {
         // Only hash if not already hashed
+        if (!preg_match('/^\$2y\$/', $value)) {
             $this->attributes['password'] = Hash::make($value);
         } else {
             $this->attributes['password'] = $value;
         }
+    }
 
     public function verifyPassword(string $password): bool
+    {
         return Hash::check($password, $this->password);
     }
 
     public function location()
+    {
         return $this->belongsTo(QueueLocation::class, 'queue_location_id');
     }
     public function counter()
