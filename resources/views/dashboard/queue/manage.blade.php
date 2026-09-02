@@ -78,11 +78,28 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-bold text-slate-700 mb-2">Integrasi AR QR Code</label>
-                    <select name="ar_qr_code_id" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm">
+                    <select name="qr_code_id" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm">
+                        <option value="">-- Tanpa AR --</option>
+                        @foreach($arQrCodes ?? [] as $qr)
+                        <option value="{{ $qr->id }}">{{ $qr->title }} ({{ $qr->ar_type }})</option>
+                        @endforeach
+                    </select>
+                    <p class="text-xs text-slate-500 mt-1">Jika dipilih, pelanggan akan melihat AR Anda sebelum mengambil antrian.</p>
+                </div>
+            </div>
+
+            <div x-data="{ 
+                hours: {
+                    mon: { label: 'Senin', active: true, open: '08:00', close: '17:00' },
+                    tue: { label: 'Selasa', active: true, open: '08:00', close: '17:00' },
+                    wed: { label: 'Rabu', active: true, open: '08:00', close: '17:00' },
+                    thu: { label: 'Kamis', active: true, open: '08:00', close: '17:00' },
+                    fri: { label: 'Jumat', active: true, open: '08:00', close: '17:00' },
+                    sat: { label: 'Sabtu', active: false, open: '08:00', close: '14:00' },
                     sun: { label: 'Minggu', active: false, open: '08:00', close: '14:00' }
                 }
             }">
-                <label class="block text-sm font-bold text-slate-700 mb-4">Jam Operasional</label>
+                <label class="block text-sm font-bold text-slate-700 mb-4 mt-6">Jam Operasional</label>
                 <input type="hidden" name="operational_hours" x-bind:value="JSON.stringify(hours)">
                 
                 <div class="space-y-3">
@@ -90,6 +107,13 @@
                         <div class="flex items-center gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
                             <label class="flex items-center gap-3 w-32 cursor-pointer">
                                 <div class="relative">
+                                    <input type="checkbox" x-model="data.active" class="sr-only peer">
+                                    <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-500"></div>
+                                </div>
+                                <span class="text-sm font-bold text-slate-700 capitalize" x-text="data.label"></span>
+                            </label>
+                            
+                            <div class="flex items-center gap-2 flex-1" x-show="data.active">
                                 <input type="time" x-model="data.open" class="px-2 py-1 bg-white border border-slate-300 rounded text-sm focus:border-teal-500 outline-none">
                                 <span class="text-slate-500 text-xs">-</span>
                                 <input type="time" x-model="data.close" class="px-2 py-1 bg-white border border-slate-300 rounded text-sm focus:border-teal-500 outline-none">
@@ -305,8 +329,61 @@
                             'fri' => ['label' => 'Jumat', 'active' => true, 'open' => '08:00', 'close' => '17:00'],
                             'sat' => ['label' => 'Sabtu', 'active' => false, 'open' => '08:00', 'close' => '14:00'],
                             'sun' => ['label' => 'Minggu', 'active' => false, 'open' => '08:00', 'close' => '14:00']
+                        ]) }}
+                    }">
+                        <label class="block text-sm font-bold text-slate-700 mb-4 mt-6">Jam Operasional</label>
+                        <input type="hidden" name="operational_hours" x-bind:value="JSON.stringify(hours)">
+                        
+                        <div class="space-y-3">
+                            <template x-for="(data, day) in hours" :key="day">
+                                <div class="flex items-center gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
+                                    <label class="flex items-center gap-3 w-32 cursor-pointer">
+                                        <div class="relative">
+                                            <input type="checkbox" x-model="data.active" class="sr-only peer">
+                                            <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-500"></div>
+                                        </div>
+                                        <span class="text-sm font-bold text-slate-700 capitalize" x-text="data.label"></span>
+                                    </label>
                                     
                                     <div class="flex items-center gap-2 flex-1" x-show="data.active">
+                                        <input type="time" x-model="data.open" class="px-2 py-1 bg-white border border-slate-300 rounded text-sm focus:border-teal-500 outline-none">
+                                        <span class="text-slate-500 text-xs">-</span>
+                                        <input type="time" x-model="data.close" class="px-2 py-1 bg-white border border-slate-300 rounded text-sm focus:border-teal-500 outline-none">
+                                    </div>
+                                    <div class="flex-1 text-slate-400 text-sm font-medium" x-show="!data.active">
+                                        Tutup
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 flex justify-end">
+                        <button type="submit" class="px-6 py-2 rounded-xl btn-gradient text-white font-bold transition-all shadow-md">
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </form>
+
+                <div class="mt-10 pt-6 border-t border-red-100">
+                    <h4 class="font-bold text-red-600 mb-2">Danger Zone</h4>
+                    <p class="text-sm text-slate-500 mb-4">Menghapus lokasi akan menghapus semua data layanan, loket, petugas, dan tiket antrian yang terkait.</p>
+                    <form action="{{ route('queue.locations.destroy', $location->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus seluruh data lokasi ini? Tindakan ini tidak dapat dibatalkan.')">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg text-sm font-bold transition-colors">
+                            Hapus Lokasi Permanen
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- MODALS --}}
+    {{-- Modal Add Service --}}
+    <div x-show="showAddServiceModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showAddServiceModal = false"></div>
+        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
             <h3 class="font-bold text-lg mb-4">Tambah Layanan</h3>
             <form action="{{ route('queue.services.store', $location->id) }}" method="POST" class="space-y-4">
                 @csrf
