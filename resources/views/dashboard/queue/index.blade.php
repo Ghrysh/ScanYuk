@@ -264,7 +264,12 @@
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('dailyChart');
         if(!ctx) return;
-        const dailyData = @json(array_map(function($k, $v) { return ['date' => $k, 'count' => $v]; }, array_keys($dailyData), array_values($dailyData)));
+        @php
+    $formattedData = array_map(function($k, $v) { 
+        return ['date' => $k, 'count' => $v]; 
+    }, array_keys($dailyData), array_values($dailyData));
+@endphp
+        const dailyData = @json($formattedData);
         
         new Chart(ctx.getContext('2d'), {
             type: 'line',
