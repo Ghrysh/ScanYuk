@@ -40,6 +40,7 @@
     @if(!$location)
     {{-- CREATE FORM --}}
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8 max-w-3xl mx-auto">
+        <form action="{{ route('queue.locations.store') }}" method="POST" class="space-y-6">
             @csrf
             
             <div>
@@ -62,17 +63,32 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <div class="relative">
-                        <input type="checkbox" name="has_booths" value="1" class="sr-only peer">
-                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+            <div x-data="{ showBooths: false }" class="space-y-4">
+                <div class="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <div class="relative">
+                            <input type="checkbox" name="has_booths" value="1" x-model="showBooths" class="sr-only peer">
+                            <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+                        </div>
+                        <div>
+                            <span class="text-sm font-bold text-slate-900 block">Gunakan Sistem Booth / Loket</span>
+                            <span class="text-xs text-slate-500">Aktifkan untuk melayani pelanggan pada beberapa booth/teller sekaligus.</span>
+                        </div>
+                    </label>
+                </div>
+                
+                <div x-show="showBooths" class="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50 border border-slate-200 rounded-lg" style="display: none;">
+                    <div>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Sebutan Booth</label>
+                        <input type="text" name="booth_name" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Contoh: Loket, Booth, Teller, Poli">
+                        <p class="text-xs text-slate-500 mt-1">Sistem akan menamai loket secara otomatis (cth: Loket 1, Loket 2).</p>
                     </div>
                     <div>
-                        <span class="text-sm font-bold text-slate-900 block">Gunakan Sistem Booth / Loket</span>
-                        <span class="text-xs text-slate-500">Aktifkan untuk melayani pelanggan pada beberapa booth/teller sekaligus.</span>
+                        <label class="block text-sm font-bold text-slate-700 mb-2">Jumlah Booth</label>
+                        <input type="number" name="booth_count" min="1" class="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500" placeholder="Contoh: 3">
+                        <p class="text-xs text-slate-500 mt-1">Berapa banyak booth yang ingin dibuat otomatis.</p>
                     </div>
-                </label>
+                </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -128,6 +144,7 @@
 
             <div class="pt-4 border-t border-slate-100 flex justify-end">
                 <button type="submit" class="px-6 py-3 rounded-xl btn-gradient text-white font-bold transition-all shadow-md">
+                    Simpan Lokasi
                 </button>
             </div>
         </form>

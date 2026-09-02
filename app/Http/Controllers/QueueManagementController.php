@@ -152,7 +152,7 @@ class QueueManagementController extends Controller
             }
         }
 
-        QueueLocation::create([
+        $location = QueueLocation::create([
             'user_id' => $user->id,
             'name' => $request->name,
             'address' => $request->address,
@@ -161,6 +161,17 @@ class QueueManagementController extends Controller
             'daily_quota' => $request->daily_quota,
             'has_booths' => $request->has_booths ?? false,
         ]);
+
+        if ($request->has_booths && $request->booth_name && $request->booth_count) {
+            $count = (int) $request->booth_count;
+            for ($i = 1; $i <= $count; $i++) {
+                \App\Models\QueueCounter::create([
+                    'queue_location_id' => $location->id,
+                    'name' => $request->booth_name . ' ' . $i,
+                    'is_active' => true,
+                ]);
+            }
+        }
 
         return redirect()->route('queue.index')->with('success', 'Lokasi antrian berhasil dibuat.');
     }
