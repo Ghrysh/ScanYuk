@@ -339,10 +339,9 @@
                 let f0 = (pkg.features && pkg.features[0]) ? pkg.features[0].toLowerCase() : '';
                 let f1 = (pkg.features && pkg.features[1]) ? pkg.features[1].toLowerCase() : '';
                 let f2 = (pkg.features && pkg.features[2]) ? pkg.features[2].toLowerCase() : '';
+                this.pkgImage = (f0.includes('terbatas') || f0.includes('unlimited')) ? '' : (parseInt(f0) || 0);
+                this.pkgVoice = (f1.includes('terbatas') || f1.includes('unlimited')) ? '' : (parseInt(f1) || 0);
                 this.pkgScan  = (f2.includes('terbatas') || f2.includes('unlimited')) ? '' : (parseInt(f2) || 0);
-                this.pkgLocationLimit = (f5.includes('terbatas') || f5.includes('unlimited')) ? '' : (parseInt(f5) || 0);
-                this.pkgTicketLimit = (f6.includes('terbatas') || f6.includes('unlimited')) ? '' : (parseInt(f6) || 0);
-                
         }"
         style="display: none;" 
         class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative" 
@@ -418,20 +417,26 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Image</label>
+                            <input type="number" name="image_limit" x-model="pkgImage" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none" placeholder="Kosongkan = Unlimited">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Voice</label>
                             <input type="number" name="voice_limit" x-model="pkgVoice" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none" placeholder="Kosongkan = Unlimited">
                         </div>
+                        <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Total Scan</label>
                             <input type="number" name="scan_limit" x-model="pkgScan" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none" placeholder="Kosongkan = Unlimited">
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-4 mt-2">
-                        <div class="col-span-full">
-                            <h4 class="text-sm font-bold text-slate-700">Limit Sistem Antrian</h4>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Lokasi Antrian</label>
-                            <input type="number" name="queue_location_limit" x-model="pkgLocationLimit" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none" placeholder="Kosongkan = Unlimited">
-                        </div>
+
+                    <div class="pt-4 mt-2 flex justify-end gap-3">
+                        <button type="button" @click="showEditModal = false" class="px-5 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors">Batal</button>
+                        <button type="submit" class="px-5 py-2.5 bg-teal-500 hover:bg-teal-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-teal-200">Simpan Perubahan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <div x-show="activeTab === 'transaksi'" 
          x-data="{
