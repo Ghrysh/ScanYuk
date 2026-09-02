@@ -37,12 +37,12 @@ class QueuePublicController extends Controller
         }
 
         $request->validate([
-            'service_id' => 'required|exists:queue_services,id',
+            'queue_service_id' => 'required|exists:queue_services,id',
             'customer_name' => 'required|string|max:255',
             'customer_phone' => 'nullable|string|max:20'
         ]);
 
-        $service = $location->services()->where('id', $request->service_id)->firstOrFail();
+        $service = $location->services()->where('id', $request->queue_service_id)->firstOrFail();
 
         if (!$service->is_active) {
             return back()->with('error', 'Layanan ini sedang tidak aktif.');
