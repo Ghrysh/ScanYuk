@@ -43,22 +43,17 @@
                 this.confirmTarget.submit();
             }
             this.showConfirm = false;
-        }
-    }">
-    x-data="{
-        serviceFilter: '',
-        
+        },
         init() {
             // Auto refresh via Alpine polling
             setInterval(() => {
-                // If no active action is happening, reload the page to get fresh data
-                // In a real app we'd use fetch, but reloading is safer for the demo to ensure consistency
-                if(!document.querySelector('form.submitting')) {
+                if(!document.querySelector('form.submitting') && !this.showConfirm) {
                     window.location.reload();
                 }
             }, 10000);
         }
     }">
+
 
     {{-- Header --}}
     <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
