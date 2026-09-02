@@ -22,6 +22,8 @@ class QueueStaffController extends Controller
             'password' => 'required|string'
         ]);
 
+        $staff = \App\Models\QueueStaff::where('username', $request->username)->first();
+
         if (!$staff || !$staff->verifyPassword($request->password)) {
             return back()->with('error', 'Username atau password salah.');
         }
