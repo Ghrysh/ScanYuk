@@ -7,8 +7,7 @@ use Illuminate\Support\Str;
 class QueueLocation extends Model
 {
     protected $fillable = [
-        'user_id', 'uuid', 'name', 'address', 'operational_hours', 'ar_qr_code_id', 'is_active',
-    ];
+        'user_id', 'uuid', 'name', 'address', 'operational_hours', 'ar_qr_code_id', 'is_active', 'daily_quota',
 
     protected $casts = [
         'operational_hours' => 'array',

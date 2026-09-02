@@ -1,16 +1,28 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Petugas Antrian - ScanYuk</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        teal: { 50: '#f0fdfa', 100: '#ccfbf1', 200: '#99f6e4', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e' },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .btn-gradient { background: linear-gradient(135deg, #14b8a6 0%, #6366f1 100%); }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
 
-@section('content')
-<div class="w-full max-w-[400px] mx-auto bg-white rounded-2xl shadow-xl border border-slate-100 p-8 my-10 relative z-10" x-data="{
-    selectedLocation: '',
-    selectedStaff: '',
-    allStaff: @js(\App\Models\QueueStaff::where('is_active', true)->get(['id', 'name', 'queue_location_id'])),
-    get filteredStaff() {
-        if (!this.selectedLocation) return [];
-        return this.allStaff.filter(s => s.queue_location_id == this.selectedLocation);
-    }
-}">
-    
+<div class="w-full max-w-[400px] mx-auto bg-white rounded-2xl shadow-xl border border-slate-100 p-8 relative z-10">
     <div class="text-center mb-8">
         <div class="inline-flex items-center justify-center gap-2 mb-6">
             <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center">
@@ -18,7 +30,7 @@
             </div>
         </div>
         <h2 class="text-2xl font-bold text-slate-900">Login Petugas</h2>
-        <p class="mt-2 text-sm text-slate-500">Pilih lokasi dan masukkan PIN Anda</p>
+        <p class="mt-2 text-sm text-slate-500">Masukkan username dan password Anda</p>
     </div>
 
     @if(session('error'))
@@ -32,35 +44,23 @@
         @csrf
 
         <div>
-            <label class="block text-sm font-semibold text-slate-700 mb-1">Lokasi Antrian</label>
-            <select name="location_id" x-model="selectedLocation" required class="appearance-none block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm">
-                <option value="">-- Pilih Lokasi --</option>
-                @foreach($locations as $loc)
-                <option value="{{ $loc->id }}">{{ $loc->name }}</option>
-                @endforeach
-            </select>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Username</label>
+            <input type="text" name="username" required
+                class="appearance-none block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm" 
+                placeholder="Masukkan username">
         </div>
 
-        <div x-show="selectedLocation">
-            <label class="block text-sm font-semibold text-slate-700 mb-1">Nama Petugas</label>
-            <select name="staff_id" x-model="selectedStaff" required class="appearance-none block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm">
-                <option value="">-- Pilih Petugas --</option>
-                <template x-for="staff in filteredStaff" :key="staff.id">
-                    <option :value="staff.id" x-text="staff.name"></option>
-                </template>
-            </select>
+        <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-1">Password</label>
+            <input type="password" name="password" required
+                class="appearance-none block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm" 
+                placeholder="••••••••">
         </div>
 
-        <div x-show="selectedStaff">
-            <label class="block text-sm font-semibold text-slate-700 mb-1">PIN (4-6 Digit Angka)</label>
-            <input type="password" name="pin" required pattern="[0-9]{4,6}"
-                class="appearance-none block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm text-center tracking-widest text-lg font-mono" 
-                placeholder="••••">
-        </div>
-
-        <button type="submit" class="w-full py-3 px-4 rounded-lg btn-gradient text-white font-bold shadow-lg shadow-teal-200 hover:opacity-90 transition-all hover:-translate-y-0.5 mt-2" :disabled="!selectedStaff" :class="!selectedStaff ? 'opacity-50 cursor-not-allowed' : ''">
+        <button type="submit" class="w-full py-3 px-4 rounded-lg btn-gradient text-white font-bold shadow-lg shadow-teal-200 hover:opacity-90 transition-all hover:-translate-y-0.5 mt-2">
             Masuk
         </button>
     </form>
 </div>
-@endsection
+</body>
+</html>

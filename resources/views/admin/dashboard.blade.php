@@ -238,6 +238,7 @@
                         <th class="px-6 py-4">Voice</th>
                         <th class="px-6 py-4">Scan</th>
                         <th class="px-6 py-4">Status</th>
+                        <th class="px-6 py-4">Sistem Antrian</th>
                         <th class="px-6 py-4 text-right">Aksi</th>
                     </tr>
                 </thead>
@@ -335,16 +336,13 @@
                 this.pkgName = pkg.name;
                 this.pkgPrice = pkg.price;
                 
-                let f0 = (pkg.features[0] || '').toLowerCase();
-                let f1 = (pkg.features[1] || '').toLowerCase();
-                let f2 = (pkg.features[2] || '').toLowerCase();
-
-                this.pkgImage = (f0.includes('terbatas') || f0.includes('unlimited')) ? '' : (parseInt(f0) || 0);
-                this.pkgVoice = (f1.includes('terbatas') || f1.includes('unlimited')) ? '' : (parseInt(f1) || 0);
+                let f0 = (pkg.features && pkg.features[0]) ? pkg.features[0].toLowerCase() : '';
+                let f1 = (pkg.features && pkg.features[1]) ? pkg.features[1].toLowerCase() : '';
+                let f2 = (pkg.features && pkg.features[2]) ? pkg.features[2].toLowerCase() : '';
                 this.pkgScan  = (f2.includes('terbatas') || f2.includes('unlimited')) ? '' : (parseInt(f2) || 0);
+                this.pkgLocationLimit = (f5.includes('terbatas') || f5.includes('unlimited')) ? '' : (parseInt(f5) || 0);
+                this.pkgTicketLimit = (f6.includes('terbatas') || f6.includes('unlimited')) ? '' : (parseInt(f6) || 0);
                 
-                this.showEditModal = true;
-            }
         }"
         style="display: none;" 
         class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative" 
@@ -362,11 +360,10 @@
                         <th class="px-6 py-4 whitespace-nowrap">Harga</th>
                         <th class="px-6 py-4 whitespace-nowrap">Image</th>
                         <th class="px-6 py-4 whitespace-nowrap">Voice</th>
-                        <th class="px-6 py-4 whitespace-nowrap">Total Scan</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Scan</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Lokasi Antrian</th>
+                        <th class="px-6 py-4 whitespace-nowrap">Total Antrian</th>
                         <th class="px-6 py-4">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100">
                     @foreach($packages as $pkg)
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-6 py-4 font-bold text-slate-900">{{ $pkg->name }}</td>
@@ -374,10 +371,10 @@
                         <td class="px-6 py-4">{{ (int) filter_var($pkg->features[0] ?? 0, FILTER_SANITIZE_NUMBER_INT) }}</td>
                         <td class="px-6 py-4">{{ (int) filter_var($pkg->features[1] ?? 0, FILTER_SANITIZE_NUMBER_INT) }}</td>
                         <td class="px-6 py-4">{{ (int) filter_var($pkg->features[2] ?? 0, FILTER_SANITIZE_NUMBER_INT) }}</td>
+                        <td class="px-6 py-4">{{ (int) filter_var($pkg->features[5] ?? 0, FILTER_SANITIZE_NUMBER_INT) ?: 'Unlimited' }}</td>
+                        <td class="px-6 py-4">{{ (int) filter_var($pkg->features[6] ?? 0, FILTER_SANITIZE_NUMBER_INT) ?: 'Unlimited' }}</td>
                         <td class="px-6 py-4">
                             <button @click="openEdit({{ $pkg->toJson() }})" class="text-slate-400 hover:text-teal-600 transition-colors" title="Edit Paket">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                            </button>
                         </td>
                     </tr>
                     @endforeach
@@ -392,12 +389,11 @@
                 x-transition:enter="transition ease-out duration-300"
                 x-transition:enter-start="opacity-0 scale-95"
                 x-transition:enter-end="opacity-100 scale-100"
-                class="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden max-h-[90vh] flex flex-col">
+                class="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden max-h-[90vh] flex flex-col">
                 
                 <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 flex-shrink-0">
                     <h3 class="text-xl font-bold text-slate-900 truncate">Edit Paket: <span x-text="pkgName" class="text-teal-600"></span></h3>
                     <button @click="showEditModal = false" class="text-slate-400 hover:text-slate-600 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     </button>
                 </div>
 
@@ -416,29 +412,26 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Limit Image</label>
-                            <input type="number" name="image_limit" x-model="pkgImage" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none" placeholder="Kosongkan = Unlimited">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-slate-100 pt-4 mt-2">
+                        <div class="col-span-full">
+                            <h4 class="text-sm font-bold text-slate-700">Limit Augmented Reality</h4>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Limit Voice</label>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Image</label>
                             <input type="number" name="voice_limit" x-model="pkgVoice" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none" placeholder="Kosongkan = Unlimited">
                         </div>
-                        <div>
                             <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Total Scan</label>
                             <input type="number" name="scan_limit" x-model="pkgScan" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none" placeholder="Kosongkan = Unlimited">
                         </div>
                     </div>
-
-                    <div class="pt-4 flex flex-col sm:flex-row gap-3">
-                        <button @click="showEditModal = false" type="button" class="w-full sm:flex-1 py-3 px-4 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all">Batal</button>
-                        <button type="submit" class="w-full sm:flex-1 py-3 px-4 rounded-xl btn-gradient text-white font-bold shadow-lg shadow-indigo-200 hover:-translate-y-0.5 transition-all">Simpan</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-slate-100 pt-4 mt-2">
+                        <div class="col-span-full">
+                            <h4 class="text-sm font-bold text-slate-700">Limit Sistem Antrian</h4>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 mb-1 uppercase">Lokasi Antrian</label>
+                            <input type="number" name="queue_location_limit" x-model="pkgLocationLimit" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg focus:border-teal-500 outline-none" placeholder="Kosongkan = Unlimited">
+                        </div>
 
     <div x-show="activeTab === 'transaksi'" 
          x-data="{

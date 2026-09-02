@@ -18,33 +18,24 @@ class QueueStaffController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'location_id' => 'required|exists:queue_locations,id',
-            'staff_id' => 'required|exists:queue_staff,id',
-            'pin' => 'required|string'
+            'username' => 'required|string',
+            'password' => 'required|string'
         ]);
 
-        $staff = QueueStaff::find($request->staff_id);
+        if (!$staff || !$staff->verifyPassword($request->password)) {
+            return back()->with('error', 'Username atau password salah.');
 
-        if (!$staff || $staff->queue_location_id != $request->location_id) {
-            return back()->with('error', 'Data staff tidak valid untuk lokasi ini.');
-        }
-
-        if (!$staff->verifyPin($request->pin)) {
-            return back()->with('error', 'PIN salah.');
-        }
-
+        if (!$staff->is_active) {
+            return back()->with('error', 'Akun petugas tidak aktif.');
         session([
             'queue_staff_id' => $staff->id,
-            'queue_location_id' => $request->location_id
+            'queue_location_id' => $staff->queue_location_id
         ]);
-
-        return redirect()->route('queue.staff.dashboard');
     }
 
     public function dashboard()
     {
         $staffId = session('queue_staff_id');
-        $staff = QueueStaff::with(['counter', 'location'])->find($staffId);
         
         if (!$staff) {
             return redirect()->route('queue.staff.logout');

@@ -105,8 +105,32 @@
 
                     </div>
                 @endforeach
-
             </div>
+
+            {{-- Sistem Antrian Pricing (WhatsApp) --}}
+            <div class="mt-20 max-w-4xl mx-auto bg-gradient-to-br from-slate-900 to-indigo-900 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-teal-500 rounded-full mix-blend-screen filter blur-3xl opacity-20"></div>
+                
+                <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div class="text-left">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 bg-teal-500/20 border border-teal-500/30 rounded-full text-teal-300 text-xs font-bold tracking-wider mb-4">
+                            <span class="w-2 h-2 rounded-full bg-teal-400 animate-pulse"></span>
+                            PRODUK BARU
+                        </div>
+                        <h3 class="text-2xl md:text-3xl font-extrabold text-white mb-3">Sistem Antrian Digital</h3>
+                        <p class="text-slate-300 text-sm md:text-base max-w-xl leading-relaxed">
+                            Solusi antrian modern untuk bisnis Anda. Termasuk fitur integrasi Augmented Reality, notifikasi suara, analitik antrian, dan manajemen multi-loket (booth).
+                        </p>
+                    </div>
+                    <div class="flex-shrink-0 w-full md:w-auto">
+                        <a href="https://wa.me/628152022225?text=Halo%20tim%20ScanYuk,%20saya%20tertarik%20dengan%20Sistem%20Antrian%20Digital" target="_blank" class="block w-full text-center px-8 py-4 bg-teal-500 hover:bg-teal-400 text-slate-900 font-extrabold rounded-xl transition-all shadow-lg shadow-teal-500/30 hover:-translate-y-1">
+                            Hubungi via WhatsApp
+                        </a>
+                        <p class="text-slate-400 text-xs text-center mt-3">Diskusikan kebutuhan spesifik Anda</p>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </section>
 

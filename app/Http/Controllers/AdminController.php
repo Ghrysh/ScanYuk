@@ -17,7 +17,10 @@ class AdminController extends Controller
             ->update(['status' => 'Batal']);
 
         $packages = PricingPackage::all();
-        $users = User::where('role', '!=', 'admin')->latest()->paginate(10, ['*'], 'users_page');
+        $users = User::where('role', '!=', 'admin')
+            ->orderByRaw("CASE WHEN queue_status = 'pending' THEN 1 ELSE 0 END DESC")
+            ->latest()
+            ->paginate(10, ['*'], 'users_page');
         $transactions = Transaction::with(['user', 'package'])->latest()->paginate(10, ['*'], 'txn_page');
 
         $totalUsers = User::where('role', '!=', 'admin')->count();
@@ -161,10 +164,8 @@ class AdminController extends Controller
             is_null($request->image_limit) ? "Tak Terbatas AR Image" : $request->image_limit . " AR Image",
             is_null($request->voice_limit) ? "Tak Terbatas Voice Narration" : $request->voice_limit . " Voice Narration",
             is_null($request->scan_limit) ? "Tak Terbatas Total Scans" : $request->scan_limit . " Total Scans",
-            $package->features[3] ?? 'Basic analytics',
-            $package->features[4] ?? 'Download QR',
-        ];
-
+            $package->features[3] ?? 'Analitik dasar',
+            $package->features[4] ?? 'Unduh QR',
         $package->save();
 
         return back()->with([
@@ -326,5 +327,12 @@ class AdminController extends Controller
         }
         
         return response()->json(['success' => true]);
+    }
+
+    public function approveQueue(User $user)
+    {
+        $user->queue_status = 'active';
+        $user->save();
+        return back()->with(['success' => "Akses Sistem Antrian untuk {$user->name} berhasil disetujui.", 'active_tab' => 'users']);
     }
 }

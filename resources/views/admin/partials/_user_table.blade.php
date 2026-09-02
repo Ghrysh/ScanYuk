@@ -20,7 +20,25 @@
             {{ ucfirst($user->status ?? 'Active') }}
         </span>
     </td>
-    <td class="px-6 py-4 text-right flex justify-end gap-2">
+    <td class="px-6 py-4">
+        @if($user->queue_status === 'active')
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700">Aktif</span>
+        @elseif($user->queue_status === 'pending')
+            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">Menunggu</span>
+        @else
+            <span class="text-slate-400 text-xs">-</span>
+        @endif
+    </td>
+    <td class="px-6 py-4 text-right flex justify-end gap-2 items-center">
+        @if($user->queue_status === 'pending')
+        <form action="{{ route('admin.users.approve_queue', $user->id) }}" method="POST" class="m-0 p-0 inline">
+            @csrf
+            <button type="submit" class="text-slate-400 hover:text-green-500 transition-colors mr-2" title="Setujui Akses Sistem Antrian">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </button>
+        </form>
+        @endif
+
         <form id="toggle-form-{{ $user->id }}" action="{{ route('admin.users.toggle-status', $user->id) }}" method="POST" class="m-0 p-0">
             @csrf
             @method('PATCH')

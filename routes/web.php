@@ -118,6 +118,8 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware(['role:admin'])->group(function () {
         Route::post('/admin/users', [AdminController::class, 'storeUser'])->name('admin.users.store');
         Route::delete('/admin/users/{user}', [AdminController::class, 'destroyUser'])->name('admin.users.destroy');
+        Route::post('/users/{user}/status', [AdminController::class, 'updateStatus'])->name('admin.users.update_status');
+        Route::post('/admin/users/{user}/approve-queue', [AdminController::class, 'approveQueue'])->name('admin.users.approve_queue');
         Route::patch('/admin/users/{user}/toggle-status', [AdminController::class, 'toggleStatus'])->name('admin.users.toggle-status');
         Route::get('/admin/users/search', [AdminController::class, 'search'])->name('admin.users.search');
         Route::get('/admin/transactions/search', [AdminController::class, 'searchTransactions'])->name('admin.transactions.search');
@@ -182,6 +184,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Queue Management (Owner)
         Route::get('/dashboard/queue', [QueueManagementController::class, 'index'])->name('queue.index');
+        Route::post('/dashboard/queue/request', [QueueManagementController::class, 'requestAccess'])->name('queue.request.submit');
         Route::get('/dashboard/queue/locations/create', [QueueManagementController::class, 'createLocation'])->name('queue.locations.create');
         Route::post('/dashboard/queue/locations', [QueueManagementController::class, 'storeLocation'])->name('queue.locations.store');
         Route::get('/dashboard/queue/locations/{location}', [QueueManagementController::class, 'manageLocation'])->name('queue.locations.manage');
@@ -193,8 +196,7 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/dashboard/queue/locations/{location}/counters', [QueueManagementController::class, 'storeCounter'])->name('queue.counters.store');
         Route::put('/dashboard/queue/counters/{counter}', [QueueManagementController::class, 'updateCounter'])->name('queue.counters.update');
         Route::delete('/dashboard/queue/counters/{counter}', [QueueManagementController::class, 'deleteCounter'])->name('queue.counters.delete');
-        Route::post('/dashboard/queue/locations/{location}/staff', [QueueManagementController::class, 'storeStaff'])->name('queue.staff.store');
-        Route::put('/dashboard/queue/staff/{staff}', [QueueManagementController::class, 'updateStaff'])->name('queue.staff.update');
+        Route::post('/dashboard/queue/staff', [QueueManagementController::class, 'storeStaff'])->name('queue.staff.store');
         Route::delete('/dashboard/queue/staff/{staff}', [QueueManagementController::class, 'deleteStaff'])->name('queue.staff.delete');
         Route::get('/dashboard/queue/locations/{location}/qr', [QueueManagementController::class, 'downloadQr'])->name('queue.locations.qr');
         Route::get('/dashboard/queue/analytics', [QueueManagementController::class, 'analytics'])->name('queue.analytics');

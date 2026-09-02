@@ -39,8 +39,7 @@
 
     @if(!$location)
     {{-- CREATE FORM --}}
-    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8 max-w-3xl">
-        <form action="{{ route('queue.locations.store') }}" method="POST" class="space-y-6">
+    <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8 max-w-3xl mx-auto">
             @csrf
             
             <div>
@@ -55,26 +54,32 @@
                 @error('address') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
             </div>
 
-            <div>
-                <label class="block text-sm font-bold text-slate-700 mb-2">Integrasi AR QR Code (Opsional)</label>
-                <select name="qr_code_id" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm">
-                    <option value="">-- Pilih AR QR Code --</option>
-                    @foreach($arQrCodes ?? [] as $qr)
-                    <option value="{{ $qr->id }}">{{ $qr->title }} ({{ $qr->ar_type }})</option>
-                    @endforeach
-                </select>
-                <p class="text-xs text-slate-500 mt-1">Jika dipilih, pelanggan akan melihat AR Anda sebelum mengambil antrian.</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Total Kuota Antrian Harian</label>
+                    <input type="number" name="daily_quota" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm" placeholder="Kosongkan jika tak terbatas">
+                    <p class="text-xs text-slate-500 mt-1">Kuota per hari untuk lokasi ini. Total semua kuota lokasi tidak boleh melebihi batas paket Anda.</p>
+                </div>
             </div>
 
-            <div x-data="{ 
-                hours: {
-                    monday: { active: true, open: '08:00', close: '17:00' },
-                    tuesday: { active: true, open: '08:00', close: '17:00' },
-                    wednesday: { active: true, open: '08:00', close: '17:00' },
-                    thursday: { active: true, open: '08:00', close: '17:00' },
-                    friday: { active: true, open: '08:00', close: '17:00' },
-                    saturday: { active: false, open: '08:00', close: '14:00' },
-                    sunday: { active: false, open: '08:00', close: '14:00' }
+            <div class="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" name="has_booths" value="1" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+                    </div>
+                    <div>
+                        <span class="text-sm font-bold text-slate-900 block">Gunakan Sistem Booth / Loket</span>
+                        <span class="text-xs text-slate-500">Aktifkan untuk melayani pelanggan pada beberapa booth/teller sekaligus.</span>
+                    </div>
+                </label>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-2">Integrasi AR QR Code</label>
+                    <select name="ar_qr_code_id" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm">
+                    sun: { label: 'Minggu', active: false, open: '08:00', close: '14:00' }
                 }
             }">
                 <label class="block text-sm font-bold text-slate-700 mb-4">Jam Operasional</label>
@@ -85,13 +90,6 @@
                         <div class="flex items-center gap-4 p-3 bg-slate-50 rounded-lg border border-slate-200">
                             <label class="flex items-center gap-3 w-32 cursor-pointer">
                                 <div class="relative">
-                                    <input type="checkbox" x-model="data.active" class="sr-only peer">
-                                    <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-500"></div>
-                                </div>
-                                <span class="text-sm font-bold text-slate-700 capitalize" x-text="day"></span>
-                            </label>
-                            
-                            <div class="flex items-center gap-2 flex-1" x-show="data.active">
                                 <input type="time" x-model="data.open" class="px-2 py-1 bg-white border border-slate-300 rounded text-sm focus:border-teal-500 outline-none">
                                 <span class="text-slate-500 text-xs">-</span>
                                 <input type="time" x-model="data.close" class="px-2 py-1 bg-white border border-slate-300 rounded text-sm focus:border-teal-500 outline-none">
@@ -106,7 +104,6 @@
 
             <div class="pt-4 border-t border-slate-100 flex justify-end">
                 <button type="submit" class="px-6 py-3 rounded-xl btn-gradient text-white font-bold transition-all shadow-md">
-                    Simpan Lokasi
                 </button>
             </div>
         </form>
@@ -128,7 +125,7 @@
                 </button>
                 <a href="{{ route('queue.display', $location->uuid) }}" target="_blank" class="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                    Buka TV Display
+                    Display Antrian
                 </a>
             </div>
 
@@ -137,10 +134,12 @@
                     Layanan (Services)
                     <span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded text-xs">{{ $location->services->count() }}</span>
                 </button>
+                @if($location->has_booths)
                 <button @click="tab = 'counters'" :class="tab === 'counters' ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-50'" class="px-4 py-3 rounded-lg text-sm text-left transition-colors flex items-center justify-between">
                     Loket (Counters)
                     <span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded text-xs">{{ $location->counters->count() }}</span>
                 </button>
+                @endif
                 <button @click="tab = 'staff'" :class="tab === 'staff' ? 'bg-teal-50 text-teal-700 font-bold' : 'text-slate-600 hover:bg-slate-50'" class="px-4 py-3 rounded-lg text-sm text-left transition-colors flex items-center justify-between">
                     Petugas (Staff)
                     <span class="bg-slate-100 text-slate-500 px-2 py-0.5 rounded text-xs">{{ $location->staff->count() }}</span>
@@ -247,14 +246,27 @@
                 <form action="{{ route('queue.locations.update', $location->id) }}" method="POST" class="space-y-6">
                     @csrf @method('PUT')
                     
-                    <div class="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <div class="relative">
-                                <input type="checkbox" name="is_active" value="1" {{ $location->is_active ? 'checked' : '' }} class="sr-only peer">
-                                <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
-                            </div>
-                            <span class="text-sm font-bold text-slate-900">Lokasi Aktif / Buka</span>
-                        </label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <div class="relative">
+                                    <input type="checkbox" name="is_active" value="1" {{ $location->is_active ? 'checked' : '' }} class="sr-only peer">
+                                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+                                </div>
+                                <span class="text-sm font-bold text-slate-900">Lokasi Aktif / Buka</span>
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <div class="relative">
+                                    <input type="checkbox" name="has_booths" value="1" {{ $location->has_booths ? 'checked' : '' }} class="sr-only peer">
+                                    <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-bold text-slate-900 block">Sistem Booth / Loket</span>
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
                     <div>
@@ -267,42 +279,34 @@
                         <textarea name="address" rows="3" class="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500">{{ $location->address }}</textarea>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-bold text-slate-700 mb-2">Integrasi AR QR Code</label>
-                        <select name="qr_code_id" class="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500">
-                            <option value="">-- Tanpa AR --</option>
-                            @foreach($arQrCodes ?? [] as $qr)
-                            <option value="{{ $qr->id }}" {{ $location->qr_code_id == $qr->id ? 'selected' : '' }}>{{ $qr->title }}</option>
-                            @endforeach
-                        </select>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">Total Kuota Antrian Harian</label>
+                            <input type="number" name="daily_quota" value="{{ $location->daily_quota }}" class="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <p class="text-xs text-slate-500 mt-1">Total semua kuota lokasi tidak boleh melebihi batas paket Anda.</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-2">Integrasi AR QR Code</label>
+                            <select name="qr_code_id" class="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                                <option value="">-- Tanpa AR --</option>
+                                @foreach($arQrCodes ?? [] as $qr)
+                                <option value="{{ $qr->id }}" {{ $location->qr_code_id == $qr->id ? 'selected' : '' }}>{{ $qr->title }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="pt-4 border-t border-slate-100 flex justify-end">
-                        <button type="submit" class="px-6 py-2 rounded-xl btn-gradient text-white font-bold transition-all shadow-md">
-                            Simpan Perubahan
-                        </button>
-                    </div>
-                </form>
-
-                <div class="mt-10 pt-6 border-t border-red-100">
-                    <h4 class="font-bold text-red-600 mb-2">Danger Zone</h4>
-                    <p class="text-sm text-slate-500 mb-4">Menghapus lokasi akan menghapus semua data layanan, loket, petugas, dan tiket antrian yang terkait.</p>
-                    <form action="{{ route('queue.locations.destroy', $location->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus seluruh data lokasi ini? Tindakan ini tidak dapat dibatalkan.')">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg text-sm font-bold transition-colors">
-                            Hapus Lokasi Permanen
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- MODALS --}}
-    {{-- Modal Add Service --}}
-    <div x-show="showAddServiceModal" style="display: none;" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showAddServiceModal = false"></div>
-        <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+                    <div x-data="{ 
+                        hours: {{ json_encode($location->operational_hours ?? [
+                            'mon' => ['label' => 'Senin', 'active' => true, 'open' => '08:00', 'close' => '17:00'],
+                            'tue' => ['label' => 'Selasa', 'active' => true, 'open' => '08:00', 'close' => '17:00'],
+                            'wed' => ['label' => 'Rabu', 'active' => true, 'open' => '08:00', 'close' => '17:00'],
+                            'thu' => ['label' => 'Kamis', 'active' => true, 'open' => '08:00', 'close' => '17:00'],
+                            'fri' => ['label' => 'Jumat', 'active' => true, 'open' => '08:00', 'close' => '17:00'],
+                            'sat' => ['label' => 'Sabtu', 'active' => false, 'open' => '08:00', 'close' => '14:00'],
+                            'sun' => ['label' => 'Minggu', 'active' => false, 'open' => '08:00', 'close' => '14:00']
+                                    
+                                    <div class="flex items-center gap-2 flex-1" x-show="data.active">
             <h3 class="font-bold text-lg mb-4">Tambah Layanan</h3>
             <form action="{{ route('queue.services.store', $location->id) }}" method="POST" class="space-y-4">
                 @csrf
@@ -350,19 +354,24 @@
         <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showAddStaffModal = false"></div>
         <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
             <h3 class="font-bold text-lg mb-4">Tambah Petugas</h3>
-            <form action="{{ route('queue.staff.store', $location->id) }}" method="POST" class="space-y-4">
+            <form action="{{ route('queue.staff.store') }}" method="POST" class="space-y-4">
                 @csrf
+                <input type="hidden" name="queue_location_id" value="{{ $location->id }}">
                 <div>
                     <label class="block text-sm font-medium mb-1">Nama Petugas</label>
                     <input type="text" name="name" required class="w-full px-3 py-2 border rounded-lg" placeholder="Nama lengkap">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1">PIN (4-6 Digit)</label>
-                    <input type="password" name="pin" required pattern="[0-9]{4,6}" class="w-full px-3 py-2 border rounded-lg" placeholder="1234">
-                    <p class="text-xs text-slate-500 mt-1">Gunakan angka saja.</p>
+                    <label class="block text-sm font-medium mb-1">Username</label>
+                    <input type="text" name="username" required class="w-full px-3 py-2 border rounded-lg" placeholder="Username untuk login">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1">Tugaskan ke Loket</label>
+                    <label class="block text-sm font-medium mb-1">Password</label>
+                    <input type="password" name="password" required minlength="4" class="w-full px-3 py-2 border rounded-lg" placeholder="Minimal 4 karakter">
+                </div>
+                @if($location->has_booths)
+                <div>
+                    <label class="block text-sm font-medium mb-1">Tugaskan ke Loket / Booth</label>
                     <select name="queue_counter_id" class="w-full px-3 py-2 border rounded-lg">
                         <option value="">-- Pilih Loket (Opsional) --</option>
                         @foreach($location->counters as $counter)
@@ -370,6 +379,7 @@
                         @endforeach
                     </select>
                 </div>
+                @endif
                 <div class="flex justify-end gap-3 pt-4 mt-2 border-t">
                     <button type="button" @click="showAddStaffModal = false" class="px-4 py-2 text-slate-600 bg-slate-100 rounded-lg">Batal</button>
                     <button type="submit" class="px-4 py-2 bg-teal-500 text-white rounded-lg font-bold">Simpan</button>

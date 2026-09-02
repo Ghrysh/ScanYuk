@@ -119,8 +119,13 @@
                 
                 <div class="flex items-center gap-6">
                     <div class="hidden md:flex items-center gap-1">
-                        <a href="{{ route('user.dashboard') }}" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors {{ request()->is('dashboard') && !request()->is('dashboard/queue*') ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Dashboard</a>
-                        <a href="{{ route('queue.index') }}" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors {{ request()->is('dashboard/queue*') ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Antrian</a>
+                        <a href="{{ route('user.dashboard') }}" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors {{ request()->is('dashboard') && !request()->is('dashboard/queue*') ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Augmented Reality</a>
+                        <a href="{{ route('queue.index') }}" class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors {{ request()->is('dashboard/queue*') ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">
+                            Sistem Antrian
+                            @if(Auth::check() && Auth::user()->queue_status === 'active')
+                            <span class="px-1.5 py-0.5 rounded-full bg-red-100 text-red-600 text-[10px] font-black uppercase tracking-wider">Baru</span>
+                            @endif
+                        </a>
                     </div>
                     <div class="hidden md:flex items-center text-sm font-medium text-slate-600">
                         {{ Auth::user()->name }} <span class="mx-2 text-slate-300">•</span> 

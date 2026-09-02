@@ -15,9 +15,27 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode as QrCodeFacade;
 
 class QueueManagementController extends Controller
 {
-    public function index()
+    public function requestAccess()
     {
         $user = Auth::user();
+        if ($user->queue_status === 'none') {
+            $user->queue_status = 'pending';
+            $user->save();
+        }
+        return back()->with('success', 'Permintaan akses Sistem Antrian berhasil dikirim. Menunggu persetujuan admin.');
+    }
+
+    public function index(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Handle queue access request view
+        if ($user->queue_status === 'none') {
+            return view('dashboard.queue.request');
+        } elseif ($user->queue_status === 'pending') {
+            return view('dashboard.queue.pending');
+        }
+        
         $locations = QueueLocation::where('user_id', $user->id)
             ->withCount([
                 'todayTickets as waiting_count' => function($q) { $q->where('status', 'waiting'); },
@@ -26,10 +44,78 @@ class QueueManagementController extends Controller
             ])->get();
             
         $role = strtolower($user->role ?? 'free');
-        $limit = QueueLocation::LOCATION_LIMITS[$role] ?? 1;
+        $limit = $user->queue_location ?? (QueueLocation::LOCATION_LIMITS[$role] ?? 1);
         $canCreate = is_null($limit) ? true : ($locations->count() < $limit);
 
-        return view('dashboard.queue.index', compact('locations', 'canCreate'));
+        // Analytics Data
+        $selectedLocationId = $request->query('location_id');
+        $dateFrom = $request->query('date_from', now()->subDays(30)->toDateString());
+        $dateTo = $request->query('date_to', now()->toDateString());
+
+        $query = QueueTicket::whereHas('location', function($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->whereBetween('date', [$dateFrom, $dateTo]);
+
+        if ($selectedLocationId) {
+            $query->where('queue_location_id', $selectedLocationId);
+        }
+
+        $tickets = $query->get();
+        $totalRegistrations = $tickets->count();
+        $totalServed = $tickets->where('status', 'completed')->count();
+        $totalNoShow = $tickets->whereIn('status', ['skipped', 'no_show'])->count();
+
+        $completedTickets = $tickets->where('status', 'completed')->filter(function($t) {
+            return $t->serving_at && $t->completed_at;
+        });
+
+        $avgWaitMinutes = 0;
+        $avgServiceMinutes = 0;
+
+        if ($completedTickets->count() > 0) {
+            $totalWait = 0;
+            $totalService = 0;
+            foreach ($completedTickets as $t) {
+                $created = \Carbon\Carbon::parse($t->created_at);
+                $serving = \Carbon\Carbon::parse($t->serving_at);
+                $completed = \Carbon\Carbon::parse($t->completed_at);
+                
+                $totalWait += $serving->diffInMinutes($created);
+                $totalService += $completed->diffInMinutes($serving);
+            }
+            $avgWaitMinutes = round($totalWait / $completedTickets->count());
+            $avgServiceMinutes = round($totalService / $completedTickets->count());
+        }
+
+        $popularService = '';
+        if ($tickets->count() > 0) {
+            $serviceCounts = $tickets->groupBy('queue_service_id')->map->count();
+            $topServiceId = $serviceCounts->sortDesc()->keys()->first();
+            $topService = QueueService::find($topServiceId);
+            if ($topService) {
+                $popularService = $topService->name;
+            }
+        }
+
+        $dailyData = [];
+        $period = \Carbon\CarbonPeriod::create($dateFrom, $dateTo);
+        foreach ($period as $date) {
+            $dateString = $date->toDateString();
+            $dailyData[$dateString] = $tickets->where('date', $dateString)->count();
+        }
+
+        // Global Staff Management Data
+        $staffs = QueueStaff::whereHas('location', function($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->with(['location', 'counter'])->get();
+
+        return view('dashboard.queue.index', compact(
+            'locations', 'canCreate',
+            'selectedLocationId', 'dateFrom', 'dateTo',
+            'totalRegistrations', 'totalServed', 'totalNoShow',
+            'avgWaitMinutes', 'avgServiceMinutes', 'popularService', 'dailyData',
+            'staffs'
+        ));
     }
 
     public function createLocation()
@@ -43,28 +129,37 @@ class QueueManagementController extends Controller
     {
         $user = Auth::user();
         $role = strtolower($user->role ?? 'free');
-        $limit = QueueLocation::LOCATION_LIMITS[$role] ?? 1;
+        $limit = $user->queue_location ?? (QueueLocation::LOCATION_LIMITS[$role] ?? 1);
+        
         $currentCount = QueueLocation::where('user_id', $user->id)->count();
-
-        if (!is_null($limit) && $currentCount >= $limit) {
-            return back()->with('error', 'Batas maksimal lokasi antrian untuk paket Anda telah tercapai.');
+        if ($limit !== null && $currentCount >= $limit) {
+            return back()->with('error', 'Batas maksimal lokasi antrian untuk paket Anda telah tercapai.')->with('showUpgrade', true);
         }
 
         $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string',
             'operational_hours' => 'nullable|array',
-            'ar_qr_code_id' => 'nullable|exists:qr_codes,id'
+            'ar_qr_code_id' => 'nullable|exists:qr_codes,id',
+            'daily_quota' => 'nullable|integer|min:1',
+            'has_booths' => 'nullable|boolean'
         ]);
+
+        if ($request->daily_quota && $user->queue_ticket !== null) {
+            $totalUsedQuota = QueueLocation::where('user_id', $user->id)->sum('daily_quota');
+            if ($totalUsedQuota + $request->daily_quota > $user->queue_ticket) {
+                return back()->with('error', 'Melebihi total antrian. Total antrian saat ini sisa: ' . max(0, $user->queue_ticket - $totalUsedQuota));
+            }
+        }
 
         QueueLocation::create([
             'user_id' => $user->id,
-            'uuid' => Str::uuid(),
             'name' => $request->name,
             'address' => $request->address,
-            'operational_hours' => $request->operational_hours,
+            'operational_hours' => $request->operational_hours ? json_decode($request->operational_hours, true) : null,
             'ar_qr_code_id' => $request->ar_qr_code_id,
-            'is_active' => true,
+            'daily_quota' => $request->daily_quota,
+            'has_booths' => $request->has_booths ?? false,
         ]);
 
         return redirect()->route('queue.index')->with('success', 'Lokasi antrian berhasil dibuat.');
@@ -83,19 +178,32 @@ class QueueManagementController extends Controller
     public function updateLocation(Request $request, QueueLocation $location)
     {
         if ($location->user_id !== Auth::id()) abort(403);
+        $user = Auth::user();
 
         $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string',
             'operational_hours' => 'nullable|array',
-            'ar_qr_code_id' => 'nullable|exists:qr_codes,id'
+            'ar_qr_code_id' => 'nullable|exists:qr_codes,id',
+            'daily_quota' => 'nullable|integer|min:1',
+            'has_booths' => 'nullable|boolean'
         ]);
+
+        if ($request->daily_quota && $user->queue_ticket !== null) {
+            $totalUsedQuota = QueueLocation::where('user_id', $user->id)
+                ->where('id', '!=', $location->id)->sum('daily_quota');
+            if ($totalUsedQuota + $request->daily_quota > $user->queue_ticket) {
+                return back()->with('error', 'Melebihi total antrian. Total antrian saat ini sisa: ' . max(0, $user->queue_ticket - $totalUsedQuota));
+            }
+        }
 
         $location->update([
             'name' => $request->name,
             'address' => $request->address,
-            'operational_hours' => $request->operational_hours,
+            'operational_hours' => $request->operational_hours ? json_decode($request->operational_hours, true) : $location->operational_hours,
             'ar_qr_code_id' => $request->ar_qr_code_id,
+            'daily_quota' => $request->daily_quota,
+            'has_booths' => $request->has_booths ?? false,
         ]);
 
         return back()->with('success', 'Lokasi antrian berhasil diperbarui.');
@@ -161,7 +269,7 @@ class QueueManagementController extends Controller
 
         $location->counters()->create($request->only('name'));
 
-        return back()->with('success', 'Loket berhasil ditambahkan.');
+        return back()->with('success', 'Loket / Booth berhasil ditambahkan.');
     }
 
     public function updateCounter(Request $request, QueueCounter $counter)
@@ -174,56 +282,70 @@ class QueueManagementController extends Controller
 
         $counter->update($request->only('name'));
 
-        return back()->with('success', 'Loket berhasil diperbarui.');
+        return back()->with('success', 'Loket / Booth berhasil diperbarui.');
     }
 
     public function deleteCounter(QueueCounter $counter)
     {
         if ($counter->location->user_id !== Auth::id()) abort(403);
         $counter->delete();
-        return back()->with('success', 'Loket berhasil dihapus.');
+        return back()->with('success', 'Loket / Booth berhasil dihapus.');
     }
 
-    public function storeStaff(Request $request, QueueLocation $location)
+    public function storeStaff(Request $request)
     {
-        if ($location->user_id !== Auth::id()) abort(403);
-
+        $user = Auth::user();
+        
         $request->validate([
+            'queue_location_id' => 'required|exists:queue_locations,id',
+            'queue_counter_id' => 'nullable|exists:queue_counters,id',
             'name' => 'required|string',
-            'pin' => 'required|string|min:4|max:6',
-            'queue_counter_id' => 'nullable|exists:queue_counters,id'
+            'username' => 'required|string|unique:queue_staff,username',
+            'password' => 'required|string|min:4'
         ]);
 
-        $location->staff()->create($request->only(['name', 'pin', 'queue_counter_id']));
+        $location = QueueLocation::where('id', $request->queue_location_id)->where('user_id', $user->id)->firstOrFail();
 
-        return back()->with('success', 'Staff berhasil ditambahkan.');
+        $location->staff()->create([
+            'name' => $request->name,
+            'username' => $request->username,
+            'password' => $request->password,
+            'queue_counter_id' => $request->queue_counter_id
+        ]);
+
+        return back()->with('success', 'Pegawai berhasil ditambahkan.');
     }
 
     public function updateStaff(Request $request, QueueStaff $staff)
     {
-        if ($staff->location->user_id !== Auth::id()) abort(403);
+        $user = Auth::user();
+        if ($staff->location->user_id !== $user->id) abort(403);
 
         $request->validate([
-            'name' => 'required|string',
-            'pin' => 'nullable|string|min:4|max:6',
-            'queue_counter_id' => 'nullable|exists:queue_counters,id'
+            'queue_location_id' => 'required|exists:queue_locations,id',
+            'queue_counter_id' => 'nullable|exists:queue_counters,id',
+            'username' => 'required|string|unique:queue_staff,username,' . $staff->id,
+            'password' => 'nullable|string|min:4'
         ]);
 
-        $data = $request->only(['name', 'queue_counter_id']);
-        if ($request->filled('pin')) {
-            $data['pin'] = $request->pin;
+        $location = QueueLocation::where('id', $request->queue_location_id)->where('user_id', $user->id)->firstOrFail();
+
+        $data = $request->only(['name', 'username', 'queue_counter_id']);
+        $data['queue_location_id'] = $location->id;
+        if ($request->filled('password')) {
+            $data['password'] = $request->password;
         }
 
         $staff->update($data);
 
-        return back()->with('success', 'Staff berhasil diperbarui.');
+        return back()->with('success', 'Pegawai berhasil diperbarui.');
     }
 
     public function deleteStaff(QueueStaff $staff)
     {
         if ($staff->location->user_id !== Auth::id()) abort(403);
         $staff->delete();
-        return back()->with('success', 'Staff berhasil dihapus.');
+        return back()->with('success', 'Pegawai berhasil dihapus.');
     }
 
     public function downloadQr(QueueLocation $location)
@@ -237,73 +359,5 @@ class QueueManagementController extends Controller
         return response($imageContent)
             ->header('Content-Type', 'image/svg+xml')
             ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
-    }
-
-    public function analytics(Request $request)
-    {
-        $locations = QueueLocation::where('user_id', Auth::id())->get();
-        $selectedLocationId = $request->query('location_id');
-        
-        $dateFrom = $request->query('date_from', now()->subDays(30)->toDateString());
-        $dateTo = $request->query('date_to', now()->toDateString());
-
-        $query = QueueTicket::whereHas('location', function($q) {
-            $q->where('user_id', Auth::id());
-        })->whereBetween('date', [$dateFrom, $dateTo]);
-
-        if ($selectedLocationId) {
-            $query->where('queue_location_id', $selectedLocationId);
-        }
-
-        $tickets = $query->get();
-
-        $totalRegistrations = $tickets->count();
-        $totalServed = $tickets->where('status', 'completed')->count();
-        $totalNoShow = $tickets->whereIn('status', ['skipped', 'no_show'])->count();
-
-        $completedTickets = $tickets->where('status', 'completed')->filter(function($t) {
-            return $t->serving_at && $t->completed_at;
-        });
-
-        $avgWaitMinutes = 0;
-        $avgServiceMinutes = 0;
-
-        if ($completedTickets->count() > 0) {
-            $totalWait = 0;
-            $totalService = 0;
-            foreach ($completedTickets as $t) {
-                $created = \Carbon\Carbon::parse($t->created_at);
-                $serving = \Carbon\Carbon::parse($t->serving_at);
-                $completed = \Carbon\Carbon::parse($t->completed_at);
-                
-                $totalWait += $serving->diffInMinutes($created);
-                $totalService += $completed->diffInMinutes($serving);
-            }
-            $avgWaitMinutes = round($totalWait / $completedTickets->count());
-            $avgServiceMinutes = round($totalService / $completedTickets->count());
-        }
-
-        $popularService = '';
-        if ($tickets->count() > 0) {
-            $serviceCounts = $tickets->groupBy('queue_service_id')->map->count();
-            $topServiceId = $serviceCounts->sortDesc()->keys()->first();
-            $topService = QueueService::find($topServiceId);
-            if ($topService) {
-                $popularService = $topService->name;
-            }
-        }
-
-        $dailyData = [];
-        $period = \Carbon\CarbonPeriod::create($dateFrom, $dateTo);
-        foreach ($period as $date) {
-            $dateString = $date->toDateString();
-            $dailyData[$dateString] = $tickets->where('date', $dateString)->count();
-        }
-
-        return view('dashboard.queue.analytics', compact(
-            'locations', 'selectedLocationId', 'dateFrom', 'dateTo',
-            'totalRegistrations', 'totalServed', 'totalNoShow',
-            'avgWaitMinutes', 'avgServiceMinutes', 'popularService', 'dailyData'
-        ));
     }
 }
