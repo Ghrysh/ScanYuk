@@ -360,24 +360,26 @@
                         <th class="px-6 py-4 whitespace-nowrap">Image</th>
                         <th class="px-6 py-4 whitespace-nowrap">Voice</th>
                         <th class="px-6 py-4 whitespace-nowrap">Scan</th>
-                        <th class="px-6 py-4 whitespace-nowrap">Lokasi Antrian</th>
-                        <th class="px-6 py-4 whitespace-nowrap">Total Antrian</th>
-                        <th class="px-6 py-4">Aksi</th>
+                        <th class="px-6 py-4 text-right">Aksi</th>
+
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
                     @foreach($packages as $pkg)
                     <tr class="hover:bg-slate-50 transition-colors">
                         <td class="px-6 py-4 font-bold text-slate-900">{{ $pkg->name }}</td>
                         <td class="px-6 py-4">Rp{{ number_format($pkg->price, 0, ',', '.') }}</td>
-                        <td class="px-6 py-4">{{ (int) filter_var($pkg->features[0] ?? 0, FILTER_SANITIZE_NUMBER_INT) }}</td>
-                        <td class="px-6 py-4">{{ (int) filter_var($pkg->features[1] ?? 0, FILTER_SANITIZE_NUMBER_INT) }}</td>
-                        <td class="px-6 py-4">{{ (int) filter_var($pkg->features[2] ?? 0, FILTER_SANITIZE_NUMBER_INT) }}</td>
-                        <td class="px-6 py-4">{{ (int) filter_var($pkg->features[5] ?? 0, FILTER_SANITIZE_NUMBER_INT) ?: 'Unlimited' }}</td>
-                        <td class="px-6 py-4">{{ (int) filter_var($pkg->features[6] ?? 0, FILTER_SANITIZE_NUMBER_INT) ?: 'Unlimited' }}</td>
-                        <td class="px-6 py-4">
-                            <button @click="openEdit({{ $pkg->toJson() }})" class="text-slate-400 hover:text-teal-600 transition-colors" title="Edit Paket">
+                        <td class="px-6 py-4">{{ (int) filter_var($pkg->features[0] ?? 0, FILTER_SANITIZE_NUMBER_INT) ?: 'Unlimited' }}</td>
+                        <td class="px-6 py-4">{{ (int) filter_var($pkg->features[1] ?? 0, FILTER_SANITIZE_NUMBER_INT) ?: 'Unlimited' }}</td>
+                        <td class="px-6 py-4">{{ (int) filter_var($pkg->features[2] ?? 0, FILTER_SANITIZE_NUMBER_INT) ?: 'Unlimited' }}</td>
+                        <td class="px-6 py-4 text-right">
+                            <button @click="showEditModal = true; openEdit({{ $pkg->toJson() }})" class="text-slate-400 hover:text-teal-600 transition-colors" title="Edit Paket">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                            </button>
                         </td>
                     </tr>
                     @endforeach
-                </tbody>
+
             </table>
         </div>
 
