@@ -166,6 +166,10 @@ class AdminController extends Controller
             is_null($request->scan_limit) ? "Tak Terbatas Total Scans" : $request->scan_limit . " Total Scans",
             $package->features[3] ?? 'Analitik dasar',
             $package->features[4] ?? 'Unduh QR',
+            $request->queue_location_limit ?? null, // Index 5
+            $request->queue_ticket_limit ?? null, // Index 6
+        ];
+        
         $package->save();
 
         return back()->with([
