@@ -208,23 +208,31 @@ class QueueManagementController extends Controller
             }
         }
 
+        $hasBooths = $request->has_booths ?? false;
+
         $location->update([
             'name' => $request->name,
             'address' => $request->address,
             'operational_hours' => $request->operational_hours ? json_decode($request->operational_hours, true) : $location->operational_hours,
             'ar_qr_code_id' => $request->ar_qr_code_id,
             'daily_quota' => $request->daily_quota,
-            'has_booths' => $request->has_booths ?? false,
+            'has_booths' => $hasBooths,
         ]);
         
-        // Jika form edit mengirimkan booth_name dan booth_count (user baru mengaktifkan has_booths)
-        if ($request->has_booths && $request->filled('booth_name') && $request->filled('booth_count') && $request->booth_count > 0) {
-            for ($i = 1; $i <= $request->booth_count; $i++) {
-                $location->counters()->create([
-                    'name' => $request->booth_name . ' ' . $i,
-                    'is_active' => true
-                ]);
+        if ($hasBooths) {
+            // Jika form edit mengirimkan booth_name dan booth_count untuk generate massal
+            if ($request->filled('booth_name') && $request->filled('booth_count') && $request->booth_count > 0) {
+                for ($i = 1; $i <= $request->booth_count; $i++) {
+                    $location->counters()->create([
+                        'name' => $request->booth_name . ' ' . $i,
+                        'is_active' => true
+                    ]);
+                }
             }
+        } else {
+            // Jika dinonaktifkan, hapus semua loket/booth beserta relasinya
+            // (Staff yang terkait dengan loket ini akan menjadi null queue_counter_id nya karena nullOnDelete di database)
+            $location->counters()->delete();
         }
 
         return back()->with('success', 'Lokasi antrian berhasil diperbarui.');

@@ -314,17 +314,25 @@
                         </div>
                     </div>
 
-                    <div x-show="hasBooths" x-collapse class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-4 border border-slate-200 rounded-lg">
-                        <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Nama Panggilan (Opsional)</label>
-                            <input type="text" name="booth_name" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Cth: Loket, Meja, Poli">
-                            <p class="text-[10px] text-slate-500 mt-1">Kosongkan jika tidak ingin membuat loket otomatis.</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold text-slate-700 mb-1">Jumlah (Opsional)</label>
-                            <input type="number" name="booth_count" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Berapa banyak? (Cth: 3)">
-                            <p class="text-[10px] text-slate-500 mt-1">Isi jika ingin sistem langsung membuatkan data loket.</p>
-                        </div>
+                    <div x-show="hasBooths" x-collapse class="bg-slate-50 p-4 border border-slate-200 rounded-lg">
+                        @if($location->counters->count() > 0)
+                            <div class="flex items-center gap-3 text-teal-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-teal-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>
+                                <span class="text-sm font-medium">Sistem loket aktif ({{ $location->counters->count() }} loket). Anda dapat menambah/mengedit loket di tab <b class="font-bold">Loket / Booth</b>. Jika dinonaktifkan, semua data loket akan terhapus.</span>
+                            </div>
+                        @else
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-1">Nama Panggilan (Opsional)</label>
+                                    <input type="text" name="booth_name" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Cth: Loket, Meja, Poli">
+                                    <p class="text-[10px] text-slate-500 mt-1">Isi untuk generate loket massal. Kosongkan jika ingin buat manual nanti.</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-1">Jumlah (Opsional)</label>
+                                    <input type="number" name="booth_count" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Berapa banyak? (Cth: 3)">
+                                </div>
+                            </div>
+                        @endif
                     </div>
 
                     <div>
