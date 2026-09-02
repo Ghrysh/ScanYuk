@@ -210,8 +210,7 @@
                     document.getElementById('toggle-form-' + this.userId).submit(); 
                 }
             }
-             }
-        }" 
+         }" 
          style="display: none;" 
          class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden relative" 
          x-transition.opacity.duration.300ms>
@@ -463,8 +462,7 @@
                 this.detailTxn = data;
                 this.showDetailModal = true;
             }
-             }
-        }"
+         }"
          style="display: none;" 
          class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden" 
          x-transition.opacity.duration.300ms>
@@ -544,8 +542,7 @@
                                       'bg-amber-100 text-amber-700': detailTxn.status === 'Pending',
                                       'bg-teal-100 text-teal-700': ['Berhasil', 'Paid', 'Success', 'unsettled'].includes(detailTxn.status),
                                       'bg-red-100 text-red-700': ['Ditolak', 'Batal', 'Failed'].includes(detailTxn.status)
-                                      }
-        }" x-text="detailTxn.status"></span>
+                                  }" x-text="detailTxn.status"></span>
                         </div>
                         <div>
                             <p class="text-xs text-slate-500 mb-1">Total Tagihan</p>
@@ -750,8 +747,7 @@
                      alert('Gagal apply');
                  }
              }
-             }
-        }">
+         }">
 
          <template x-if="!recommendation">
              <div>
@@ -936,8 +932,7 @@
                            this.showChatModal = false;
                            clearInterval(this.pollInterval);
                        }
-                 }
-        }">
+             }">
             <div class="overflow-x-auto">
                 <table class="w-full text-left text-sm text-slate-600">
                     <thead class="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200">
@@ -1223,8 +1218,7 @@
 
             playPing() { try { let ctx = new (window.AudioContext || window.webkitAudioContext)(); let osc = ctx.createOscillator(); let gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.type = 'sine'; osc.frequency.setValueAtTime(800, ctx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1); gain.gain.setValueAtTime(0, ctx.currentTime); gain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.02); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5); osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.5); } catch(e){} },
             scrollDown() { setTimeout(() => { let el = document.getElementById('live-chat-box'); if(el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' }); }, 100); }
-             }
-        }" 
+         }" 
          x-init="initLive()">
         
         <div x-show="!notifEnabled" class="bg-indigo-50 border border-indigo-200 p-4 rounded-xl mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
