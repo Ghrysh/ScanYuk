@@ -46,7 +46,7 @@ class QueueStaffController extends Controller
         $staff = \App\Models\QueueStaff::find($staffId);
         
         if (!$staff) {
-            return redirect()->route('queue.staff.logout');
+            return redirect()->route('queue.staff.login');
         }
 
         $locationId = $staff->queue_location_id;

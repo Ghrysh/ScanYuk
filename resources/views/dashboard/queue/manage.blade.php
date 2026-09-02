@@ -219,7 +219,7 @@
                             <p class="text-sm text-slate-500">Estimasi: {{ $svc->estimated_duration_minutes }} menit/orang • Kuota Harian: {{ $svc->daily_quota ?: 'Tak Terbatas' }}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <form action="{{ route('queue.services.delete', $svc->id) }}" method="POST" class="inline" onsubmit="return confirm('Hapus layanan ini?')">
+                            <form action="{{ route('queue.services.delete', $svc->id) }}" method="POST" class="inline" @submit.prevent="if(typeof showAppConfirm === \'function\') showAppConfirm(\'Konfirmasi\', \'Hapus layanan ini?\', $event.target); else if(confirm(\'Hapus layanan ini?\')) $event.target.submit();">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                             </form>
@@ -247,7 +247,7 @@
                             <h4 class="font-bold text-slate-900">{{ $counter->name }}</h4>
                             <p class="text-sm text-slate-500">Status: {{ $counter->is_active ? 'Aktif' : 'Nonaktif' }}</p>
                         </div>
-                        <form action="{{ route('queue.counters.delete', $counter->id) }}" method="POST" class="inline" onsubmit="return confirm('Hapus loket ini?')">
+                        <form action="{{ route('queue.counters.delete', $counter->id) }}" method="POST" class="inline" @submit.prevent="if(typeof showAppConfirm === \'function\') showAppConfirm(\'Konfirmasi\', \'Hapus loket ini?\', $event.target); else if(confirm(\'Hapus loket ini?\')) $event.target.submit();">
                             @csrf @method('DELETE')
                             <button type="submit" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                         </form>
@@ -274,7 +274,7 @@
                             <h4 class="font-bold text-slate-900">{{ $staff->name }}</h4>
                             <p class="text-sm text-slate-500">Counter: {{ $staff->counter ? $staff->counter->name : 'Belum Ditugaskan' }}</p>
                         </div>
-                        <form action="{{ route('queue.staff.delete', $staff->id) }}" method="POST" class="inline" onsubmit="return confirm('Hapus petugas ini?')">
+                        <form action="{{ route('queue.staff.delete', $staff->id) }}" method="POST" class="inline" @submit.prevent="if(typeof showAppConfirm === \'function\') showAppConfirm(\'Konfirmasi\', \'Hapus petugas ini?\', $event.target); else if(confirm(\'Hapus petugas ini?\')) $event.target.submit();">
                             @csrf @method('DELETE')
                             <button type="submit" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                         </form>
@@ -389,7 +389,7 @@
                 <div class="mt-10 pt-6 border-t border-red-100">
                     <h4 class="font-bold text-red-600 mb-2">Danger Zone</h4>
                     <p class="text-sm text-slate-500 mb-4">Menghapus lokasi akan menghapus semua data layanan, loket, petugas, dan tiket antrian yang terkait.</p>
-                    <form action="{{ route('queue.locations.delete', $location->id) }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus seluruh data lokasi ini? Tindakan ini tidak dapat dibatalkan.')">
+                    <form action="{{ route('queue.locations.delete', $location->id) }}" method="POST" @submit.prevent="if(typeof showAppConfirm === \'function\') showAppConfirm(\'Konfirmasi\', \'Anda yakin ingin menghapus seluruh data lokasi ini? Tindakan ini tidak dapat dibatalkan.\', $event.target); else if(confirm(\'Anda yakin ingin menghapus seluruh data lokasi ini? Tindakan ini tidak dapat dibatalkan.\')) $event.target.submit();">
                         @csrf @method('DELETE')
                         <button type="submit" class="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg text-sm font-bold transition-colors">
                             Hapus Lokasi Permanen

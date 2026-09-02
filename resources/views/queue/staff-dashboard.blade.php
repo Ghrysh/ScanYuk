@@ -25,7 +25,26 @@
         }
     </style>
 </head>
-<body class="bg-slate-50 bg-grid-pattern min-h-screen text-slate-800 flex flex-col"
+<body class="bg-slate-50 bg-grid-pattern min-h-screen text-slate-800 flex flex-col" x-data="{
+        confirmTitle: '',
+        confirmDesc: '',
+        confirmTarget: null,
+        showConfirm: false,
+        serviceFilter: '',
+        confirmAction(title, desc, target) {
+            this.confirmTitle = title;
+            this.confirmDesc = desc;
+            this.confirmTarget = target;
+            this.showConfirm = true;
+        },
+        executeConfirm() {
+            if (this.confirmTarget) {
+                this.confirmTarget.classList.add('submitting');
+                this.confirmTarget.submit();
+            }
+            this.showConfirm = false;
+        }
+    }">
     x-data="{
         serviceFilter: '',
         
@@ -115,7 +134,7 @@
                             </form>
                         @endif
 
-                        <form action="{{ route('queue.staff.skip', $currentTicket->id) }}" method="POST" class="flex-1 max-w-[200px]" onsubmit="this.classList.add('submitting'); return confirm('Lewati antrian ini?');">
+                        <form action="{{ route('queue.staff.skip', $currentTicket->id) }}" method="POST" class="flex-1 max-w-[200px]" @submit.prevent="confirmAction('Lewati antrian ini?', 'Antrian yang dilewati bisa dipanggil kembali nanti.', $event.target)">
                             @csrf @method('PATCH')
                             <button type="submit" class="w-full py-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-lg transition-colors border border-slate-200">
                                 Lewati (Skip)
@@ -203,6 +222,30 @@
         </section>
 
     </main>
+
+
+    <!-- Confirm Modal -->
+    <div x-show="showConfirm" style="display: none;" class="fixed inset-0 z-[999] flex items-center justify-center p-4">
+        <div x-show="showConfirm" x-transition.opacity.duration.300ms class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" @click="showConfirm = false"></div>
+        <div x-show="showConfirm" 
+            x-transition:enter="transition ease-out duration-300"
+            x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+            x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+            class="relative bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center">
+            
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+            </div>
+            
+            <h3 class="text-xl font-bold text-slate-900 mb-2" x-text="confirmTitle"></h3>
+            <p class="text-slate-500 text-sm mb-6" x-text="confirmDesc"></p>
+            
+            <div class="flex gap-3 w-full">
+                <button type="button" @click="showConfirm = false" class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-colors">Batal</button>
+                <button type="button" @click="executeConfirm()" class="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>
