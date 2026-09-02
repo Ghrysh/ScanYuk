@@ -94,7 +94,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                     <label class="block text-sm font-bold text-slate-700 mb-2">Integrasi AR QR Code</label>
-                    <select name="qr_code_id" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm">
+                    <select name="ar_qr_code_id" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all sm:text-sm">
                         <option value="">-- Tanpa AR --</option>
                         @foreach($arQrCodes ?? [] as $qr)
                         <option value="{{ $qr->id }}">{{ $qr->title }} ({{ $qr->ar_type }})</option>
@@ -328,7 +328,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-bold text-slate-700 mb-2">Integrasi AR QR Code</label>
-                            <select name="qr_code_id" class="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500">
+                            <select name="ar_qr_code_id" class="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500">
                                 <option value="">-- Tanpa AR --</option>
                                 @foreach($arQrCodes ?? [] as $qr)
                                 <option value="{{ $qr->id }}" {{ $location->qr_code_id == $qr->id ? 'selected' : '' }}>{{ $qr->title }}</option>

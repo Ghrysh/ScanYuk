@@ -139,7 +139,7 @@ class QueueManagementController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string',
-            'operational_hours' => 'nullable|array',
+            'operational_hours' => 'nullable|string',
             'ar_qr_code_id' => 'nullable|exists:qr_codes,id',
             'daily_quota' => 'nullable|integer|min:1',
             'has_booths' => 'nullable|boolean'
@@ -194,7 +194,7 @@ class QueueManagementController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'address' => 'nullable|string',
-            'operational_hours' => 'nullable|array',
+            'operational_hours' => 'nullable|string',
             'ar_qr_code_id' => 'nullable|exists:qr_codes,id',
             'daily_quota' => 'nullable|integer|min:1',
             'has_booths' => 'nullable|boolean'
