@@ -24,18 +24,24 @@ class QueueStaffController extends Controller
 
         if (!$staff || !$staff->verifyPassword($request->password)) {
             return back()->with('error', 'Username atau password salah.');
+        }
 
         if (!$staff->is_active) {
             return back()->with('error', 'Akun petugas tidak aktif.');
+        }
+        
         session([
             'queue_staff_id' => $staff->id,
             'queue_location_id' => $staff->queue_location_id
         ]);
+        
+        return redirect()->route('queue.staff.dashboard');
     }
 
     public function dashboard()
     {
         $staffId = session('queue_staff_id');
+        $staff = \App\Models\QueueStaff::find($staffId);
         
         if (!$staff) {
             return redirect()->route('queue.staff.logout');

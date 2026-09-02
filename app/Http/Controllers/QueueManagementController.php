@@ -363,7 +363,19 @@ class QueueManagementController extends Controller
     {
         if ($location->user_id !== Auth::id()) abort(403);
 
-        $url = route('queue.register', $location->uuid);
+        if ($location->ar_qr_code_id && $location->qrCode) {
+            // Jika menggunakan AR, QR code akan diarahkan ke scanner AR,
+            // dan kita sisipkan parameter queue_location_uuid agar scanner
+            // bisa mengarahkan user ke halaman antrian setelah AR selesai.
+            if ($location->qrCode->ar_project_id) {
+                $url = route('ar.view', ['project' => $location->qrCode->ar_project_id]) . '?queue_uuid=' . $location->uuid;
+            } else {
+                $url = url('/scan-ar?id=' . $location->qrCode->uuid . '&queue_uuid=' . $location->uuid);
+            }
+        } else {
+            // Tanpa AR, langsung ke halaman registrasi antrian
+            $url = route('queue.register', $location->uuid);
+        }
         $imageContent = QrCodeFacade::format('svg')->size(500)->margin(2)->generate($url);
         $fileName = 'Queue-QR-' . Str::slug($location->name) . '.svg';
 

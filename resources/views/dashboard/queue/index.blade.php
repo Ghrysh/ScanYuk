@@ -176,12 +176,22 @@
                 </button>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-6 flex flex-col md:flex-row gap-6 bg-slate-50" x-data="{ showForm: false, editMode: false, currentStaff: null, formAction: '{{ route('queue.staff.store') }}' }">
+            <div class="flex-1 overflow-y-auto p-6 flex flex-col md:flex-row gap-6 bg-slate-50" x-data="{ 
+                showForm: false, 
+                editMode: false, 
+                currentStaff: null, 
+                formAction: '{{ route('queue.staff.store') }}',
+                selectedLocationId: '',
+                locationsData: {!! json_encode($locations->map(function($l) { return ['id' => $l->id, 'has_booths' => $l->has_booths, 'counters' => $l->counters]; })) !!},
+                get selectedLocationData() {
+                    return this.locationsData.find(l => l.id == this.selectedLocationId);
+                }
+            }">
                 <!-- List Pegawai -->
                 <div class="flex-1 bg-white border border-slate-200 rounded-xl overflow-hidden flex flex-col shadow-sm">
                     <div class="p-4 border-b border-slate-100 bg-white flex justify-between items-center">
                         <h4 class="font-bold text-slate-800">Daftar Pegawai</h4>
-                        <button @click="showForm = true; editMode = false; currentStaff = null; formAction = '{{ route('queue.staff.store') }}'" class="text-xs font-bold text-teal-600 hover:text-teal-700 bg-teal-50 px-3 py-1.5 rounded-lg">+ Tambah Pegawai</button>
+                        <button @click="showForm = true; editMode = false; currentStaff = null; selectedLocationId = ''; formAction = '{{ route('queue.staff.store') }}'" class="text-xs font-bold text-teal-600 hover:text-teal-700 bg-teal-50 px-3 py-1.5 rounded-lg">+ Tambah Pegawai</button>
                     </div>
                     <div class="overflow-y-auto max-h-[400px]">
                         @if($staffs->isEmpty())
@@ -196,7 +206,7 @@
                                     <div class="text-xs text-teal-600 font-medium mt-0.5">📍 {{ $staff->location->name ?? 'Tidak ada lokasi' }}</div>
                                 </div>
                                 <div class="flex gap-2">
-                                    <button @click="showForm = true; editMode = true; currentStaff = {{ $staff->toJson() }}; formAction = '/dashboard/queue/staff/{{ $staff->id }}'" class="text-indigo-500 p-1.5 hover:bg-indigo-50 rounded">
+                                    <button @click="showForm = true; editMode = true; currentStaff = {{ $staff->toJson() }}; formAction = '/dashboard/queue/staff/{{ $staff->id }}'; selectedLocationId = currentStaff.queue_location_id"" class="text-indigo-500 p-1.5 hover:bg-indigo-50 rounded">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                     </button>
                                     <form action="{{ route('queue.staff.delete', $staff->id) }}" method="POST" onsubmit="return confirm('Hapus pegawai ini?')">
@@ -224,11 +234,23 @@
 
                         <div>
                             <label class="block text-xs font-bold text-slate-700 mb-1">Tugaskan di Lokasi <span class="text-red-500">*</span></label>
-                            <select name="queue_location_id" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-teal-500">
+                            <select name="queue_location_id" x-model="selectedLocationId" required class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-teal-500">
                                 <option value="">-- Pilih Lokasi --</option>
                                 @foreach($locations as $loc)
-                                <option value="{{ $loc->id }}" :selected="editMode && currentStaff.queue_location_id == {{ $loc->id }}">{{ $loc->name }}</option>
+                                <option value="{{ $loc->id }}">{{ $loc->name }}</option>
                                 @endforeach
+                            </select>
+                        </div>
+                        
+                        <div x-show="selectedLocationData && selectedLocationData.has_booths" style="display: none;">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Tugaskan ke Booth / Loket</label>
+                            <select name="queue_counter_id" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm outline-none focus:border-teal-500">
+                                <option value="">-- Pilih Loket (Opsional) --</option>
+                                <template x-if="selectedLocationData && selectedLocationData.counters">
+                                    <template x-for="counter in selectedLocationData.counters" :key="counter.id">
+                                        <option :value="counter.id" x-text="counter.name" :selected="editMode && currentStaff && currentStaff.queue_counter_id == counter.id"></option>
+                                    </template>
+                                </template>
                             </select>
                         </div>
 
