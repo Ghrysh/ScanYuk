@@ -1,7 +1,17 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="w-full max-w-lg mx-auto bg-white min-h-[calc(100vh-64px)] sm:min-h-screen sm:border-x border-slate-200 relative pb-20" x-data="{ showForm: {{ $arQrCode ? 'false' : 'true' }}, selectedService: '' }">
+@php
+    $firstAvailableServiceId = '';
+    foreach($location->services as $service) {
+        $isFull = $service->daily_quota && $service->daily_quota <= ($service->today_registrations_count ?? 0);
+        if (!$isFull && $service->is_active) {
+            $firstAvailableServiceId = $service->id;
+            break;
+        }
+    }
+@endphp
+<div class="w-full max-w-lg mx-auto bg-white min-h-[calc(100vh-64px)] sm:min-h-screen sm:border-x border-slate-200 relative pb-20" x-data="{ showForm: {{ $arQrCode ? 'false' : 'true' }}, selectedService: '{{ $firstAvailableServiceId }}' }">
     
     {{-- Header --}}
     <div class="bg-gradient-to-br from-teal-600 to-indigo-700 text-white p-6 rounded-b-3xl shadow-lg relative overflow-hidden">
@@ -55,15 +65,7 @@
             </div>
             @endif
             
-            @if($errors->any())
-            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
-                <ul class="text-red-700 text-sm list-disc pl-4">
-                    @foreach($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-            @endif
+
             
             <div class="space-y-3">
                 @foreach($location->services as $service)
@@ -96,6 +98,12 @@
                     <input type="text" name="customer_name" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all" placeholder="Masukkan nama Anda">
                     @error('customer_name') <p class="text-red-500 text-xs mt-1">{{ $message }}</p> @enderror
                 </div>
+                
+                @error('queue_service_id')
+                <div class="mb-4">
+                    <p class="text-red-500 text-sm font-bold bg-red-50 p-3 rounded-lg border border-red-100">Pilih salah satu layanan di atas terlebih dahulu.</p>
+                </div>
+                @enderror
                 
                 <div class="mb-6">
                     <label class="block text-sm font-bold text-slate-700 mb-2">Nomor HP / WhatsApp (Opsional)</label>

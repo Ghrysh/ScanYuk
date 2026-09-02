@@ -17,7 +17,7 @@ class QueuePublicController extends Controller
         }
 
         $location->load(['services' => function($q) {
-            $q->where('is_active', true)->orderBy('sort_order');
+            $q->where('is_active', true)->withCount(['tickets as today_registrations_count' => function($query) { $query->where('date', now()->toDateString()); }])->orderBy('sort_order');
         }]);
 
         $arQrCode = null;

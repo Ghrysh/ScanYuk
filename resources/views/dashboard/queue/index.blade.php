@@ -147,9 +147,15 @@
                 <a href="{{ route('queue.locations.manage', $location->id) }}" class="flex-1 py-2 text-center bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
                     Kelola
                 </a>
+                @if($location->services()->count() > 0)
                 <a href="{{ route('queue.locations.qr', $location->id) }}" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-teal-600 hover:bg-teal-50 transition-colors" title="Unduh QR Code">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                 </a>
+                @else
+                <button type="button" onclick="showAppConfirm('Layanan Kosong', 'Anda belum menambahkan layanan apapun ke lokasi ini. Silakan klik Kelola dan tambahkan setidaknya 1 layanan (misal: Poli Umum) terlebih dahulu agar QR Code bisa digunakan.', null)" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-red-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Layanan Kosong">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </button>
+                @endif
                 <a href="{{ route('queue.display', $location->uuid) }}" target="_blank" class="px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors" title="Buka TV Display">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                 </a>
