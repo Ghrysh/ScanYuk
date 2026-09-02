@@ -15,6 +15,9 @@ use App\Http\Controllers\UserDashboardController;
 use App\Http\Controllers\ArProjectController;
 use App\Http\Controllers\MarkerController;
 use App\Http\Controllers\TemplateController;
+use App\Http\Controllers\QueueManagementController;
+use App\Http\Controllers\QueuePublicController;
+use App\Http\Controllers\QueueStaffController;
 
 Route::get('/', function () {
     return view('home');
@@ -176,6 +179,25 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard/ar/result/{project}', [App\Http\Controllers\ArProjectController::class, 'result'])->name('ar.result');
 
         Route::delete('/api/markers/{marker}', [\App\Http\Controllers\MarkerController::class, 'destroy'])->name('marker.destroy');
+
+        // Queue Management (Owner)
+        Route::get('/dashboard/queue', [QueueManagementController::class, 'index'])->name('queue.index');
+        Route::get('/dashboard/queue/locations/create', [QueueManagementController::class, 'createLocation'])->name('queue.locations.create');
+        Route::post('/dashboard/queue/locations', [QueueManagementController::class, 'storeLocation'])->name('queue.locations.store');
+        Route::get('/dashboard/queue/locations/{location}', [QueueManagementController::class, 'manageLocation'])->name('queue.locations.manage');
+        Route::put('/dashboard/queue/locations/{location}', [QueueManagementController::class, 'updateLocation'])->name('queue.locations.update');
+        Route::delete('/dashboard/queue/locations/{location}', [QueueManagementController::class, 'deleteLocation'])->name('queue.locations.delete');
+        Route::post('/dashboard/queue/locations/{location}/services', [QueueManagementController::class, 'storeService'])->name('queue.services.store');
+        Route::put('/dashboard/queue/services/{service}', [QueueManagementController::class, 'updateService'])->name('queue.services.update');
+        Route::delete('/dashboard/queue/services/{service}', [QueueManagementController::class, 'deleteService'])->name('queue.services.delete');
+        Route::post('/dashboard/queue/locations/{location}/counters', [QueueManagementController::class, 'storeCounter'])->name('queue.counters.store');
+        Route::put('/dashboard/queue/counters/{counter}', [QueueManagementController::class, 'updateCounter'])->name('queue.counters.update');
+        Route::delete('/dashboard/queue/counters/{counter}', [QueueManagementController::class, 'deleteCounter'])->name('queue.counters.delete');
+        Route::post('/dashboard/queue/locations/{location}/staff', [QueueManagementController::class, 'storeStaff'])->name('queue.staff.store');
+        Route::put('/dashboard/queue/staff/{staff}', [QueueManagementController::class, 'updateStaff'])->name('queue.staff.update');
+        Route::delete('/dashboard/queue/staff/{staff}', [QueueManagementController::class, 'deleteStaff'])->name('queue.staff.delete');
+        Route::get('/dashboard/queue/locations/{location}/qr', [QueueManagementController::class, 'downloadQr'])->name('queue.locations.qr');
+        Route::get('/dashboard/queue/analytics', [QueueManagementController::class, 'analytics'])->name('queue.analytics');
     });
 
     Route::post('/checkout', [\App\Http\Controllers\PaymentController::class, 'checkout'])->name('payment.checkout');
@@ -269,6 +291,31 @@ Route::post('/api/chatbot/send', [\App\Http\Controllers\ChatbotController::class
 Route::post('/api/chatbot/live/request', [\App\Http\Controllers\ChatbotController::class, 'requestLiveChat']);
 Route::post('/api/chatbot/live/send', [\App\Http\Controllers\ChatbotController::class, 'sendLiveChatMessage']);
 Route::get('/api/chatbot/live/poll/{leadId}', [\App\Http\Controllers\ChatbotController::class, 'pollLiveChat']);
+
+// === Queue System Routes ===
+
+// Public Queue Registration & Monitoring (no auth)
+Route::get('/antrian/staff/login', [QueueStaffController::class, 'loginForm'])->name('queue.staff.login');
+Route::post('/antrian/staff/login', [QueueStaffController::class, 'login'])->name('queue.staff.login.post');
+Route::post('/antrian/staff/logout', [QueueStaffController::class, 'logout'])->name('queue.staff.logout');
+
+Route::middleware('queue.staff')->group(function () {
+    Route::get('/antrian/staff/dashboard', [QueueStaffController::class, 'dashboard'])->name('queue.staff.dashboard');
+    Route::post('/antrian/staff/call-next', [QueueStaffController::class, 'callNext'])->name('queue.staff.call-next');
+    Route::post('/antrian/staff/serve/{ticket}', [QueueStaffController::class, 'startServing'])->name('queue.staff.serve');
+    Route::post('/antrian/staff/complete/{ticket}', [QueueStaffController::class, 'complete'])->name('queue.staff.complete');
+    Route::post('/antrian/staff/skip/{ticket}', [QueueStaffController::class, 'skip'])->name('queue.staff.skip');
+    Route::post('/antrian/staff/recall/{ticket}', [QueueStaffController::class, 'recall'])->name('queue.staff.recall');
+});
+
+Route::get('/antrian/display/{uuid}', [QueuePublicController::class, 'display'])->name('queue.display');
+Route::get('/antrian/ticket/{id}', [QueuePublicController::class, 'ticket'])->name('queue.ticket');
+Route::get('/antrian/{uuid}', [QueuePublicController::class, 'register'])->name('queue.register');
+Route::post('/antrian/{uuid}/register', [QueuePublicController::class, 'store'])->name('queue.register.store');
+
+// Queue API (polling)
+Route::get('/api/queue/ticket/{id}/status', [QueuePublicController::class, 'ticketStatus']);
+Route::get('/api/queue/display/{uuid}', [QueuePublicController::class, 'displayData']);
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 

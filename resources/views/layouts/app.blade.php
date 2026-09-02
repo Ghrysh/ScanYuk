@@ -118,6 +118,10 @@
                 </a>
                 
                 <div class="flex items-center gap-6">
+                    <div class="hidden md:flex items-center gap-1">
+                        <a href="{{ route('user.dashboard') }}" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors {{ request()->is('dashboard') && !request()->is('dashboard/queue*') ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Dashboard</a>
+                        <a href="{{ route('queue.index') }}" class="px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors {{ request()->is('dashboard/queue*') ? 'text-teal-700 bg-teal-50' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }}">Antrian</a>
+                    </div>
                     <div class="hidden md:flex items-center text-sm font-medium text-slate-600">
                         {{ Auth::user()->name }} <span class="mx-2 text-slate-300">•</span> 
                         <span class="text-teal-600 font-bold capitalize">{{ Auth::user()->role }}</span>

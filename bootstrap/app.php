@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
             'role' => RoleMiddleware::class,
+            'queue.staff' => \App\Http\Middleware\QueueStaffAuth::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
