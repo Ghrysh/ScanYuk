@@ -304,6 +304,7 @@ Route::post('/antrian/staff/logout', [QueueStaffController::class, 'logout'])->n
 Route::middleware('queue.staff')->group(function () {
     Route::get('/antrian/staff/dashboard', [QueueStaffController::class, 'dashboard'])->name('queue.staff.dashboard');
     Route::post('/antrian/staff/call-next', [QueueStaffController::class, 'callNext'])->name('queue.staff.call-next');
+    Route::post('/antrian/staff/call/{ticket}', [QueueStaffController::class, 'callSpecific'])->name('queue.staff.call-specific');
     Route::post('/antrian/staff/serve/{ticket}', [QueueStaffController::class, 'startServing'])->name('queue.staff.serve');
     Route::post('/antrian/staff/complete/{ticket}', [QueueStaffController::class, 'complete'])->name('queue.staff.complete');
     Route::post('/antrian/staff/skip/{ticket}', [QueueStaffController::class, 'skip'])->name('queue.staff.skip');

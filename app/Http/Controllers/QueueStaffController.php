@@ -57,13 +57,12 @@ class QueueStaffController extends Controller
             ->where('date', now()->toDateString())
             ->first();
 
-        $waitingTicketsQuery = QueueTicket::where('queue_location_id', $locationId)
+        $waitingTickets = QueueTicket::where('queue_location_id', $locationId)
             ->where('status', 'waiting')
             ->where('date', now()->toDateString())
+            ->with('service')
             ->orderBy('id', 'asc')
             ->get();
-
-        $waitingTickets = $waitingTicketsQuery->groupBy('queue_service_id');
 
         $completedCount = QueueTicket::where('queue_location_id', $locationId)
             ->where('queue_counter_id', $staff->queue_counter_id)
@@ -147,5 +146,18 @@ class QueueStaffController extends Controller
             'queue_counter_id' => $staff->queue_counter_id
         ]);
         return back()->with('success', 'Antrian dipanggil ulang.');
+    }
+
+    public function callSpecific(QueueTicket $ticket)
+    {
+        $staffId = session('queue_staff_id');
+        $staff = QueueStaff::find($staffId);
+        
+        $ticket->update([
+            'status' => 'called',
+            'called_at' => now(),
+            'queue_counter_id' => $staff->queue_counter_id
+        ]);
+        return back()->with('success', 'Antrian ' . $ticket->queue_number . ' dipanggil.');
     }
 }
