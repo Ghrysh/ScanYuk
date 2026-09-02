@@ -216,6 +216,16 @@ class QueueManagementController extends Controller
             'daily_quota' => $request->daily_quota,
             'has_booths' => $request->has_booths ?? false,
         ]);
+        
+        // Jika form edit mengirimkan booth_name dan booth_count (user baru mengaktifkan has_booths)
+        if ($request->has_booths && $request->filled('booth_name') && $request->filled('booth_count') && $request->booth_count > 0) {
+            for ($i = 1; $i <= $request->booth_count; $i++) {
+                $location->counters()->create([
+                    'name' => $request->booth_name . ' ' . $i,
+                    'is_active' => true
+                ]);
+            }
+        }
 
         return back()->with('success', 'Lokasi antrian berhasil diperbarui.');
     }

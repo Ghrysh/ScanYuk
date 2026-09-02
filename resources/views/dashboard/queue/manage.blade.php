@@ -219,7 +219,7 @@
                             <p class="text-sm text-slate-500">Estimasi: {{ $svc->estimated_duration_minutes }} menit/orang • Kuota Harian: {{ $svc->daily_quota ?: 'Tak Terbatas' }}</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <form action="{{ route('queue.services.delete', $svc->id) }}" method="POST" class="inline" @submit.prevent="if(typeof showAppConfirm === \'function\') showAppConfirm(\'Konfirmasi\', \'Hapus layanan ini?\', $event.target); else if(confirm(\'Hapus layanan ini?\')) $event.target.submit();">
+                            <form action="{{ route('queue.services.delete', $svc->id) }}" method="POST" class="inline" @submit.prevent="if(typeof showAppConfirm === 'function') showAppConfirm('Konfirmasi', 'Hapus layanan ini?', $event.target); else if(confirm('Hapus layanan ini?')) $event.target.submit();">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                             </form>
@@ -247,7 +247,7 @@
                             <h4 class="font-bold text-slate-900">{{ $counter->name }}</h4>
                             <p class="text-sm text-slate-500">Status: {{ $counter->is_active ? 'Aktif' : 'Nonaktif' }}</p>
                         </div>
-                        <form action="{{ route('queue.counters.delete', $counter->id) }}" method="POST" class="inline" @submit.prevent="if(typeof showAppConfirm === \'function\') showAppConfirm(\'Konfirmasi\', \'Hapus loket ini?\', $event.target); else if(confirm(\'Hapus loket ini?\')) $event.target.submit();">
+                        <form action="{{ route('queue.counters.delete', $counter->id) }}" method="POST" class="inline" @submit.prevent="if(typeof showAppConfirm === 'function') showAppConfirm('Konfirmasi', 'Hapus loket ini?', $event.target); else if(confirm('Hapus loket ini?')) $event.target.submit();">
                             @csrf @method('DELETE')
                             <button type="submit" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                         </form>
@@ -274,7 +274,7 @@
                             <h4 class="font-bold text-slate-900">{{ $staff->name }}</h4>
                             <p class="text-sm text-slate-500">Counter: {{ $staff->counter ? $staff->counter->name : 'Belum Ditugaskan' }}</p>
                         </div>
-                        <form action="{{ route('queue.staff.delete', $staff->id) }}" method="POST" class="inline" @submit.prevent="if(typeof showAppConfirm === \'function\') showAppConfirm(\'Konfirmasi\', \'Hapus petugas ini?\', $event.target); else if(confirm(\'Hapus petugas ini?\')) $event.target.submit();">
+                        <form action="{{ route('queue.staff.delete', $staff->id) }}" method="POST" class="inline" @submit.prevent="if(typeof showAppConfirm === 'function') showAppConfirm('Konfirmasi', 'Hapus petugas ini?', $event.target); else if(confirm('Hapus petugas ini?')) $event.target.submit();">
                             @csrf @method('DELETE')
                             <button type="submit" class="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"><svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                         </form>
@@ -288,7 +288,7 @@
             {{-- TAB: SETTINGS --}}
             <div x-show="tab === 'settings'" class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-6 md:p-8" style="display: none;">
                 <h3 class="font-bold text-slate-900 text-lg mb-6">Pengaturan Lokasi</h3>
-                <form action="{{ route('queue.locations.update', $location->id) }}" method="POST" class="space-y-6">
+                <form action="{{ route('queue.locations.update', $location->id) }}" method="POST" class="space-y-6" x-data="{ hasBooths: {{ $location->has_booths ? 'true' : 'false' }} }">
                     @csrf @method('PUT')
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -304,13 +304,26 @@
                         <div class="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <div class="relative">
-                                    <input type="checkbox" name="has_booths" value="1" {{ $location->has_booths ? 'checked' : '' }} class="sr-only peer">
+                                    <input type="checkbox" name="has_booths" value="1" x-model="hasBooths" class="sr-only peer">
                                     <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
                                 </div>
                                 <div>
                                     <span class="text-sm font-bold text-slate-900 block">Sistem Booth / Loket</span>
                                 </div>
                             </label>
+                        </div>
+                    </div>
+
+                    <div x-show="hasBooths" x-collapse class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 p-4 border border-slate-200 rounded-lg">
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1">Nama Panggilan (Opsional)</label>
+                            <input type="text" name="booth_name" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Cth: Loket, Meja, Poli">
+                            <p class="text-[10px] text-slate-500 mt-1">Kosongkan jika tidak ingin membuat loket otomatis.</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-slate-700 mb-1">Jumlah (Opsional)</label>
+                            <input type="number" name="booth_count" class="w-full px-3 py-2 border rounded-lg text-sm" placeholder="Berapa banyak? (Cth: 3)">
+                            <p class="text-[10px] text-slate-500 mt-1">Isi jika ingin sistem langsung membuatkan data loket.</p>
                         </div>
                     </div>
 
@@ -335,7 +348,7 @@
                             <select name="ar_qr_code_id" class="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500">
                                 <option value="">-- Tanpa AR --</option>
                                 @foreach($arQrCodes ?? [] as $qr)
-                                <option value="{{ $qr->id }}" {{ $location->qr_code_id == $qr->id ? 'selected' : '' }}>{{ $qr->title }}</option>
+                                <option value="{{ $qr->id }}" {{ $location->ar_qr_code_id == $qr->id ? 'selected' : '' }}>{{ $qr->title }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -389,7 +402,7 @@
                 <div class="mt-10 pt-6 border-t border-red-100">
                     <h4 class="font-bold text-red-600 mb-2">Danger Zone</h4>
                     <p class="text-sm text-slate-500 mb-4">Menghapus lokasi akan menghapus semua data layanan, loket, petugas, dan tiket antrian yang terkait.</p>
-                    <form action="{{ route('queue.locations.delete', $location->id) }}" method="POST" @submit.prevent="if(typeof showAppConfirm === \'function\') showAppConfirm(\'Konfirmasi\', \'Anda yakin ingin menghapus seluruh data lokasi ini? Tindakan ini tidak dapat dibatalkan.\', $event.target); else if(confirm(\'Anda yakin ingin menghapus seluruh data lokasi ini? Tindakan ini tidak dapat dibatalkan.\')) $event.target.submit();">
+                    <form action="{{ route('queue.locations.delete', $location->id) }}" method="POST" @submit.prevent="if(typeof showAppConfirm === 'function') showAppConfirm('Konfirmasi', 'Anda yakin ingin menghapus seluruh data lokasi ini? Tindakan ini tidak dapat dibatalkan.', $event.target); else if(confirm('Anda yakin ingin menghapus seluruh data lokasi ini? Tindakan ini tidak dapat dibatalkan.')) $event.target.submit();">
                         @csrf @method('DELETE')
                         <button type="submit" class="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 rounded-lg text-sm font-bold transition-colors">
                             Hapus Lokasi Permanen
