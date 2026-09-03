@@ -28,7 +28,7 @@
     <section class="w-full px-6 bg-white relative z-10">
         <div class="max-w-[90rem] mx-auto">
             
-            {{-- 
+            @if(false)
 <div class="flex items-center justify-center gap-3 mb-12">
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-indigo-900" viewBox="0 0 24 24" fill="currentColor">
                     <path fill-rule="evenodd" d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z" clip-rule="evenodd" />
@@ -109,7 +109,7 @@
             </div>
 
             
---}}
+@endif
 {{-- Sistem Antrian Pricing (WhatsApp) --}}
             <div class="mt-20 max-w-4xl mx-auto bg-gradient-to-br from-slate-900 to-indigo-900 rounded-3xl p-8 md:p-12 shadow-2xl relative overflow-hidden">
                 <div class="absolute top-0 right-0 w-64 h-64 bg-teal-500 rounded-full mix-blend-screen filter blur-3xl opacity-20"></div>
