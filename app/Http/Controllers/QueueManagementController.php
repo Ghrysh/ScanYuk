@@ -17,6 +17,7 @@ class QueueManagementController extends Controller
 {
     public function requestAccess()
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         if ($user->queue_status === 'none') {
             $user->queue_status = 'pending';
@@ -27,6 +28,7 @@ class QueueManagementController extends Controller
 
     public function index(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         
         // Handle queue access request view
@@ -127,6 +129,7 @@ class QueueManagementController extends Controller
 
     public function storeLocation(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         $role = strtolower($user->role ?? 'free');
         $limit = $user->queue_location ?? (QueueLocation::LOCATION_LIMITS[$role] ?? 1);
@@ -189,6 +192,7 @@ class QueueManagementController extends Controller
     public function updateLocation(Request $request, QueueLocation $location)
     {
         if ($location->user_id !== Auth::id()) abort(403);
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         $request->validate([
@@ -323,6 +327,7 @@ class QueueManagementController extends Controller
 
     public function storeStaff(Request $request)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         
         $request->validate([
@@ -347,6 +352,7 @@ class QueueManagementController extends Controller
 
     public function updateStaff(Request $request, QueueStaff $staff)
     {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         if ($staff->location->user_id !== $user->id) abort(403);
 
@@ -400,5 +406,30 @@ class QueueManagementController extends Controller
         return response($imageContent)
             ->header('Content-Type', 'image/svg+xml')
             ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"');
+    }
+
+    public function leaderboard(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $customers = \App\Models\QueueCustomer::where('user_id', $user->id)
+            ->orderBy('points', 'desc')
+            ->orderBy('visits', 'desc')
+            ->get();
+            
+        return view('dashboard.queue.leaderboard', compact('customers'));
+    }
+
+    public function addPoints(Request $request, \App\Models\QueueCustomer $customer)
+    {
+        if ($customer->user_id !== Auth::id()) abort(403);
+
+        $request->validate([
+            'points' => 'required|integer|min:1'
+        ]);
+
+        $customer->increment('points', $request->points);
+
+        return back()->with('success', 'Poin berhasil ditambahkan ke ' . $customer->name);
     }
 }

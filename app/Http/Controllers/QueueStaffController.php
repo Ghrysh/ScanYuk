@@ -123,6 +123,32 @@ class QueueStaffController extends Controller
             'status' => 'completed',
             'completed_at' => now()
         ]);
+
+        if ($ticket->customer_name) {
+            $userId = $ticket->location->user_id;
+            
+            $customer = \App\Models\QueueCustomer::where('user_id', $userId)
+                ->where(function($q) use ($ticket) {
+                    if ($ticket->customer_phone) {
+                        $q->where('phone', $ticket->customer_phone);
+                    } else {
+                        $q->where('name', $ticket->customer_name)->whereNull('phone');
+                    }
+                })->first();
+
+            if (!$customer) {
+                \App\Models\QueueCustomer::create([
+                    'user_id' => $userId,
+                    'name' => $ticket->customer_name,
+                    'phone' => $ticket->customer_phone,
+                    'points' => 0,
+                    'visits' => 1
+                ]);
+            } else {
+                $customer->increment('visits');
+            }
+        }
+
         return back()->with('success', 'Pelayanan selesai.');
     }
 

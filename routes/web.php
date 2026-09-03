@@ -198,6 +198,8 @@ Route::middleware(['auth'])->group(function () {
         Route::delete('/dashboard/queue/counters/{counter}', [QueueManagementController::class, 'deleteCounter'])->name('queue.counters.delete');
         Route::post('/dashboard/queue/staff', [QueueManagementController::class, 'storeStaff'])->name('queue.staff.store');
         Route::delete('/dashboard/queue/staff/{staff}', [QueueManagementController::class, 'deleteStaff'])->name('queue.staff.delete');
+        Route::get('/dashboard/queue/leaderboard', [QueueManagementController::class, 'leaderboard'])->name('queue.leaderboard');
+        Route::post('/dashboard/queue/leaderboard/{customer}/add-points', [QueueManagementController::class, 'addPoints'])->name('queue.leaderboard.add-points');
         Route::get('/dashboard/queue/locations/{location}/qr', [QueueManagementController::class, 'downloadQr'])->name('queue.locations.qr');
         Route::get('/dashboard/queue/analytics', [QueueManagementController::class, 'analytics'])->name('queue.analytics');
     });
