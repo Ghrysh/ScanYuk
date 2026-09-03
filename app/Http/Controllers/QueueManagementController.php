@@ -45,9 +45,7 @@ class QueueManagementController extends Controller
                 'todayTickets as completed_count' => function($q) { $q->where('status', 'completed'); }
             ])->get();
             
-        $role = strtolower($user->role ?? 'free');
-        $limit = $user->queue_location ?? (QueueLocation::LOCATION_LIMITS[$role] ?? 1);
-        $canCreate = is_null($limit) ? true : ($locations->count() < $limit);
+        $canCreate = true;
 
         // Analytics Data
         $selectedLocationId = $request->query('location_id');
@@ -131,13 +129,6 @@ class QueueManagementController extends Controller
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
-        $role = strtolower($user->role ?? 'free');
-        $limit = $user->queue_location ?? (QueueLocation::LOCATION_LIMITS[$role] ?? 1);
-        
-        $currentCount = QueueLocation::where('user_id', $user->id)->count();
-        if ($limit !== null && $currentCount >= $limit) {
-            return back()->with('error', 'Batas maksimal lokasi antrian untuk paket Anda telah tercapai.')->with('showUpgrade', true);
-        }
 
         $request->validate([
             'name' => 'required|string|max:255',
@@ -147,13 +138,6 @@ class QueueManagementController extends Controller
             'daily_quota' => 'nullable|integer|min:1',
             'has_booths' => 'nullable|boolean'
         ]);
-
-        if ($request->daily_quota && $user->queue_ticket !== null) {
-            $totalUsedQuota = QueueLocation::where('user_id', $user->id)->sum('daily_quota');
-            if ($totalUsedQuota + $request->daily_quota > $user->queue_ticket) {
-                return back()->with('error', 'Melebihi total antrian. Total antrian saat ini sisa: ' . max(0, $user->queue_ticket - $totalUsedQuota));
-            }
-        }
 
         $location = QueueLocation::create([
             'user_id' => $user->id,
@@ -203,14 +187,6 @@ class QueueManagementController extends Controller
             'daily_quota' => 'nullable|integer|min:1',
             'has_booths' => 'nullable|boolean'
         ]);
-
-        if ($request->daily_quota && $user->queue_ticket !== null) {
-            $totalUsedQuota = QueueLocation::where('user_id', $user->id)
-                ->where('id', '!=', $location->id)->sum('daily_quota');
-            if ($totalUsedQuota + $request->daily_quota > $user->queue_ticket) {
-                return back()->with('error', 'Melebihi total antrian. Total antrian saat ini sisa: ' . max(0, $user->queue_ticket - $totalUsedQuota));
-            }
-        }
 
         $hasBooths = $request->has_booths ?? false;
 
