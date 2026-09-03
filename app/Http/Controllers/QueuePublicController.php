@@ -98,6 +98,30 @@ class QueuePublicController extends Controller
         return view('queue.display', compact('location', 'calledTickets', 'waitingTickets', 'services'));
     }
 
+    public function displayLeaderboard($userId)
+    {
+        $customers = \App\Models\QueueCustomer::where('user_id', $userId)
+            ->orderBy('points', 'desc')
+            ->orderBy('visits', 'desc')
+            ->limit(10)
+            ->get();
+            
+        return view('queue.display-leaderboard', compact('customers', 'userId'));
+    }
+    
+    public function displayLeaderboardData($userId)
+    {
+        $customers = \App\Models\QueueCustomer::where('user_id', $userId)
+            ->orderBy('points', 'desc')
+            ->orderBy('visits', 'desc')
+            ->limit(10)
+            ->get();
+            
+        return response()->json([
+            'customers' => $customers
+        ]);
+    }
+
     public function ticketStatus($id)
     {
         $ticket = QueueTicket::with('counter')->find($id);

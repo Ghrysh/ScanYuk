@@ -314,6 +314,7 @@ Route::middleware('queue.staff')->group(function () {
 });
 
 Route::get('/antrian/display/{uuid}', [QueuePublicController::class, 'display'])->name('queue.display');
+Route::get('/antrian/display/leaderboard/{user_id}', [QueuePublicController::class, 'displayLeaderboard'])->name('queue.leaderboard.display');
 Route::get('/antrian/ticket/{id}', [QueuePublicController::class, 'ticket'])->name('queue.ticket');
 Route::get('/antrian/{uuid}', [QueuePublicController::class, 'register'])->name('queue.register');
 Route::post('/antrian/{uuid}/register', [QueuePublicController::class, 'store'])->name('queue.register.store');
@@ -321,6 +322,7 @@ Route::post('/antrian/{uuid}/register', [QueuePublicController::class, 'store'])
 // Queue API (polling)
 Route::get('/api/queue/ticket/{id}/status', [QueuePublicController::class, 'ticketStatus']);
 Route::get('/api/queue/display/{uuid}', [QueuePublicController::class, 'displayData']);
+Route::get('/api/queue/display/leaderboard/{user_id}', [QueuePublicController::class, 'displayLeaderboardData']);
 
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
