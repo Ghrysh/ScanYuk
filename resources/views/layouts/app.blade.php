@@ -419,7 +419,13 @@
         },
         execute() {
             if (this.targetForm) {
-                this.targetForm.submit();
+                if (typeof this.targetForm === 'string') {
+                    window.location.href = this.targetForm;
+                } else if (typeof this.targetForm === 'function') {
+                    this.targetForm();
+                } else {
+                    this.targetForm.submit();
+                }
             }
             this.show = false;
         }

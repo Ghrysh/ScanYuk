@@ -11,7 +11,7 @@
         setTimeout(() => this.showToast = false, 3000);
     },
     tab: 'services',
-    showAddServiceModal: false,
+    showAddServiceModal: new URLSearchParams(window.location.search).get('add_service') === '1',
     showAddCounterModal: false,
     showAddStaffModal: false
 }">
