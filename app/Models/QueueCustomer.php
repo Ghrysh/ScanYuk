@@ -13,6 +13,7 @@ class QueueCustomer extends Model
         'phone',
         'points',
         'visits',
+        'views',
     ];
 
     public function user(): BelongsTo

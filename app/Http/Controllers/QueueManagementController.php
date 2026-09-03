@@ -420,6 +420,14 @@ class QueueManagementController extends Controller
         return view('dashboard.queue.leaderboard', compact('customers'));
     }
 
+    public function addViews(Request $request, \App\Models\QueueCustomer $customer)
+    {
+        if ($customer->user_id !== Auth::id()) abort(403);
+        $request->validate(['views' => 'required|integer|min:1']);
+        $customer->increment('views', $request->views);
+        return back()->with('success', 'Viewers berhasil ditambahkan ke ' . $customer->name);
+    }
+
     public function addPoints(Request $request, \App\Models\QueueCustomer $customer)
     {
         if ($customer->user_id !== Auth::id()) abort(403);

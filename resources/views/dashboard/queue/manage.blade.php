@@ -46,6 +46,20 @@
     <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 md:p-8 max-w-3xl mx-auto">
         <form action="{{ route('queue.locations.store') }}" method="POST" class="space-y-6">
             @csrf
+            @if(session('error'))
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-r-xl">
+                <p class="text-red-700 font-bold text-sm">{{ session('error') }}</p>
+            </div>
+            @endif
+            @if($errors->any())
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-r-xl">
+                <ul class="text-red-700 text-sm list-disc pl-4 font-semibold">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+            @endif
             
             <div>
                 <label class="block text-sm font-bold text-slate-700 mb-2">Nama Lokasi <span class="text-red-500">*</span></label>
@@ -297,6 +311,20 @@
                 <h3 class="font-bold text-slate-900 text-lg mb-6">Pengaturan Lokasi</h3>
                 <form action="{{ route('queue.locations.update', $location->id) }}" method="POST" class="space-y-6" x-data="{ hasBooths: {{ $location->has_booths ? 'true' : 'false' }} }">
                     @csrf @method('PUT')
+            @if(session('error'))
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-r-xl">
+                <p class="text-red-700 font-bold text-sm">{{ session('error') }}</p>
+            </div>
+            @endif
+            @if($errors->any())
+            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4 rounded-r-xl">
+                <ul class="text-red-700 text-sm list-disc pl-4 font-semibold">
+                    @foreach($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+            @endif
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="flex items-center gap-3 p-4 bg-slate-50 border border-slate-200 rounded-lg">
