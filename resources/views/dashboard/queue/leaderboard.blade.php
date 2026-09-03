@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-7xl mx-auto" x-data="{
+<div class="max-w-7xl mx-auto pt-8 pb-12 px-4 sm:px-6 lg:px-8" x-data="{
     showPointsModal: false,
     selectedCustomer: null,
     pointsToAdd: 10,
