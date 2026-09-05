@@ -132,7 +132,7 @@
                     </span>
                 </div>
 
-                <p class="text-xs text-slate-400 mt-4 mb-2 font-semibold tracking-wide uppercase">Antrian Hari Ini</p>\n                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-3 gap-3">
                     <div class="bg-amber-50 p-3 rounded-lg border border-amber-100 text-center">
                         <div class="text-xl font-black text-amber-600 mb-1">{{ $location->waiting_count ?? 0 }}</div>
                         <div class="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Menunggu</div>
