@@ -131,7 +131,7 @@
                         
                         <div x-show="index === 0" class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-400 to-indigo-500"></div>
                         
-                        <div class="text-slate-400 font-bold uppercase tracking-widest mb-2" x-text="ticket.service.name"></div>
+                        <div class="text-slate-400 font-bold uppercase tracking-widest mb-2" x-text="ticket.service_name"></div>
                         
                         <div class="text-[5rem] xl:text-[7rem] font-black leading-none tracking-tighter mb-4 text-white" 
                             :class="index === 0 ? 'text-teal-400' : ''"
@@ -139,7 +139,7 @@
                         
                         <div class="w-full bg-slate-900/50 rounded-2xl p-4 text-center border border-slate-700 mt-auto">
                             <div class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-1">Silakan Menuju</div>
-                            <div class="text-2xl xl:text-3xl font-black text-slate-200" x-text="ticket.counter.name"></div>
+                            <div class="text-2xl xl:text-3xl font-black text-slate-200" x-text="ticket.counter_name || 'Petugas'"></div>
                         </div>
                     </div>
                 </template>
@@ -167,7 +167,7 @@
                             <div class="w-16 h-16 rounded-xl bg-slate-800 flex items-center justify-center font-black text-2xl text-white border border-slate-600" x-text="ticket.queue_number"></div>
                             <div>
                                 <div class="font-bold text-slate-200 text-lg mb-0.5" x-text="ticket.customer_name"></div>
-                                <div class="text-sm font-semibold text-teal-400" x-text="ticket.service.name"></div>
+                                <div class="text-sm font-semibold text-teal-400" x-text="ticket.service_name"></div>
                             </div>
                         </div>
                     </div>
