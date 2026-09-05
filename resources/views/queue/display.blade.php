@@ -51,13 +51,13 @@
                     
                     // Check if there's a newly called ticket to play sound
                     const oldIds = this.calledTickets.map(t => t.id);
-                    const newCalled = data.calledTickets.filter(t => !oldIds.includes(t.id));
+                    const newCalled = data.called.filter(t => !oldIds.includes(t.id));
                     if (newCalled.length > 0) {
                         this.playBell();
                     }
                     
-                    this.calledTickets = data.calledTickets;
-                    this.waitingTickets = data.waitingTickets;
+                    this.calledTickets = data.called;
+                    this.waitingTickets = data.waiting;
                 } catch(e) {
                     console.error('Failed to fetch display data', e);
                 }

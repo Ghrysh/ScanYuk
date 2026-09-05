@@ -173,6 +173,7 @@ class QueuePublicController extends Controller
                 return [
                     'id' => $t->id,
                     'queue_number' => $t->queue_number,
+                    'customer_name' => $t->customer_name,
                     'status' => $t->status,
                     'service_name' => $t->service->name,
                     'counter_name' => $t->counter ? $t->counter->name : null,
@@ -186,6 +187,7 @@ class QueuePublicController extends Controller
                 return [
                     'id' => $t->id,
                     'queue_number' => $t->queue_number,
+                    'customer_name' => $t->customer_name,
                     'service_name' => $t->service->name,
                 ];
             });
