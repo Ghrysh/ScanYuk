@@ -40,6 +40,9 @@ class QueueManagementController extends Controller
         
         $locations = QueueLocation::where('user_id', $user->id)
             ->withCount([
+                'todayTickets as today_waiting_count' => function($q) { $q->where('status', 'waiting'); },
+                'todayTickets as today_serving_count' => function($q) { $q->where('status', 'serving'); },
+                'todayTickets as today_completed_count' => function($q) { $q->where('status', 'completed'); },
                 'tickets as waiting_count' => function($q) { $q->where('status', 'waiting'); },
                 'tickets as serving_count' => function($q) { $q->where('status', 'serving'); },
                 'tickets as completed_count' => function($q) { $q->where('status', 'completed'); }
