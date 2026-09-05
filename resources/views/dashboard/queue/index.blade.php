@@ -132,17 +132,17 @@
                     </span>
                 </div>
 
-                <div class="grid grid-cols-3 gap-3 mt-6">
+                <p class="text-xs text-slate-400 mt-4 mb-2 font-semibold tracking-wide uppercase">Antrian Hari Ini</p>\n                <div class="grid grid-cols-3 gap-3">
                     <div class="bg-amber-50 p-3 rounded-lg border border-amber-100 text-center">
-                        <div class="text-xl font-black text-amber-600 mb-1">{{ $location->today_waiting ?? 0 }}</div>
+                        <div class="text-xl font-black text-amber-600 mb-1">{{ $location->waiting_count ?? 0 }}</div>
                         <div class="text-[10px] font-bold text-amber-700 uppercase tracking-wider">Menunggu</div>
                     </div>
                     <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 text-center">
-                        <div class="text-xl font-black text-indigo-600 mb-1">{{ $location->today_serving ?? 0 }}</div>
+                        <div class="text-xl font-black text-indigo-600 mb-1">{{ $location->serving_count ?? 0 }}</div>
                         <div class="text-[10px] font-bold text-indigo-700 uppercase tracking-wider">Dilayani</div>
                     </div>
                     <div class="bg-green-50 p-3 rounded-lg border border-green-100 text-center">
-                        <div class="text-xl font-black text-green-600 mb-1">{{ $location->today_completed ?? 0 }}</div>
+                        <div class="text-xl font-black text-green-600 mb-1">{{ $location->completed_count ?? 0 }}</div>
                         <div class="text-[10px] font-bold text-green-700 uppercase tracking-wider">Selesai</div>
                     </div>
                 </div>

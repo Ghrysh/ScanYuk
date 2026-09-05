@@ -80,8 +80,8 @@ class QueueManagementController extends Controller
                 $serving = \Carbon\Carbon::parse($t->serving_at);
                 $completed = \Carbon\Carbon::parse($t->completed_at);
                 
-                $totalWait += $serving->diffInMinutes($created);
-                $totalService += $completed->diffInMinutes($serving);
+                $totalWait += abs($created->diffInMinutes($serving));
+                $totalService += abs($serving->diffInMinutes($completed));
             }
             $avgWaitMinutes = round($totalWait / $completedTickets->count());
             $avgServiceMinutes = round($totalService / $completedTickets->count());
@@ -97,11 +97,12 @@ class QueueManagementController extends Controller
             }
         }
 
+        $groupedTickets = $tickets->groupBy(function($t) { return $t->date->toDateString(); });
         $dailyData = [];
         $period = \Carbon\CarbonPeriod::create($dateFrom, $dateTo);
         foreach ($period as $date) {
             $dateString = $date->toDateString();
-            $dailyData[$dateString] = $tickets->where('date', $dateString)->count();
+            $dailyData[$dateString] = isset($groupedTickets[$dateString]) ? $groupedTickets[$dateString]->count() : 0;
         }
 
         // Global Staff Management Data
